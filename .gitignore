@@ -163,3 +163,17 @@ cython_debug/
 
 # 忽略各种文件夹下codex AGENRS.md
 AGENTS.md
+
+# Local / personal tooling (not for remote)
+.specstory/
+.staging-skills
+.claude/
+.cursor
+.tmp-ch4-build/
+.tmp-ch10-build/
+.tmp-ch12-build/
+.tmp-follow-builders/
+.tmp-x-content-feishu-message.txt
+.tmp-learn-build-912/
+.tmp-learn-expand/
+.vscode/

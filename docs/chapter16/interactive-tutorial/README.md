@@ -38,7 +38,7 @@ pip install "hello-agents[all]"
 
 ```
 interactive-tutorial/
-├── index.html      # 主教程（单文件自包含逻辑与样式，约 55 页）
+├── index.html      # 主教程（单文件自包含逻辑与样式，约 54 页）
 ├── assets/         # 本地配图（封面 SVG）
 │   └── ch16_cover.svg
 └── README.md       # 本说明
