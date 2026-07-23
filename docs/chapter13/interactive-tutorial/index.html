@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第十三章 · 智能旅行助手 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 13 Signal
+   Same product line as Ch1–Ch12; sky / azure primary signal · Travel Lab
+   ============================================================ */
+
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(56, 189, 248, 0.14);
+  --line-strong: rgba(56, 189, 248, 0.36);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #38bdf8;
+  --signal-bright: #7dd3fc;
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(56, 189, 248, 0.18), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(232, 168, 74, 0.10), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--amber), var(--cyan));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(56, 189, 248, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(56, 189, 248, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(95, 245, 216, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(224,122,74,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(56, 189, 248, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.cover-hero {
+  margin: 1rem 0 1.4rem; border: 1px solid var(--line-strong);
+  background: var(--panel); overflow: hidden;
+}
+.cover-hero img { width: 100%; height: auto; display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps7 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: rgba(224,122,74,0.12);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.arch-block.base { border-left: 3px solid var(--mint); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  transition: border-color 0.2s;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.05rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; margin-top: 1rem; color: var(--paper);
+  border-top: 1px solid var(--line); padding-top: 1rem; font-size: 0.95rem;
+}
+.flash-card.revealed .a { display: block; }
+.flash-idx {
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-mute); margin-bottom: 0.75rem; letter-spacing: 0.06em;
+}
+.flash-nav { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  margin-bottom: 0.75rem; color: var(--text);
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.4rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224,107,90,0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.75rem; padding: 0.75rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(224,122,74,0.08); color: var(--text-dim);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.78rem;
+  color: var(--cyan-bright); margin-top: 0.5rem;
+}
+.check-list { list-style: none; margin: 1rem 0; }
+.check-list li {
+  display: flex; align-items: flex-start; gap: 0.65rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--line);
+  color: var(--text-dim); font-size: 0.92rem;
+}
+.check-list input {
+  margin-top: 0.25rem; accent-color: var(--signal);
+  width: 18px; height: 18px; flex-shrink: 0;
+}
+.goal-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.goal-card {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; position: relative;
+}
+.goal-card .tag {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.goal-card h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+.goal-card p { font-size: 0.85rem; margin: 0; }
+.budget-lab {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1.15rem; margin: 1.2rem 0;
+}
+.budget-lab label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.08em; color: var(--text-mute);
+  display: block; margin-bottom: 0.35rem; text-transform: uppercase;
+}
+.budget-lab input[type="range"] {
+  width: 100%; accent-color: var(--signal); margin-bottom: 0.85rem;
+}
+.budget-bar {
+  display: flex; height: 36px; border: 1px solid var(--line-strong);
+  overflow: hidden; margin: 0.75rem 0;
+  font-family: var(--font-display); font-size: 0.65rem;
+}
+.budget-seg {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink); font-weight: 600; transition: width 0.3s ease;
+  overflow: hidden; white-space: nowrap;
+}
+.budget-seg.sys { background: var(--signal); }
+.budget-seg.ev { background: var(--cyan); }
+.budget-seg.ctx { background: var(--amber); }
+.budget-seg.free { background: var(--panel-2); color: var(--text-mute); }
+.budget-meta {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  color: var(--text-dim); line-height: 1.6;
+}
+.budget-warn {
+  margin-top: 0.65rem; padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--amber); background: var(--amber-dim);
+  font-size: 0.88rem; color: var(--paper); display: none;
+}
+.budget-warn.show { display: block; }
+.template-map {
+  display: grid; gap: 0.35rem; margin: 1rem 0;
+  font-family: var(--font-mono); font-size: 0.8rem;
+}
+.template-map div {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 0.55rem 0.85rem; color: var(--text-dim);
+}
+.template-map div strong { color: var(--signal-bright); font-weight: 500; }
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 40;
+}
+.overlay.show { display: block; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: min(86vw, 300px);
+    z-index: 50; transform: translateX(-105%); transition: transform 0.3s;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3 { grid-template-columns: 1fr; }
+  .loop-stepper .steps,
+  .loop-stepper .steps.steps5,
+  .loop-stepper .steps.steps3,
+  .loop-stepper .steps.steps4,
+  .loop-stepper .steps.steps7 { grid-template-columns: repeat(2, 1fr); }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+}
+
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 13</div>
+      <h1>第十三章 · 智能旅行助手</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>进度</span>
+        <span id="progressText">1 / 1</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">SKY SIGNAL · ← → 翻页</div>
+  </aside>
+
+  <main class="stage">
+    <div class="topbar">
+      <button class="menu-btn" type="button" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button class="btn" id="btnPrev" type="button">← 上一页</button>
+        <button class="btn btn-primary" id="btnNext" type="button">下一页 →</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+
+<!--
+  COVERAGE CHECKLIST (源文档 · 第十三章 智能旅行助手.md)
+  [x] 开篇五大功能 · 13.1 痛点/四层架构/5分钟体验
+  [x] 13.2 数据流转 · dict→Pydantic · Field/验证器 · 自底向上 · FastAPI+TS
+  [x] 13.3 为何多Agent · 四角色 · Prompt · 协作五步 · 查询构建
+  [x] 13.4 裸API问题 · 高德MCP · 调用链 · 共享实例 · Unsplash
+  [x] 13.5 SPA · TS · Axios · Home · Result/地图
+  [x] 13.6 预算 · 进度 · 编辑 · 导出 · 锚点导航
+  [x] 13.7 总结 · 清单 · 实践
+-->
+
+<section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
+
+<p class="slide-sub">Lab 13 · Industrial Blueprint</p>
+<h2 class="slide-title">第十三章 · 智能旅行助手</h2>
+<p class="lead">把 HelloAgents 的范式、工具、记忆、协议与评估融会贯通——做一个真正能规划行程、画地图、算预算、可编辑可导出的全栈 AI 应用。</p>
+<div class="cover-hero"><img src="assets/ch13_cover.svg" alt="Lab 13 智能旅行助手四层架构"/></div>
+<div class="note"><strong>本章交付物：</strong>Vue3+FastAPI 旅行助手 · 四 Agent 协作 · 高德 MCP · Unsplash · 预算/编辑/导出。</div>
+
+</section>
+<section class="slide" data-id="goals" data-label="本章地图" data-group="开篇">
+
+<p class="slide-sub">学习路径</p>
+<h2 class="slide-title">你将掌握什么</h2>
+<div class="goal-grid">
+  <div class="goal-card"><div class="tag">13.1</div><h3>架构设计</h3><p>前后端分离四层：前端 · 后端 · 智能体 · 外部服务。</p></div>
+  <div class="goal-card"><div class="tag">13.2</div><h3>数据模型</h3><p>Pydantic 自底向上：Location → Attraction → DayPlan → TripPlan。</p></div>
+  <div class="goal-card"><div class="tag">13.3</div><h3>多 Agent</h3><p>景点 / 天气 / 酒店 / 规划 四专家协作。</p></div>
+  <div class="goal-card"><div class="tag">13.4</div><h3>MCP 集成</h3><p>高德 MCP 自动展开 + 共享实例；Unsplash 增强。</p></div>
+  <div class="goal-card"><div class="tag">13.5</div><h3>前端工程</h3><p>TS 类型对齐、Axios、Home/Result、地图标注。</p></div>
+  <div class="goal-card"><div class="tag">13.6</div><h3>产品功能</h3><p>预算、进度条、编辑、导出、锚点导航。</p></div>
+</div>
+<div class="analogy">第一章的简易旅行助手只演示 Thought-Action-Observation；本章是把它做成可交付产品。</div>
+
+</section>
+<section class="slide" data-id="features" data-label="五大核心功能" data-group="开篇">
+
+<p class="slide-sub">产品能力一览</p>
+<h2 class="slide-title">智能旅行助手做什么</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>智能行程规划</h3><div class="en">Planning</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>输入目的地、日期、偏好 → 自动生成含景点、餐饮、酒店的完整日程。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>地图可视化</h3><div class="en">Map</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>高德 JS API 标注景点坐标、编号标签，路线一目了然。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>预算计算</h3><div class="en">Budget</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>门票 / 酒店 / 餐饮 / 交通四类汇总，前端 Statistic 展示。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>行程编辑</h3><div class="en">Edit</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>上移、下移、删除景点；深拷贝可撤销；保存后刷新地图。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>导出分享</h3><div class="en">Export</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>html2canvas + jsPDF；导出时规避嵌套 Canvas 兼容问题。</p></div>
+  </div></div>
+</div>
+
+</section>
+<section class="slide" data-id="install" data-label="5 分钟跑通" data-group="开篇">
+
+<p class="slide-sub">13.1.3 · 快速体验</p>
+<h2 class="slide-title">先跑起来再读细节</h2>
+<div class="callout" data-label="环境">Python ≥ 3.10 · Node ≥ 16 · npm ≥ 8</div>
+<p><strong>密钥：</strong>LLM API · 高德 Web 服务 Key · Unsplash Access Key → 写入 <code>.env</code></p>
+<div class="code-block"># 后端
+cd helloagents-trip-planner/backend
+pip install -r requirements.txt
+cp .env.example .env   # 填密钥
+uvicorn app.api.main:app --reload
+# 文档：http://localhost:8000/docs
+
+# 前端（新终端）
+cd helloagents-trip-planner/frontend
+npm install && npm run dev
+# 应用：http://localhost:5173</div>
+<div class="note"><strong>体验路径：</strong>填表 →「开始规划」→ 看进度 → 结果页（概览/预算/地图/日程/天气）→ 编辑 → 导出。</div>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/13-figures/13-2.png" alt="图 13.2 规划进行中" loading="lazy"/>
+<div class="fig-cap">图 13.2 规划进行中</div>
+<div class="fig-fallback"><strong>离线要点：</strong>加载进度条与状态文案：搜索景点→天气→酒店→生成计划</div></div><div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/13-figures/13-3.png" alt="图 13.3 规划完成页" loading="lazy"/>
+<div class="fig-cap">图 13.3 规划完成页</div>
+<div class="fig-fallback"><strong>离线要点：</strong>行程概览与结果主界面</div></div>
+</section>
+<section class="slide" data-id="why-trip" data-label="为何需要旅行助手" data-group="13.1 架构">
+
+<p class="slide-sub">13.1.1</p>
+<h2 class="slide-title">传统规划的三大痛点</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>信息分散</h3><ul><li>景点 / 天气 / 酒店分属不同网站</li><li>手动切换、复制粘贴整合</li></ul></div>
+  <div class="compare-col b"><h3>缺少个性化</h3><ul><li>通用攻略难贴合偏好</li><li>预算、时间、口味难兼顾</li></ul></div>
+  <div class="compare-col c"><h3>难以调整</h3><ul><li>改一处牵动顺序与预算</li><li>常需整份重做</li></ul></div>
+</div>
+<div class="analogy">对系统说「北京 3 天，历史文化，预算中等」→ 自动出日程、地图、预算，且可局部编辑。</div>
+<p>本章目标：把 AI 做成<strong>真有用的应用</strong>——多 Agent、全栈 Web、可交付工程。</p>
+
+</section>
+<section class="slide" data-id="arch-layers" data-label="四层技术架构" data-group="13.1 架构">
+
+<p class="slide-sub">13.1.2</p>
+<h2 class="slide-title">前后端分离 · 四层堆叠</h2>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/13-figures/13-1.png" alt="图 13.1 技术架构" loading="lazy"/>
+<div class="fig-cap">图 13.1 技术架构</div>
+<div class="fig-fallback"><strong>离线要点：</strong>前端 Vue3 → 后端 FastAPI → 智能体 HelloAgents → 外部 API（高德/Unsplash/LLM）</div></div>
+<div class="arch-stack">
+  <div class="arch-block enc">前端层 · Vue3 + TypeScript<span class="sub">表单、结果、地图可视化</span></div>
+  <div class="arch-block dec">后端层 · FastAPI<span class="sub">路由、校验、业务编排</span></div>
+  <div class="arch-block head">智能体层 · HelloAgents<span class="sub">4 个专职 Agent + 任务分解</span></div>
+  <div class="arch-block base">外部服务层<span class="sub">高德地图 · Unsplash · LLM API</span></div>
+</div>
+
+</section>
+<section class="slide" data-id="data-flow" data-label="数据流转与目录" data-group="13.1 架构">
+
+<p class="slide-sub">请求链路 · 仓库结构</p>
+<h2 class="slide-title">从点击到渲染</h2>
+<div class="loop-stepper" id="reqFlow">
+  <div class="steps steps5">
+    <button class="step-btn" type="button">① 表单</button>
+    <button class="step-btn" type="button">② 校验</button>
+    <button class="step-btn" type="button">③ Agents</button>
+    <button class="step-btn" type="button">④ MCP/API</button>
+    <button class="step-btn" type="button">⑤ 渲染</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<details class="expand-card"><summary>项目目录速览</summary>
+<div class="expand-body"><div class="code-block">helloagents-trip-planner/
+├── backend/app/{agents,api,models,services,config.py}
+└── frontend/src/{views,services,types,router}</div></div></details>
+
+</section>
+<section class="slide" data-id="flash131" data-label="闪卡 · 13.1" data-group="13.1 架构">
+
+<p class="slide-sub">巩固</p>
+<h2 class="slide-title">架构闪卡</h2>
+<div class="flash-wrap" id="flash131" data-cards='[{"q": "四层架构自上而下是？", "a": "前端(Vue3) → 后端(FastAPI) → 智能体(HelloAgents) → 外部服务(高德/Unsplash/LLM)。"}, {"q": "为什么要先 5 分钟跑通？", "a": "建立产品直觉后再啃模型与 Agent，避免只看代码无体感。"}, {"q": "第一章助手与本章的差别？", "a": "第一章演示循环原理；本章是完整产品：多 Agent、地图、预算、编辑、导出。"}]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash131',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash131',1)">下一张</button>
+  </div>
+</div>
+</section>
+<section class="slide" data-id="quiz131" data-label="检测 · 13.1" data-group="13.1 架构">
+
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">架构小测</h2>
+<div class="quiz-item" data-quiz="q131" data-answer="1">
+  <h4>智能体层的职责是？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">只渲染地图</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">任务分解、工具调用、结果整合</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">直接写 Vue 模板</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">替代 LLM</button>
+  <div class="quiz-explain">智能体层用 HelloAgents 分解任务并调用工具，再把结果交给后端返回前端。</div>
+</div><div class="quiz-item" data-quiz="q131" data-answer="3">
+  <h4>外部服务层不包含？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">高德地图 API</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">Unsplash API</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">LLM API</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">Pydantic 模型定义</button>
+  <div class="quiz-explain">Pydantic 属于后端数据模型，不是外部服务。</div>
+</div><div class="quiz-score" id="score-q131"></div>
+</section>
+<section class="slide" data-id="why-model" data-label="为何需要数据模型" data-group="13.2 数据模型">
+
+<p class="slide-sub">13.2.1</p>
+<h2 class="slide-title">数据要过「七道关」</h2>
+<p>前端表单 → HTTP → Python 对象 → 外部 API → 再变回 Python → HTTP → TS 对象 → 页面。</p>
+<p>外部 API 字段五花八门：<code>lng</code> / <code>lon</code> / <code>longitude</code>。没有统一模型，每一步都可能静默出错。</p>
+<div class="callout" data-label="核心问题">如何表示并可靠传递「旅行计划」？答案：契约化数据模型。</div>
+
+</section>
+<section class="slide" data-id="dict-vs-pydantic" data-label="字典 → Pydantic" data-group="13.2 数据模型">
+
+<p class="slide-sub">13.2.2</p>
+<h2 class="slide-title">原型够用，工程不够</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>dict 痛点</h3><ul><li>字段名不统一</li><li>类型错误迟到运行时</li><li>加字段要改多处</li></ul></div>
+  <div class="compare-col b"><h3>Pydantic 收益</h3><ul><li>类定义即契约</li><li>创建即校验</li><li>IDE 补全 + 序列化</li></ul></div>
+</div>
+<div class="code-block">class Location(BaseModel):
+    longitude: float = Field(..., description="经度")
+    latitude: float = Field(..., description="纬度")
+
+class Attraction(BaseModel):
+    name: str
+    location: Location
+    ticket_price: int = 0</div>
+
+</section>
+<section class="slide" data-id="pydantic-core" data-label="Pydantic 核心概念" data-group="13.2 数据模型">
+
+<p class="slide-sub">13.2.3</p>
+<h2 class="slide-title">Field · 嵌套 · 验证器</h2>
+<ul>
+<li><code>...</code> 必填；<code>Optional</code> / 默认值可选</li>
+<li><code>ge/le/gt</code> 范围约束</li>
+<li>嵌套：<code>DayPlan.attractions: List[Attraction]</code></li>
+<li><code>@field_validator(..., mode='before')</code>：把 <code>"16°C"</code> 变成 <code>16</code></li>
+</ul>
+<div class="code-block">@field_validator('temperature', mode='before')
+def parse_temperature(cls, v):
+    if isinstance(v, str):
+        return int(v.replace('°C','').replace('℃','').strip())
+    return v</div>
+<div class="note"><strong>记住：</strong>脏数据在边界清洗一次，业务代码就能当「干净数字」用。</div>
+
+</section>
+<section class="slide" data-id="model-bottom-up" data-label="自底向上建模" data-group="13.2 数据模型">
+
+<p class="slide-sub">13.2.4</p>
+<h2 class="slide-title">Location → … → TripPlan</h2>
+<div class="arch-stack">
+  <div class="arch-block base">Location（经纬度 + 范围校验）</div>
+  <div class="arch-block enc">Attraction / Meal / Hotel / Budget / WeatherInfo</div>
+  <div class="arch-block dec">DayPlan（单日：景点列表 + 餐 + 酒店）</div>
+  <div class="arch-block head">TripPlan（城市、日期、days、天气、建议、预算）</div>
+</div>
+<details class="expand-card"><summary>WeatherInfo 为何特殊？</summary>
+<div class="expand-body">高德温度常带单位字符串；用 before 验证器统一成 int，并容错返回 0。</div></details>
+<details class="expand-card"><summary>default_factory=list</summary>
+<div class="expand-body">可变默认值不要写 <code>= []</code>，用 <code>default_factory=list</code> 避免共享同一列表。</div></details>
+
+</section>
+<section class="slide" data-id="model-web" data-label="模型在 Web 中的用法" data-group="13.2 数据模型">
+
+<p class="slide-sub">13.2.5</p>
+<h2 class="slide-title">FastAPI + TypeScript 对齐</h2>
+<div class="code-block">@app.post("/api/trip/plan", response_model=TripPlan)
+async def create_trip_plan(request: TripPlanRequest) -> TripPlan:
+    return await generate_trip_plan(request)</div>
+<p>FastAPI 自动：请求校验 · 响应校验 · OpenAPI 文档。前端用同构 interface，减少手工转换。</p>
+<div class="template-map">
+  <div><strong>Python</strong> Optional[str] → <strong>TS</strong> category?: string</div>
+  <div><strong>Python</strong> List[DayPlan] → <strong>TS</strong> days: DayPlan[]</div>
+  <div><strong>Python</strong> float → <strong>TS</strong> number</div>
+</div>
+
+</section>
+<section class="slide" data-id="flash132" data-label="闪卡 · 13.2" data-group="13.2 数据模型">
+
+<p class="slide-sub">巩固</p>
+<h2 class="slide-title">模型闪卡</h2>
+<div class="flash-wrap" id="flash132" data-cards='[{"q": "为何不用 dict 扛生产？", "a": "字段不统一、类型晚暴露、维护成本高；Pydantic 把契约前移。"}, {"q": "自底向上建模顺序？", "a": "Location → Attraction/Meal/Hotel/Budget/Weather → DayPlan → TripPlan。"}, {"q": "field_validator 典型用途？", "a": "在入库前把外部脏格式（如温度字符串）清洗成规范类型。"}]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash132',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash132',1)">下一张</button>
+  </div>
+</div>
+</section>
+<section class="slide" data-id="quiz132" data-label="检测 · 13.2" data-group="13.2 数据模型">
+
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">模型小测</h2>
+<div class="quiz-item" data-quiz="q132" data-answer="1">
+  <h4>列表字段正确默认写法？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">attractions: List[Attraction] = []</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">attractions: List[Attraction] = Field(default_factory=list)</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">attractions = list</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">不用默认值</button>
+  <div class="quiz-explain">可变默认值必须用 default_factory，避免实例间共享。</div>
+</div><div class="quiz-item" data-quiz="q132" data-answer="1">
+  <h4>FastAPI 使用 response_model 的直接好处？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">加快 LLM</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">自动校验响应并生成文档</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">替换前端</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">免写密钥</button>
+  <div class="quiz-explain">response_model 负责出站校验与 OpenAPI。</div>
+</div><div class="quiz-score" id="score-q132"></div>
+</section>
+<section class="slide" data-id="why-multi" data-label="为何多智能体" data-group="13.3 多智能体">
+
+<p class="slide-sub">13.3.1</p>
+<h2 class="slide-title">单 Agent 的三堵墙</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>工具调用限制</h3><p>SimpleAgent 每轮一工具，中间结果要手传。</p></div>
+  <div class="compare-col b"><h3>时间成本</h3><p>ReactAgent 多轮串行 LLM，10–30s 级等待。</p></div>
+  <div class="compare-col c"><h3>提示词膨胀</h3><p>一坨大 Prompt：难维护、易混、难定位故障。</p></div>
+</div>
+<div class="analogy">旅行社：景点顾问 + 酒店顾问 + 行程规划师分工，比一个人包办更稳。</div>
+
+</section>
+<section class="slide" data-id="agent-roles" data-label="四角色设计" data-group="13.3 多智能体">
+
+<p class="slide-sub">13.3.2</p>
+<h2 class="slide-title">各司其职的四个专家</h2>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/13-figures/13-6.png" alt="图 13.6 多智能体协作" loading="lazy"/>
+<div class="fig-cap">图 13.6 多智能体协作</div>
+<div class="fig-fallback"><strong>离线要点：</strong>Attraction → Weather → Hotel → Planner 整合</div></div>
+<details class="expand-card" open><summary>AttractionSearchAgent</summary>
+<div class="expand-body">输入城市+偏好；调用 <code>amap_maps_text_search</code>；禁止编造。</div></details>
+<details class="expand-card"><summary>WeatherQueryAgent</summary>
+<div class="expand-body">输入城市；调用 <code>amap_maps_weather</code>；任务极窄、极少出错。</div></details>
+<details class="expand-card"><summary>HotelAgent</summary>
+<div class="expand-body">按住宿类型搜酒店 POI。</div></details>
+<details class="expand-card"><summary>PlannerAgent</summary>
+<div class="expand-body">不调外部工具；整合前三者输出 + 用户需求 → 严格 JSON 行程。</div></details>
+
+</section>
+<section class="slide" data-id="agent-prompts" data-label="提示词要点" data-group="13.3 多智能体">
+
+<p class="slide-sub">角色 Prompt 设计</p>
+<h2 class="slide-title">短、准、带工具格式</h2>
+<div class="code-block">ATTRACTION_AGENT_PROMPT = """你是景点搜索专家。
+**工具调用格式:**
+`[TOOL_CALL:amap_maps_text_search:keywords=景点,city=城市名]`
+**重要:** 必须使用工具搜索,不要编造；按偏好({preferences})搜{city}。
+"""</div>
+<p>Planner 额外约束：每天 2–3 景点、含三餐、温度纯数字、含 budget 等。</p>
+<div class="note"><strong>设计四问：</strong>输入？输出？工具？失败模式？</div>
+
+</section>
+<section class="slide" data-id="agent-collab" data-label="协作五步流程" data-group="13.3 多智能体">
+
+<p class="slide-sub">13.3.3–13.3.4</p>
+<h2 class="slide-title">plan_trip 流水线</h2>
+<div class="loop-stepper" id="agentFlow">
+  <div class="steps steps5">
+    <button class="step-btn" type="button">① 景点</button>
+    <button class="step-btn" type="button">② 天气</button>
+    <button class="step-btn" type="button">③ 酒店</button>
+    <button class="step-btn" type="button">④ 规划</button>
+    <button class="step-btn" type="button">⑤ 解析</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<details class="expand-card"><summary>_build_planner_query 装什么？</summary>
+<div class="expand-body">用户需求块 + 景点/天气/酒店三段原始回复，结构化拼给 Planner，避免信息丢失。</div></details>
+
+</section>
+<section class="slide" data-id="flash133" data-label="闪卡 · 13.3" data-group="13.3 多智能体">
+
+<p class="slide-sub">巩固</p>
+<h2 class="slide-title">协作闪卡</h2>
+<div class="flash-wrap" id="flash133" data-cards='[{"q": "哪个 Agent 通常不调外部工具？", "a": "PlannerAgent——专注整合与 JSON 行程生成。"}, {"q": "为何拆成多 Agent？", "a": "降低 Prompt 复杂度、便于调试扩展、对齐职责边界。"}, {"q": "协作最后一步做什么？", "a": "解析 Planner 的 JSON 为 TripPlan（Pydantic）。"}]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash133',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash133',1)">下一张</button>
+  </div>
+</div>
+</section>
+<section class="slide" data-id="quiz133" data-label="检测 · 13.3" data-group="13.3 多智能体">
+
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">协作小测</h2>
+<div class="quiz-item" data-quiz="q133" data-answer="1">
+  <h4>AttractionSearchAgent 必须遵守的原则？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">可以编造热门景点</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">必须用工具搜索</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">只返回酒店</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">跳过城市参数</button>
+  <div class="quiz-explain">提示词强调必须工具搜索，禁止幻觉编造。</div>
+</div><div class="quiz-item" data-quiz="q133" data-answer="3">
+  <h4>多 Agent 相对单 Agent 大 Prompt 的优势不包括？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">易维护</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">易定位故障环节</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">未来可加餐厅 Agent</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">一定更少 LLM 调用次数</button>
+  <div class="quiz-explain">拆分后仍有多次 LLM；优势在职责与可维护性，不保证调用更少。</div>
+</div><div class="quiz-score" id="score-q133"></div>
+</section>
+<section class="slide" data-id="why-mcp" data-label="为何不用裸 HTTP" data-group="13.4 MCP 集成">
+
+<p class="slide-sub">13.4.1</p>
+<h2 class="slide-title">直接调 API 的四个问题</h2>
+<ol>
+<li><strong>Agent 无法自主调用</strong>——绕过 TOOL_CALL 协议就退化成硬编码函数。</li>
+<li><strong>参数爆炸</strong>——POI 十几个参数塞进 Prompt 不现实。</li>
+<li><strong>响应难解析</strong>——复杂 JSON 与格式变更要到处改。</li>
+<li><strong>工具管理乱</strong>——十几个 API 各自手写注册。</li>
+</ol>
+<div class="callout" data-label="解法">用 MCP：标准化工具发现与调用；HelloAgents 的 MCPTool 对接服务器。</div>
+
+</section>
+<section class="slide" data-id="amap-mcp" data-label="高德 MCP 集成" data-group="13.4 MCP 集成">
+
+<p class="slide-sub">13.4.2</p>
+<h2 class="slide-title">一个 MCPTool → 16 个工具</h2>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/13-figures/13-7.png" alt="图 13.7 amap-mcp-server 工具" loading="lazy"/>
+<div class="fig-cap">图 13.7 amap-mcp-server 工具</div>
+<div class="fig-fallback"><strong>离线要点：</strong>POI/天气/路线等多类工具</div></div>
+<div class="code-block">mcp_tool = MCPTool(
+    name="amap_mcp",
+    command="npx",  # 仓内亦可用 uvx（PyPI 生态）
+    args=["-y", "@sugarforever/amap-mcp-server"],
+    env={"AMAP_API_KEY": settings.amap_api_key},
+    auto_expand=True  # 关键！
+)</div>
+<p><code>auto_expand=True</code>：查询服务器能力，为每个工具注册独立 Tool。进程经 stdin/stdout JSON-RPC 通信。</p>
+
+</section>
+<section class="slide" data-id="mcp-flow" data-label="MCP 调用链路" data-group="13.4 MCP 集成">
+
+<p class="slide-sub">从 TOOL_CALL 到 POI</p>
+<h2 class="slide-title">对 Agent 只暴露工具名</h2>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/13-figures/13-8.png" alt="图 13.8 MCP 工具调用流程" loading="lazy"/>
+<div class="fig-cap">图 13.8 MCP 工具调用流程</div>
+<div class="fig-fallback"><strong>离线要点：</strong>Agent → 标记 → MCPTool → JSON-RPC → 高德 HTTP → 文本结果</div></div>
+<div class="loop-stepper" id="mcpFlow">
+  <div class="steps steps5">
+    <button class="step-btn" type="button">① 决策</button>
+    <button class="step-btn" type="button">② 标记</button>
+    <button class="step-btn" type="button">③ RPC</button>
+    <button class="step-btn" type="button">④ 高德</button>
+    <button class="step-btn" type="button">⑤ 回传</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+
+</section>
+<section class="slide" data-id="shared-mcp" data-label="共享 MCP 实例" data-group="13.4 MCP 集成">
+
+<p class="slide-sub">13.4.3</p>
+<h2 class="slide-title">三 Agent 共用一个进程</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>各建实例</h3><ul><li>三进程</li><li>易撞速率限制</li><li>内存/CPU 浪费</li></ul></div>
+  <div class="compare-col b"><h3>共享实例</h3><ul><li>单进程</li><li>统一限流入口</li><li>资源可控</li></ul></div>
+</div>
+<p>在 <code>TripPlannerAgent.__init__</code> 创建一次 <code>self.mcp_tool</code>，再 <code>add_tool</code> 给景点/天气/酒店三个 Agent。</p>
+
+</section>
+<section class="slide" data-id="unsplash" data-label="Unsplash 图片增强" data-group="13.4 MCP 集成">
+
+<p class="slide-sub">13.4.4</p>
+<h2 class="slide-title">不必事事都做成 Tool</h2>
+<p>景点配图用 <code>UnsplashService</code> 在 API 路由里补 <code>image_url</code>——无需 Agent 决策。</p>
+<div class="code-block">for day in trip_plan.days:
+    for attraction in day.attractions:
+        if not attraction.image_url:
+            attraction.image_url = unsplash_service.get_photo_url(
+                f"{attraction.name} {trip_plan.city}"
+            )</div>
+<div class="note"><strong>判断标准：</strong>需要智能取舍 → Tool/MCP；固定后处理 → 服务层直调。</div>
+
+</section>
+<section class="slide" data-id="flash134" data-label="闪卡 · 13.4" data-group="13.4 MCP 集成">
+
+<p class="slide-sub">巩固</p>
+<h2 class="slide-title">MCP 闪卡</h2>
+<div class="flash-wrap" id="flash134" data-cards='[{"q": "auto_expand 的作用？", "a": "自动发现 MCP 服务器工具并注册为多个独立 Tool。"}, {"q": "为何共享 MCP 实例？", "a": "避免多进程、控制限流与资源，三 Agent 共用一个服务器。"}, {"q": "Unsplash 为何不做成 MCP？", "a": "纯数据增强、无决策；放在路由后处理更简单。"}]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash134',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash134',1)">下一张</button>
+  </div>
+</div>
+</section>
+<section class="slide" data-id="quiz134" data-label="检测 · 13.4" data-group="13.4 MCP 集成">
+
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">MCP 小测</h2>
+<div class="quiz-item" data-quiz="q134" data-answer="1">
+  <h4>MCP 与 HelloAgents 的通信方式？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">仅浏览器 WebSocket</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">stdin/stdout JSON-RPC 进程通信</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">只能 REST 轮询</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">写进 SQLite</button>
+  <div class="quiz-explain">MCPTool 拉起服务器进程，经标准输入输出做 JSON-RPC。</div>
+</div><div class="quiz-item" data-quiz="q134" data-answer="1">
+  <h4>npx 与 uvx？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">完全不同协议</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">生态不同：npm vs PyPI，理念相近</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">uvx 不能跑 MCP</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">必须同时用</button>
+  <div class="quiz-explain">文档可用 npx；仓库示例可用 uvx，按生态选择。</div>
+</div><div class="quiz-score" id="score-q134"></div>
+</section>
+<section class="slide" data-id="spa-arch" data-label="前后端分离" data-group="13.5 前端">
+
+<p class="slide-sub">13.5.1</p>
+<h2 class="slide-title">SPA：后端只出 JSON</h2>
+<p>后端核心接口：<code>POST /api/trip/plan</code>。前端 Vue3 + TS 单页：填表 → 请求 → 渲染，无整页刷新。</p>
+<div class="template-map">
+  <div><strong>Vue 3</strong> · Composition API</div>
+  <div><strong>TypeScript</strong> · 与 Pydantic 对齐</div>
+  <div><strong>Vite</strong> · 开发服务器</div>
+  <div><strong>Ant Design Vue</strong> · 表单/统计/菜单</div>
+  <div><strong>Axios</strong> · HTTP</div>
+  <div><strong>高德 JS API</strong> · 地图</div>
+</div>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/13-figures/13-table-2.png" alt="表 13.2 前端技术栈" loading="lazy"/>
+<div class="fig-cap">表 13.2 前端技术栈</div>
+<div class="fig-fallback"><strong>离线要点：</strong>Vue3/TS/Vite/AntDV/Axios/AMap 等选型表</div></div>
+</section>
+<section class="slide" data-id="ts-types" data-label="TypeScript 类型" data-group="13.5 前端">
+
+<p class="slide-sub">13.5.2</p>
+<h2 class="slide-title">前后端同一份契约</h2>
+<div class="code-block">export interface TripPlanRequest {
+  city: string; start_date: string; end_date: string
+  days: number; preferences: string
+  budget: string; transportation: string; accommodation: string
+}
+export interface TripPlan {
+  city: string; start_date: string; end_date: string
+  days: DayPlan[]; weather_info: WeatherInfo[]
+  overall_suggestions: string; budget?: Budget
+}</div>
+<p>收益：调用参数检查 · 响应字段补全 · 后端改结构前端立刻报红。</p>
+
+</section>
+<section class="slide" data-id="api-service" data-label="API 服务封装" data-group="13.5 前端">
+
+<p class="slide-sub">13.5.3</p>
+<h2 class="slide-title">Axios 实例与超时</h2>
+<div class="code-block">const api = axios.create({
+  baseURL: 'http://localhost:8000/api',
+  timeout: 120000, // 多 Agent 可能 10–30s
+})
+export const generateTripPlan = async (request: TripPlanRequest): Promise&lt;TripPlan&gt; => {
+  const response = await api.post&lt;TripPlan&gt;('/trip/plan', request)
+  return response.data
+}</div>
+<p>拦截器做统一日志/错误处理。超时设 2 分钟，避免误杀长任务。</p>
+
+</section>
+<section class="slide" data-id="home-form" data-label="Home 表单" data-group="13.5 前端">
+
+<p class="slide-sub">13.5.4</p>
+<h2 class="slide-title">Composition API + 模拟进度</h2>
+<ul>
+<li><code>formData = ref&lt;TripPlanRequest&gt;(...)</code></li>
+<li><code>handleSubmit</code>：loading → 定时器推进度文案 → <code>generateTripPlan</code> → <code>router.push</code> 带 state</li>
+<li>模板：Ant Form + <code>v-model:value</code> 双向绑定</li>
+</ul>
+<div class="note"><strong>进度是模拟的：</strong>后端暂无真实阶段回调；文案对齐四 Agent 顺序，降低「卡住」焦虑。</div>
+
+</section>
+<section class="slide" data-id="result-page" data-label="Result 与地图" data-group="13.5 前端">
+
+<p class="slide-sub">13.5.5</p>
+<h2 class="slide-title">概览 · 预算 · 地图 · 日程 · 天气</h2>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/13-figures/13-4.png" alt="图 13.4 结果页细节" loading="lazy"/>
+<div class="fig-cap">图 13.4 结果页细节</div>
+<div class="fig-fallback"><strong>离线要点：</strong>地图与每日行程展示</div></div>
+<div class="code-block">const AMap = await AMapLoader.load({ key, version: '2.0' })
+map = new AMap.Map('amap-container', { zoom: 12, center: [...] })
+// 遍历 days.attractions → AMap.Marker(经纬度 + 序号 label)</div>
+<p>导出：<code>html2canvas</code> → PNG；或再包进 <code>jsPDF</code>。嵌套 Canvas（地图）有坑，见 13.6.4。</p>
+
+</section>
+<section class="slide" data-id="flash135" data-label="闪卡 · 13.5" data-group="13.5 前端">
+
+<p class="slide-sub">巩固</p>
+<h2 class="slide-title">前端闪卡</h2>
+<div class="flash-wrap" id="flash135" data-cards='[{"q": "为何 timeout=120000？", "a": "多 Agent + 外部 API 可能需数十秒，过短会中断。"}, {"q": "TS optional 对应 Python？", "a": "field?: T 对应 Optional[T]。"}, {"q": "结果页地图数据从哪来？", "a": "Attraction.location 的 longitude/latitude，后端模型已统一。"}]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash135',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash135',1)">下一张</button>
+  </div>
+</div>
+</section>
+<section class="slide" data-id="quiz135" data-label="检测 · 13.5" data-group="13.5 前端">
+
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">前端小测</h2>
+<div class="quiz-item" data-quiz="q135" data-answer="1">
+  <h4>前后端分离的关键特征？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">HTML 与业务写在同一 PHP</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">后端 JSON API，前端独立渲染</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">必须用 jQuery</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">禁止 TypeScript</button>
+  <div class="quiz-explain">后端提供 API，前端独立消费 JSON。</div>
+</div><div class="quiz-item" data-quiz="q135" data-answer="0">
+  <h4>generateTripPlan 返回类型？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">Promise&lt;TripPlan&gt;</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">string</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">void</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">Location</button>
+  <div class="quiz-explain">async 函数返回 Promise&lt;TripPlan&gt;。</div>
+</div><div class="quiz-score" id="score-q135"></div>
+</section>
+<section class="slide" data-id="budget" data-label="预算计算" data-group="13.6 功能">
+
+<p class="slide-sub">13.6.1</p>
+<h2 class="slide-title">后端估算 · 前端展示</h2>
+<p>预算在 <strong>PlannerAgent</strong> 提示词中要求输出四类合计 + total；前端用 Statistic 栅格展示。</p>
+<div class="code-block">"budget": {
+  "total_attractions": 180,
+  "total_hotels": 1200,
+  "total_meals": 480,
+  "total_transportation": 200,
+  "total": 2060
+}</div>
+<p><code>v-if="tripPlan.budget"</code>：Optional 容错——LLM 没吐预算也不崩 UI。</p>
+
+</section>
+<section class="slide" data-id="loading" data-label="加载进度条" data-group="13.6 功能">
+
+<p class="slide-sub">13.6.2</p>
+<h2 class="slide-title">等待也可感知</h2>
+<div class="loop-stepper" id="loadFlow">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">≤30%</button>
+    <button class="step-btn" type="button">≤50%</button>
+    <button class="step-btn" type="button">≤70%</button>
+    <button class="step-btn" type="button">其后</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<p>成功：清定时器 → 100% → 跳转；失败：提示重试；<code>finally</code> 关 loading。</p>
+
+</section>
+<section class="slide" data-id="edit-trip" data-label="行程编辑" data-group="13.6 功能">
+
+<p class="slide-sub">13.6.3</p>
+<h2 class="slide-title">深拷贝 · 交换 · splice</h2>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/13-figures/13-5.png" alt="图 13.5 编辑行程" loading="lazy"/>
+<div class="fig-cap">图 13.5 编辑行程</div>
+<div class="fig-fallback"><strong>离线要点：</strong>上移/下移/删除控件</div></div>
+<ul>
+<li>进入编辑：<code>originalPlan = JSON.parse(JSON.stringify(tripPlan))</code></li>
+<li>移动：解构交换数组元素</li>
+<li>删除：<code>splice(i,1)</code></li>
+<li>保存：关编辑 + <code>initMap()</code>；取消：还原副本</li>
+</ul>
+<div class="analogy">对象是引用——浅赋值会让「撤销」失效；深拷贝才是真正的快照。</div>
+
+</section>
+<section class="slide" data-id="export" data-label="导出图片/PDF" data-group="13.6 功能">
+
+<p class="slide-sub">13.6.4</p>
+<h2 class="slide-title">html2canvas 与地图坑</h2>
+<p>地图 Canvas 嵌套 + 跨域导致截图不完整。可选方案：静态地图 API · 分拆导出 · 无头浏览器 · <strong>导出时隐藏地图</strong>（当前实用方案）。</p>
+<div class="code-block">const canvas = await html2canvas(element, {
+  backgroundColor: '#fff', scale: 2, useCORS: true
+})
+// PNG: a.download = `${city}旅行计划.png`
+// PDF: jsPDF A4 宽 210mm，按比例算高</div>
+
+</section>
+<section class="slide" data-id="sidebar-nav" data-label="侧边锚点导航" data-group="13.6 功能">
+
+<p class="slide-sub">13.6.5</p>
+<h2 class="slide-title">长页也能秒跳</h2>
+<p>Menu keys：overview / budget / map / days / weather。点击后：</p>
+<div class="code-block">element.scrollIntoView({ behavior: 'smooth', block: 'start' })</div>
+<p>各区块设同名 <code>id</code>。产品闭环：能生成、能感知等待、能改、能存、能逛。</p>
+
+</section>
+<section class="slide" data-id="flash136" data-label="闪卡 · 13.6" data-group="13.6 功能">
+
+<p class="slide-sub">巩固</p>
+<h2 class="slide-title">功能闪卡</h2>
+<div class="flash-wrap" id="flash136" data-cards='[{"q": "预算为何放后端 Planner？", "a": "估算依赖行程内价格信息，Agent 生成时一并产出，避免前端重复逻辑。"}, {"q": "编辑为何深拷贝？", "a": "避免 original 与当前引用同一对象，保证可取消。"}, {"q": "导出地图的实用策略？", "a": "导出时隐藏动态地图，保证文字行程可导出。"}]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash136',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash136',1)">下一张</button>
+  </div>
+</div>
+</section>
+<section class="slide" data-id="quiz136" data-label="检测 · 13.6" data-group="13.6 功能">
+
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">功能小测</h2>
+<div class="quiz-item" data-quiz="q136" data-answer="1">
+  <h4>moveAttraction 交换元素的优雅写法？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">临时变量三行</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">[a,b]=[b,a] 解构交换</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">只用 push/pop</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">用 Set</button>
+  <div class="quiz-explain">ES6 解构赋值交换。</div>
+</div><div class="quiz-item" data-quiz="q136" data-answer="1">
+  <h4>html2canvas 的 scale:2 作用？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">加快导出</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">提高分辨率更清晰</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">改 PDF 页数</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">关闭 CORS</button>
+  <div class="quiz-explain">2 倍分辨率导出更清晰。</div>
+</div><div class="quiz-score" id="score-q136"></div>
+</section>
+<section class="slide" data-id="summary" data-label="本章总结" data-group="13.7 总结自测">
+
+<p class="slide-sub">13.7</p>
+<h2 class="slide-title">融会贯通的四件事</h2>
+<ol>
+<li><strong>系统设计</strong>：复杂问题 → 多简单任务</li>
+<li><strong>工程实践</strong>：理论 → 可运行代码</li>
+<li><strong>全栈能力</strong>：FastAPI + Vue3 契约对齐</li>
+<li><strong>AI 应用</strong>：LLM + MCP + 产品功能闭环</li>
+</ol>
+<div class="callout" data-label="延伸">加餐厅 Agent · 优化 UX · 迁到购物/学习助手 · 部署服务真实用户。</div>
+
+</section>
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="13.7 总结自测">
+
+<p class="slide-sub">打勾才算过关</p>
+<h2 class="slide-title">你能解释并动手吗？</h2>
+<ul class="check-list">
+  <li><input type="checkbox" /> 说出四层架构与一次请求的数据路径</li>
+  <li><input type="checkbox" /> 画出 Location→TripPlan 模型树</li>
+  <li><input type="checkbox" /> 说明四 Agent 输入/输出/工具</li>
+  <li><input type="checkbox" /> 解释 auto_expand 与共享 MCP</li>
+  <li><input type="checkbox" /> 写清 TS TripPlan 与 Axios 超时理由</li>
+  <li><input type="checkbox" /> 实现编辑深拷贝与导出隐藏地图的取舍</li>
+  <li><input type="checkbox" /> 本地跑通 backend docs + frontend 5173</li>
+</ul>
+
+</section>
+<section class="slide" data-id="exercises" data-label="实践建议" data-group="13.7 总结自测">
+
+<p class="slide-sub">最好的学习是改代码</p>
+<h2 class="slide-title">继续动手</h2>
+<ol>
+<li>为 Planner 增加「雨天室内景点优先」规则，观察 JSON 变化。</li>
+<li>把 Unsplash 换成可配置图片源接口（仍保持非 Tool）。</li>
+<li>给进度条做<strong>真实阶段回调</strong>（SSE/WebSocket）替换模拟。</li>
+<li>新增 RestaurantAgent，并接入共享 MCP。</li>
+<li>尝试静态地图 API 改善 PDF 导出。</li>
+</ol>
+<div class="callout" data-label="完成">恭喜走完 Lab 13。用 ← → 复习薄弱页，回到目录跳转即可。</div>
+
+</section>
+    </div>
+  </main>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll(".slide"));
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+["flash131","flash132","flash133","flash134","flash135","flash136"].forEach(initFlash);
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+function bindStepper(rootId, texts) {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  function show(n) {
+    root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+    const panel = root.querySelector(".loop-panel");
+    panel.innerHTML = `<h4>${texts[n].t}</h4><p>${texts[n].p}</p>`;
+  }
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.addEventListener("click", () => show(i)));
+  show(0);
+}
+
+bindStepper("reqFlow", [
+  { t: "① 用户填表", p: "前端收集城市、日期、偏好、预算、交通、住宿，点击「开始规划」。" },
+  { t: "② 后端校验", p: "FastAPI + Pydantic 校验 TripPlanRequest，非法字段直接 400。" },
+  { t: "③ 智能体系统", p: "依次调用景点、天气、酒店、规划四个 Agent。" },
+  { t: "④ MCP / 外部 API", p: "高德经 MCP；图片等可由服务层直调；LLM 生成整合结果。" },
+  { t: "⑤ 前端渲染", p: "返回 TripPlan JSON，Result 页展示概览、预算、地图、日程、天气。" }
+]);
+
+bindStepper("agentFlow", [
+  { t: "① 景点搜索", p: "AttractionSearchAgent.run：按偏好调用高德 POI 搜索。" },
+  { t: "② 天气查询", p: "WeatherQueryAgent.run：拉取目的地天气预报。" },
+  { t: "③ 酒店推荐", p: "HotelAgent.run：按住宿类型搜索酒店。" },
+  { t: "④ 行程规划", p: "_build_planner_query 拼装需求+三段结果，PlannerAgent 产出 JSON。" },
+  { t: "⑤ 解析落地", p: "_parse_trip_plan 转成 TripPlan 模型，交给 API 返回前端。" }
+]);
+
+bindStepper("mcpFlow", [
+  { t: "① Agent 决策", p: "分析「搜北京历史文化景点」，选择 amap_maps_text_search。" },
+  { t: "② 工具标记", p: "生成 [TOOL_CALL:amap_maps_text_search:keywords=...,city=北京]。" },
+  { t: "③ JSON-RPC", p: "MCPTool 经 stdin 发 tools/call 给 MCP 服务器进程。" },
+  { t: "④ 调用高德", p: "服务器拼 HTTP、带 Key、请求 POI，解析响应。" },
+  { t: "⑤ 文本回传", p: "stdout 返回精简文本列表，Agent 继续推理。" }
+]);
+
+bindStepper("loadFlow", [
+  { t: "≤30% · 景点", p: "文案：正在搜索景点… 对齐 AttractionSearchAgent。" },
+  { t: "≤50% · 天气", p: "文案：正在查询天气… 对齐 WeatherQueryAgent。" },
+  { t: "≤70% · 酒店", p: "文案：正在推荐酒店… 对齐 HotelAgent。" },
+  { t: "其后 · 规划", p: "文案：正在生成行程计划… 对齐 PlannerAgent；成功后跳到 100%。" }
+]);
+
+document.querySelectorAll(".fig img").forEach((img) => {
+  img.addEventListener("error", () => {
+    const fig = img.closest(".fig");
+    if (fig) fig.classList.add("offline");
+  });
+});
+
+goTo(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,2373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第五章 · 基于低代码平台的智能体搭建 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 05 Signal
+   Same product line as Ch1–Ch4; mint/lime primary signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(157, 217, 110, 0.16);
+  --line-strong: rgba(157, 217, 110, 0.38);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #9dd96e;
+  --signal-bright: #b8f08a;
+  --violet: #a78bfa;
+  --violet-dim: rgba(167, 139, 250, 0.14);
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #9dd96e;
+  --mint-dim: rgba(157, 217, 110, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(157, 217, 110, 0.14), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(61, 168, 184, 0.12), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--cyan), var(--amber));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(157, 217, 110, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(157, 217, 110, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(184, 240, 138, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(157,217,110,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(157, 217, 110, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps6 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps2 { grid-template-columns: repeat(2, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: var(--mint-dim);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: center; text-align: center;
+  transition: border-color 0.25s; user-select: none;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.15rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; font-size: 0.98rem; color: var(--paper); line-height: 1.55;
+}
+.flash-card.revealed .q { display: none; }
+.flash-card.revealed .a { display: block; }
+.flash-card.revealed { border-color: var(--cyan); background: rgba(61,168,184,0.1); }
+.flash-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 0.75rem; font-family: var(--font-display);
+  font-size: 0.72rem; color: var(--text-mute);
+}
+.flash-controls { display: flex; gap: 0.4rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); margin-bottom: 0.75rem; line-height: 1.4;
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.35rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: rgba(157, 217, 110, 0.15); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224, 107, 90, 0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.65rem; padding: 0.7rem 0.85rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(157, 217, 110, 0.08); color: var(--paper);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.85rem;
+  color: var(--cyan-bright); margin: 0.5rem 0 1rem;
+}
+.check-list { list-style: none; margin: 1rem 0; padding: 0; }
+.check-list li {
+  display: flex; gap: 0.65rem; align-items: flex-start;
+  padding: 0.55rem 0.7rem; border: 1px solid var(--line);
+  margin-bottom: 0.4rem; background: var(--panel);
+  cursor: pointer; transition: all 0.2s;
+}
+.check-list li:hover { border-color: var(--line-strong); }
+.check-list li.done {
+  border-color: var(--mint); background: rgba(157, 217, 110, 0.08);
+}
+.check-list li.done .ck-text { color: var(--mint); text-decoration: line-through; opacity: 0.85; }
+.ck-box {
+  width: 18px; height: 18px; border: 1px solid var(--signal);
+  flex-shrink: 0; margin-top: 0.15rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: transparent;
+}
+.check-list li.done .ck-box {
+  background: var(--mint); border-color: var(--mint); color: var(--ink);
+}
+.ck-text { font-size: 0.9rem; color: var(--text-dim); }
+.cover { text-align: left; padding: 1rem 0 2rem; }
+.cover-badge {
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--signal); border: 1px solid var(--line-strong);
+  display: inline-block; padding: 0.3rem 0.7rem; margin-bottom: 1.25rem;
+}
+.cover h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1.1; margin-bottom: 0.75rem; max-width: 18ch;
+}
+.cover .tagline {
+  font-size: 1.1rem; color: var(--paper);
+  max-width: 36em; margin-bottom: 1.5rem;
+}
+.goals { display: grid; gap: 0.55rem; margin: 1.25rem 0 1.75rem; }
+.goal {
+  display: grid; grid-template-columns: auto 1fr; gap: 0.85rem;
+  align-items: start; padding: 0.85rem 1rem;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.goal-n {
+  font-family: var(--font-display); font-size: 1.2rem;
+  color: var(--cyan-bright); line-height: 1;
+}
+.goal p { margin: 0; font-size: 0.92rem; }
+.cover-img {
+  margin-top: 1.5rem; border: 1px solid var(--line-strong);
+  max-width: 100%; width: 100%; background: var(--panel);
+}
+.kbd-hint {
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.04em;
+}
+.kbd {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  border: 1px solid var(--line-strong); padding: 0.1rem 0.35rem;
+  color: var(--signal); background: var(--panel);
+}
+.kw-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem; margin: 1rem 0;
+}
+.kw {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.9rem 1rem;
+}
+.kw h4 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.kw p { margin: 0; font-size: 0.85rem; }
+.path-hint {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--cyan-bright); background: rgba(61, 168, 184, 0.08);
+  border: 1px dashed rgba(61, 168, 184, 0.35);
+  padding: 0.65rem 0.85rem; margin: 0.85rem 0;
+}
+.step-card {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.9rem 1rem; margin: 0.6rem 0;
+}
+.step-card h4 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.tag-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0; }
+.tag-pill {
+  font-family: var(--font-display); font-size: 0.68rem;
+  letter-spacing: 0.06em; padding: 0.25rem 0.55rem;
+  border: 1px solid var(--line-strong); color: var(--signal);
+  background: var(--mint-dim);
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0;
+    width: min(86vw, 300px); z-index: 40;
+    transform: translateX(-105%); transition: transform 0.3s ease;
+    box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3, .kw-grid { grid-template-columns: 1fr; }
+  .loop-stepper .steps, .loop-stepper .steps.steps5, .loop-stepper .steps.steps3, .loop-stepper .steps.steps6, .loop-stepper .steps.steps2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 35;
+  }
+  .overlay.show { display: block; }
+}
+@media (max-width: 520px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+}
+
+</style>
+</head>
+<body>
+<!--
+  COVERAGE CHECKLIST (原书 ∪ 学习版 · 详解百页)
+  [x] 章首：手搓→搭积木、两种极端、四关键词、路线图与读法
+  [x] 5.1.1 四大价值（门槛/效率/可观测/标准化）+ 抽象收束
+  [x] 5.1.2 Coze / Dify / n8n 定位·特点·人群·选型小图
+  [x] 5.2.1 界面图5.1–5.5、创建模式、资源库、游戏隐喻
+  [x] 5.2.2 每日AI简报：插件/配置/编排/Prompt/预览/发布图5.6–5.14
+  [x] 5.2.3 Coze 优势与局限（MCP、zip）
+  [x] 5.3.1 BaaS+LLMOps、模型中立、部署、Marketplace
+  [x] 5.3.2 超级助手：插件MCP、分类器、五模块、图5.17–5.37
+  [x] 5.3.3 Dify 优势与局限
+  [x] 5.4.1 节点（触发/常规）与工作流 JSON
+  [x] 5.4.2–5.4.4 邮件Agent：知识库三连 + 主流程五步 图5.38–5.50
+  [x] 5.4.5 表5.1 优势局限与持久化
+  [x] 5.5 小结、选型、混合开发、习题要点、参考文献
+-->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 05</div>
+      <h1>低代码平台智能体搭建<br/>互动教程</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>学习进度</span>
+        <span id="progressText">1 / 102</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav" aria-label="章节目录"></nav>
+    <div class="sidebar-foot">Lab 05 · Lime · 102 页 · ← → 翻页</div>
+  </aside>
+  <main class="stage">
+    <div class="topbar">
+      <button type="button" class="menu-btn" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button type="button" class="btn" id="btnPrev">上一页</button>
+        <button type="button" class="btn btn-primary" id="btnNext">下一页</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+      <section class="slide active" data-id="cover" data-label="封面 · 学习目标" data-group="开篇">
+
+<div class="cover">
+  <div class="cover-badge">Hello-Agents · Lab 05 · Lime Signal</div>
+  <h2>基于低代码平台的智能体搭建</h2>
+  <p class="tagline">上一章是「自己下厨房」手写范式；这一章换视角——用可视化节点与工作流，更快把想法搭成可跑的 Agent。本教程按原书知识点拆成百余页详解，不是提纲速览。</p>
+  <div class="goals">
+    <div class="goal"><div class="goal-n">01</div><p>理解低代码平台的价值与边界：加速验证、可视化、协作，而不是「零门槛魔法」。</p></div>
+    <div class="goal"><div class="goal-n">02</div><p>能按场景选型：Coze（应用上线）、Dify（Agent 产品组织）、n8n（系统集成自动化）。</p></div>
+    <div class="goal"><div class="goal-n">03</div><p>跟完三个实战：每日 AI 简报、超级个人助手、智能邮件助手（含知识库、Prompt、发布调试）。</p></div>
+    <div class="goal"><div class="goal-n">04</div><p>建立混合开发思维：平台做原型与标准化流程，代码做深度定制与持久化。</p></div>
+  </div>
+  <p class="kbd-hint">操作：侧栏跳转 · <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · 手机点「目录」</p>
+  <img class="cover-img" src="assets/ch5_cover.svg" alt="第五章封面：三大平台蓝图" />
+</div>
+
+      </section>
+      <section class="slide" data-id="roadmap" data-label="本章路线图" data-group="开篇">
+
+<p class="slide-sub">导航地图</p>
+<h2 class="slide-title">五个大块，三条实战线</h2>
+<p class="lead">先建立「为什么用平台」的判断力，再分别上手 Coze / Dify / n8n，最后用选型表把经验固化成决策。</p>
+<div class="kw-grid">
+  <div class="kw"><h4>5.1 平台化兴起</h4><p>四大价值 + 三平台定位。读完应能回答「什么时候该用平台」。</p></div>
+  <div class="kw"><h4>5.2 Coze</h4><p>界面与资源库 → 每日 AI 简报（插件→Prompt→发布）→ 优劣。</p></div>
+  <div class="kw"><h4>5.3 Dify</h4><p>生态与部署 → 超级个人助手（分类器+五模块+MCP）→ 优劣。</p></div>
+  <div class="kw"><h4>5.4 n8n</h4><p>节点工作流 → 邮件 Agent（知识库+主流程）→ 表 5.1 权衡。</p></div>
+</div>
+<div class="note"><strong>学习建议：</strong>理论页可快读；三个实战页请放慢，对照图注与配置参数想「数据从哪进、从哪出」。</div>
+
+      </section>
+      <section class="slide" data-id="read-how" data-label="怎么读本章" data-group="开篇">
+
+<p class="slide-sub">学习方法</p>
+<h2 class="slide-title">三条阅读节奏</h2>
+<ol>
+  <li><strong>先建立判断：</strong>5.1 读懂「何时用平台」</li>
+  <li><strong>再跟一条实战线：</strong>至少完整跟完一个平台案例（建议 Coze 入门 → Dify 架构 → n8n 集成）</li>
+  <li><strong>最后做选型题：</strong>用习题 7 逼自己说清理由，而不是背平台名字</li>
+</ol>
+<div class="note">本 HTML 页多图多配置，是为了「可对照操作」；不必一次背完所有参数，但要懂每步「为什么存在」。</div>
+
+      </section>
+      <section class="slide" data-id="intro" data-label="从手搓到搭积木" data-group="开篇">
+
+<p class="slide-sub">章首导读</p>
+<h2 class="slide-title">不是放弃代码，是多一条工程路线</h2>
+<p class="lead">如果你的目标不是研究底层细节，而是更快把想法做出来——低代码平台把常见工程动作抽象成节点、模块与工作流。</p>
+<div class="compare">
+  <div class="compare-col a"><h3>手写代码</h3><ul><li>控制力强、自由度高</li><li>打地基到走线都自己来</li><li>适合深度定制与研究</li><li>慢：连工具、管状态、排链路</li></ul></div>
+  <div class="compare-col b"><h3>低代码平台</h3><ul><li>标准化构件 + 预制模块</li><li>可视化、可观测、协作友好</li><li>适合快速验证与业务编排</li><li>自由度受平台边界限制</li></ul></div>
+</div>
+<div class="analogy">搭房子：手写像从打地基开始；低代码像用预制构件。不是谁高级谁低级，而是阶段不同、工具不同。</div>
+
+      </section>
+      <section class="slide" data-id="extremes" data-label="两种极端判断" data-group="开篇">
+
+<p class="slide-sub">纠偏</p>
+<h2 class="slide-title">低代码既不「不专业」，也不「万能」</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>极端 A</h3><p>觉得不用写代码就不专业，平台是「玩具」。</p><p style="margin-top:0.6rem;font-size:0.9rem">错在哪：专业开发者也大量用平台做原型、联调与标准化流程。效率本身就是专业能力。</p></div>
+  <div class="compare-col b"><h3>极端 B</h3><p>觉得平台什么都能解决，以后不用管底层。</p><p style="margin-top:0.6rem;font-size:0.9rem">错在哪：持久化、高并发、深度定制、原理理解仍要你自己。平台不替你思考任务设计。</p></div>
+</div>
+<div class="callout" data-label="本章真正目标">
+  <p>帮你建立现实判断：低代码是 Agent 工具箱里的一种选择。学完应能回答——什么时候适合用平台，什么时候该回到代码。</p>
+</div>
+
+      </section>
+      <section class="slide" data-id="keywords" data-label="四个关键词" data-group="开篇">
+
+<p class="slide-sub">先抓主线</p>
+<h2 class="slide-title">读这一章前先对齐词汇</h2>
+<div class="kw-grid">
+  <div class="kw"><h4>低代码平台</h4><p>不是零门槛魔法盒；把 API、状态、流程等工程动作抽象成可拖拽节点与模块。</p></div>
+  <div class="kw"><h4>工作流</h4><p>把任务拆成有序节点，数据按预定路线流动——看得见的流水线。</p></div>
+  <div class="kw"><h4>可观测性</h4><p>能否看清每一步发生了什么：耗时、失败点、数据流。平台通常比终端日志更直观。</p></div>
+  <div class="kw"><h4>原型验证</h4><p>先尽快验证「值不值得做」，再决定是否下沉代码或上生产加固。</p></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="save-not" data-label="平台省什么 / 不做什么" data-group="开篇">
+
+<p class="slide-sub">边界感</p>
+<h2 class="slide-title">抽象重复劳动，不取消思考</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>平台帮你省什么？</h3><p class="en">SAVE</p><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>重复工程劳动：连工具、管状态、搭流程、调接口、看轨迹。不省「思考」：任务拆分、规则、知识库、评估仍要你自己。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>平台不替你做什么？</h3><p class="en">NOT MAGIC</p><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>原理理解、业务设计、提示词质量、生产级持久化与高并发优化——这些仍是工程与产品能力。</p></div>
+  </div></div>
+</div>
+<div class="note"><strong>和第四章的关系：</strong>第四章让你「看懂轮子怎么转」；本章让你「站在轮子上更快上路」。两章互补，不是互斥。</div>
+
+      </section>
+      <section class="slide" data-id="s51" data-label="5.1 节导读" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">§ 5.1</p>
+<h2 class="slide-title">平台化构建的兴起</h2>
+<p class="lead">既然会写代码了，为什么还要看低代码？因为真正耗时的往往不是「模型调用」，而是连工具、管状态、搭流程、排查链路。</p>
+<div class="note"><strong>类比网站演进：</strong>从手写 HTML/CSS/JS → WordPress / Wix；智能体也迎来图形化、模块化的平台浪潮。重心从「实现细节」转向「业务逻辑」。</div>
+<p>本节两问：① 为何需要低代码？② Coze / Dify / n8n 怎么选？</p>
+
+      </section>
+      <section class="slide" data-id="why-pain" data-label="纯代码的痛点" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.1 · 动机</p>
+<h2 class="slide-title">「重复造轮子」与工程效率的张力</h2>
+<p>「重复造轮子」对深入学习至关重要；但在追求工程效率与创新的实战中，我们往往需要站在巨人肩膀上。</p>
+<p>尽管第四章封装了可复用的 <code>ReActAgent</code>、<code>PlanAndSolveAgent</code> 等类，当业务逻辑变复杂时：</p>
+<ul>
+  <li>维护成本急剧上升（分支、异常、鉴权、重试……）</li>
+  <li>开发周期拉长（从想法到可演示原型可能要数天）</li>
+  <li>非开发角色难以直接参与流程设计</li>
+</ul>
+<div class="analogy">低代码像「预制厨房」：灶具、水槽已经装好，你负责决定做什么菜、按什么顺序出锅。</div>
+
+      </section>
+      <section class="slide" data-id="why-v1" data-label="价值① 降低技术门槛" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.1 · 四大价值</p>
+<h2 class="slide-title">把复杂细节封装成「节点」</h2>
+<p>低代码平台将 API 调用、状态管理、并发控制等封装成易于理解的节点或模块。用户无需精通编程，通过拖拽与连接就能构建工作流。</p>
+<details class="expand-card"><summary>谁因此受益？</summary><div class="expand-body">
+<p>产品经理、设计师、业务专家等非技术人员也能参与智能体设计与创造，拓宽创新边界。开发者则少写样板代码。</p>
+</div></details>
+<details class="expand-card"><summary>新手注意</summary><div class="expand-body">
+<p>「低门槛」≠「零思考」。节点连错、Prompt 写糊、知识库没喂对，结果一样会跑偏。门槛降低的是工程操作，不是产品判断。</p>
+</div></details>
+
+      </section>
+      <section class="slide" data-id="why-v2" data-label="价值② 提升开发效率" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.1</p>
+<h2 class="slide-title">原型从「数天」压到「数小时」</h2>
+<p>对专业开发者而言，平台同样能带来巨大效率提升。项目初期需要快速验证想法或搭建 Prototype 时，低代码可在数小时甚至数分钟内完成原本需要数天编码的工作。</p>
+<div class="callout" data-label="精力投向">
+  <p>把时间从底层工程实现，挪到<strong>业务逻辑梳理</strong>与<strong>提示工程优化</strong>——这通常才是 Agent 效果差异的来源。</p>
+</div>
+<div class="note"><strong>实战节奏：</strong>先用平台验证「用户是否需要」；确认价值后再决定是否用代码做加固、私有化与性能优化。</div>
+
+      </section>
+      <section class="slide" data-id="why-v3" data-label="价值③ 可视化与可观测" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.1</p>
+<h2 class="slide-title">端到端看见数据怎么流</h2>
+<p>相比在终端打印日志，图形化平台天然提供智能体运行轨迹的端到端可视化：</p>
+<ul>
+  <li>数据在每个节点之间如何流动</li>
+  <li>哪一个环节耗时最长</li>
+  <li>哪一次工具调用失败、失败原因是什么</li>
+</ul>
+<div class="analogy">像给流水线装上透明罩：堵在哪一站、哪一箱货掉了，一眼能看见——调试体验是纯代码难以比拟的。</div>
+
+      </section>
+      <section class="slide" data-id="why-v4" data-label="价值④ 标准化与最佳实践" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.1</p>
+<h2 class="slide-title">内置模板与统一协作语言</h2>
+<p>优秀低代码平台通常内置行业最佳实践，例如：</p>
+<ul>
+  <li>预设的 ReAct 模板</li>
+  <li>优化过的知识库检索引擎</li>
+  <li>标准化的工具接入规范</li>
+</ul>
+<p>这不仅避免开发者「踩坑」，也让团队协作更顺畅——所有人基于同一套标准和组件开发。</p>
+<div class="callout" data-label="一句话收束">
+  <p>低代码并非要取代代码，而是更高层次抽象：从繁琐底层实现解放出来，更专注智能体「思考」与「行动」的逻辑本身。</p>
+</div>
+
+      </section>
+      <section class="slide" data-id="why-abs" data-label="更高层次的抽象" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.1 · 收束</p>
+<h2 class="slide-title">从「实现细节」转向「业务逻辑」</h2>
+<p>简而言之：低代码让我们从繁琐底层实现解放出来，更专注智能体「思考」与「行动」的逻辑本身，从而更快、更好地把创意变为现实。</p>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>还要学第四章吗？</h3><p class="flip-hint">点击</p></div>
+    <div class="flip-face back"><p>要。不懂范式，平台上的 ReAct/工作流只是黑盒；懂了才能设计得更好、排错更快。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>什么时候必须回代码？</h3><p class="flip-hint">点击</p></div>
+    <div class="flip-face back"><p>深度定制、极限性能、特殊协议、精细状态机、平台能力天花板——以及你要沉淀可版本控制的核心资产时。</p></div>
+  </div></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="obs-demo" data-label="可观测性长什么样" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.1 · 深挖</p>
+<h2 class="slide-title">调试时你想看见的三件事</h2>
+<div class="kw-grid">
+  <div class="kw"><h4>数据</h4><p>每个节点输入/输出 JSON 或文本是什么</p></div>
+  <div class="kw"><h4>时间</h4><p>哪一步最慢：模型、检索还是外部 API</p></div>
+  <div class="kw"><h4>失败</h4><p>鉴权失败、超时、格式错误、空结果</p></div>
+</div>
+<p>纯代码也能做观测，但要自己埋点；平台把「看见」变成默认能力。</p>
+
+      </section>
+      <section class="slide" data-id="choose-intro" data-label="5.1.2 平台怎么选" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.2</p>
+<h2 class="slide-title">百花齐放：看需求、背景与目标</h2>
+<p class="lead">智能体与 LLM 应用的低代码市场很热闹。选哪个，往往取决于核心需求、技术背景以及项目最终目标。</p>
+<p>本章重点介绍并实操三个代表性平台：</p>
+<div class="tag-row">
+  <span class="tag-pill">Coze · 应用搭建与上线</span>
+  <span class="tag-pill">Dify · Agent 产品组织</span>
+  <span class="tag-pill">n8n · 系统集成自动化</span>
+</div>
+
+      </section>
+      <section class="slide" data-id="choose-coze" data-label="选型 · Coze" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.2 · Coze</p>
+<h2 class="slide-title">零代码/低代码 Agent 体验</h2>
+<ul>
+  <li><strong>核心定位：</strong>由字节跳动推出，主打让不具备编程背景的用户也能轻松创造 Agent。</li>
+  <li><strong>特点：</strong>可视化界面友好，像搭乐高——拖拽插件、配置知识库、设定工作流；插件库丰富；支持一键发布到抖音、飞书、微信公众号等。</li>
+  <li><strong>适用人群：</strong>AI 应用入门用户、产品经理、运营人员，以及希望快速把创意变成可交互产品的个人创作者。</li>
+</ul>
+<div class="note"><strong>记忆钩子：</strong>Coze ≈ 「做出来并上线给人用」最快的那条路。</div>
+
+      </section>
+      <section class="slide" data-id="choose-dify" data-label="选型 · Dify" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.2 · Dify</p>
+<h2 class="slide-title">开源 LLM 应用开发与运营平台</h2>
+<ul>
+  <li><strong>核心定位：</strong>为开发者提供从原型构建到生产部署的一站式方案，融合后端服务与模型运营理念。</li>
+  <li><strong>特点：</strong>支持 Agent 工作流、RAG Pipeline、数据标注与微调等；追求专业、稳定、可扩展的企业级应用时，Dify 提供坚实基础。</li>
+  <li><strong>适用人群：</strong>有一定技术背景的开发者、需要构建可扩展企业级 AI 应用的团队。</li>
+</ul>
+<div class="note"><strong>记忆钩子：</strong>Dify ≈ 「把 Agent 当产品来组织」：角色、技能、规则、工作流、知识库、部署一体。</div>
+
+      </section>
+      <section class="slide" data-id="choose-n8n" data-label="选型 · n8n" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.2 · n8n</p>
+<h2 class="slide-title">开源工作流自动化（非纯 LLM 平台）</h2>
+<ul>
+  <li><strong>核心定位：</strong>本质是通用工作流自动化工具；近年来积极集成 AI 能力。</li>
+  <li><strong>特点：</strong>强项在「连接」——数百预置节点串联 SaaS、数据库、API；可在流程中嵌入 LLM 节点。学习曲线相对陡峭。</li>
+  <li><strong>适用人群：</strong>需要把 AI 深度整合进现有业务流程、实现高度定制化自动化的开发者与企业。</li>
+</ul>
+<div class="note"><strong>记忆钩子：</strong>n8n ≈ 「让 AI 成为整条业务自动化里的一环」，而不是只做一个聊天 Bot。</div>
+
+      </section>
+      <section class="slide" data-id="choose-map" data-label="脑内选型小图" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">5.1.2 · 对照</p>
+<h2 class="slide-title">一张图记住三个定位</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>Coze</h3><p style="margin:0;font-size:0.88rem">面向<strong>应用搭建与上线</strong><br/>插件多、发布快<br/>入门/产品/运营</p></div>
+  <div class="compare-col b"><h3>Dify</h3><p style="margin:0;font-size:0.88rem">面向<strong>Agent 产品组织</strong><br/>工作流·RAG·部署<br/>开发者/企业团队</p></div>
+  <div class="compare-col c"><h3>n8n</h3><p style="margin:0;font-size:0.88rem">面向<strong>系统集成与自动化</strong><br/>连接数百服务<br/>业务深度定制</p></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="quiz51" data-label="检测 · 5.1 节" data-group="5.1 平台化兴起">
+
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">平台化基础检测</h2>
+<div class="quiz-score" id="score-q51"></div>
+<div class="quiz-item" data-quiz="q51" data-answer="1">
+  <h4>低代码平台最准确的定位是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">完全取代手写代码的终局方案</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">Agent 开发工具箱中的一种选择：加速验证与可视化编排</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只有非程序员才需要的玩具</button>
+  <div class="quiz-explain">平台抽象重复工程劳动，但不取消对原理与任务设计的理解。</div>
+</div>
+<div class="quiz-item" data-quiz="q51" data-answer="2">
+  <h4>若目标是把 AI 深度嵌进现有 CRM/数据库/邮件等多系统自动化，优先倾向？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">Coze</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">只写纯前端页面</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">n8n</button>
+  <div class="quiz-explain">n8n 的强项是「连接」：数百预置节点串联业务链路。</div>
+</div>
+<div class="quiz-item" data-quiz="q51" data-answer="0">
+  <h4>平台相对纯代码的突出优势之一是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">端到端可视化与可观测的调试体验</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">永远更高并发性能</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">无需任何提示词</button>
+  <div class="quiz-explain">图形化轨迹让你看到节点间数据流与失败点；提示词仍然关键。</div>
+</div>
+<div class="quiz-item" data-quiz="q51" data-answer="1">
+  <h4>「站在巨人肩膀上」在本章语境下主要指？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">永远不要自己写工具函数</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">在追求效率的实战中复用平台封装的工程能力</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">第四章的代码可以全部删除</button>
+  <div class="quiz-explain">学习阶段造轮子重要；交付与验证阶段应善用已封装能力。</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="s52" data-label="5.2 节导读" data-group="5.2 Coze">
+
+<p class="slide-sub">§ 5.2</p>
+<h2 class="slide-title">平台一：Coze（扣子）</h2>
+<p class="lead">上手门槛低、交互直观：用较少工程成本，快速搭一个能跑、能调、能发布的 Agent。</p>
+<p>带着问题读：如果我刚开始做 AI 应用，Coze 帮我省掉了哪些麻烦？</p>
+<div class="note"><strong>生态亮点：</strong>一键发布到微信、飞书、豆包等；企业可用 API 把能力嵌进现有业务——「搭积木式」构建。</div>
+
+      </section>
+      <section class="slide" data-id="coze-what" data-label="Coze 是什么" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2 开场</p>
+<h2 class="slide-title">市面上应用很广的智能体制作工具</h2>
+<p>扣子（Coze）以直观可视化界面和丰富功能模块，让用户轻松创建各类智能体：陪聊机器人、自动写故事、甚至把故事做成电影 MV。</p>
+<ul>
+  <li><strong>生态集成：</strong>开发完成可一键发布到微信、飞书、豆包等主流平台</li>
+  <li><strong>企业能力：</strong>灵活 API，支持把智能体能力集成到现有业务系统</li>
+  <li><strong>构建方式：</strong>「搭积木式」——插件 + 知识库 + 工作流 + 提示词</li>
+</ul>
+
+      </section>
+      <section class="slide" data-id="coze-ui" data-label="界面初览 · 图5.1" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.1 · 平台界面</p>
+<h2 class="slide-title">开发工作区与配套资料空间</h2>
+<p>最左侧侧栏是开发工作区：项目开发、资源库、效果评测、空间配置。下方配套区含官方模板、插件商店、智能体社区、API 管理、教程与企业通用管理。右侧常见更新公告、新手教程、关注与推荐。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-01.png" alt="图 5.1 扣子平台整体示意" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>左侧：开发工作区（项目/资源库/评测/配置）；中右：更新公告、新手教程、关注与推荐。</div>
+  <div class="fig-cap">图 5.1 扣子平台整体示意</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-create" data-label="创建入口 · 图5.2" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.1 · 创建入口</p>
+<h2 class="slide-title">智能体 vs 应用</h2>
+<p>点左侧加号进入创建：一类是<strong>智能体</strong>，一类是<strong>应用</strong>。</p>
+<ul>
+  <li>智能体：单智能体自主规划模式、单智能体对话流模式、多智能体模式</li>
+  <li>应用：可设计桌面网页端 UI，也能搭小程序与 H5</li>
+</ul>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-02.png" alt="图 5.2 扣子智能体创建入口" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>创建智能体（自主规划 / 对话流 / 多智能体）或应用（网页、小程序、H5）。</div>
+  <div class="fig-cap">图 5.2 扣子智能体创建入口</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-modes" data-label="三种智能体模式" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.1 · 细读</p>
+<h2 class="slide-title">自主规划 · 对话流 · 多智能体</h2>
+<ul>
+  <li><strong>单智能体自主规划：</strong>更接近「给目标，自己规划行动」——适合工具调用型任务</li>
+  <li><strong>单智能体对话流：</strong>更强调对话路径可控——适合客服、引导式问答</li>
+  <li><strong>多智能体：</strong>分工协作——适合复杂多角色任务</li>
+</ul>
+<div class="note">创建时先想清楚：你要的是「自主干活」还是「可控对话」还是「多角色协作」。</div>
+
+      </section>
+      <section class="slide" data-id="coze-space" data-label="项目空间 · 图5.3" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.1</p>
+<h2 class="slide-title">你的智能体仓库</h2>
+<p>项目空间放着你所有开发或复制的智能体/应用，是扣子开发中最常来到的地方。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-03.png" alt="图 5.3 扣子智能体项目空间" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>项目列表：自建与复制的智能体/应用仓库。</div>
+  <div class="fig-cap">图 5.3 扣子智能体项目空间</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-res" data-label="资源库 · 图5.4" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.1</p>
+<h2 class="slide-title">出装与技能决定上限</h2>
+<p>资源库存放工作流、知识库、卡片、提示词库等。模型决定下限；资源库搭配决定能力上限——按想法给智能体「出装」。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-04.png" alt="图 5.4 扣子智能体资源库" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>工作流、知识库、卡片、提示词库等「出装」仓库。</div>
+  <div class="fig-cap">图 5.4 扣子智能体资源库</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-cfg" data-label="空间配置 · 图5.5" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.1</p>
+<h2 class="slide-title">发布渠道与模型管理</h2>
+<p>空间配置是智能体、插件、工作流和发布渠道的统一管理频道；模型管理可查看调用的各种大模型。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-05.png" alt="图 5.5 扣子空间配置/发布渠道" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>统一管理智能体、插件、工作流、发布渠道与模型。</div>
+  <div class="fig-cap">图 5.5 扣子空间配置/发布渠道</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-game" data-label="游戏隐喻对照表" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.1 · 记忆锚点</p>
+<h2 class="slide-title">把 Coze 模块想成游戏组件</h2>
+<p>作者把扣子开发比作打游戏：各部分配合组合出精彩智能体。</p>
+<details class="expand-card open"><summary>完整对照（建议记住）</summary><div class="expand-body">
+<ul>
+<li><strong>工作流</strong>：关卡通关路线图</li>
+<li><strong>对话流</strong>：NPC 对话通关</li>
+<li><strong>插件</strong>：角色技能卡</li>
+<li><strong>知识库</strong>：游戏百科全书</li>
+<li><strong>卡片</strong>：快捷道具栏</li>
+<li><strong>提示词</strong>：角色的移动键</li>
+<li><strong>数据库</strong>：「云存档」</li>
+<li><strong>发布管理</strong>：关卡审核员</li>
+<li><strong>模型管理</strong>：角色库 / 捏脸系统</li>
+<li><strong>效果评测</strong>：闯关评分系统</li>
+</ul>
+</div></details>
+
+      </section>
+      <section class="slide" data-id="coze-case" data-label="案例：每日AI简报" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · 案例说明</p>
+<h2 class="slide-title">多源聚合 → 筛选 → 结构化输出</h2>
+<p class="lead">不是纯演示：背后有内容搜集、信息筛选、格式组织、输出规范。平台价值在于把分散操作串成看得见的工作流。</p>
+<p>从 36氪、虎嗅、IT之家、InfoQ、GitHub、arXiv 抓取当日 AI 头条、论文与开源动态，整合成精炼简报。</p>
+<div class="tag-row">
+  <span class="tag-pill">多源信息聚合</span>
+  <span class="tag-pill">角色与 Prompt</span>
+  <span class="tag-pill">自动化工作流</span>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-skills" data-label="本案例要掌握的技能" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2</p>
+<h2 class="slide-title">三件核心能力</h2>
+<ol>
+  <li><strong>多源信息聚合：</strong>利用插件生态，跨平台、跨类型接入数据流</li>
+  <li><strong>智能体行为定义：</strong>用角色设定与 Prompt 控制任务执行与内容生成标准</li>
+  <li><strong>自动化工作流构建：</strong>把数据获取、内容处理与格式化输出串联成高效流水线</li>
+</ol>
+<div class="analogy">像办一份小报：记者（插件）采稿 → 主编（角色+Prompt）审稿排版 → 发行（多渠道发布）。</div>
+
+      </section>
+      <section class="slide" data-id="coze-s1a" data-label="步骤一 · 集成插件" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · Step 1</p>
+<h2 class="slide-title">添加信息源插件</h2>
+<p>首要任务：接入丰富且权威的信息来源。在插件库搜索并添加：</p>
+<ul>
+  <li><strong>RSS</strong>：订阅媒体平台 RSS 源</li>
+  <li><strong>GitHub</strong>：追踪开源项目</li>
+  <li><strong>arXiv</strong>：获取最新学术研究成果</li>
+</ul>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-06.png" alt="图 5.6 媒体平台的 RSS 源插件" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>RSS 插件订阅媒体源。</div>
+  <div class="fig-cap">图 5.6 媒体平台的 RSS 源插件</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-07.png" alt="图 5.7 GitHub 插件" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>GitHub 插件追踪开源项目。</div>
+  <div class="fig-cap">图 5.7 GitHub 插件</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-08.png" alt="图 5.8 arXiv 插件" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>arXiv 插件获取论文。</div>
+  <div class="fig-cap">图 5.8 arXiv 插件</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-s1b" data-label="步骤一 · 个性化配置" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · Step 1</p>
+<h2 class="slide-title">把参数配到「能精准取数」</h2>
+<div class="code-block">RSS 链接配置
+- 36氪：https://www.36kr.com/feed
+- 虎嗅：https://rss.huxiu.com/
+- it之家：http://www.ithome.com/rss/
+- infoq：https://feed.infoq.com/ai-ml-data-eng/
+
+GitHub 插件
+- q: AI
+- per_page: 10
+- sort: updated
+
+arXiv 插件
+- count：5
+- search_query：AI
+- sort_by：2</div>
+<div class="note"><strong>新手坑：</strong>插件「加了」不等于「配好了」。RSS URL、关键词、数量、排序都会直接影响简报质量。</div>
+
+      </section>
+      <section class="slide" data-id="coze-s1c" data-label="步骤一 · 编排连接" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · Step 1</p>
+<h2 class="slide-title">输入节点 → 大模型处理</h2>
+<p>在可视化编排里，把已配置的信息源插件（如 <code>rss_24Hbj</code>、<code>searchRepository</code>、<code>arxiv</code>）作为数据输入节点，连接到后续逻辑处理模块（如大模型模块），形成完整数据处理路径。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-09.png" alt="图 5.9 每日AI简报编排流程图" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>rss / GitHub / arxiv 等输入 → 大模型模块。</div>
+  <div class="fig-cap">图 5.9 每日AI简报编排流程图</div>
+</div>
+<div class="loop-stepper" id="cozePlug">
+  <div class="steps steps3">
+    <button type="button" class="step-btn on" onclick="showCozePlug(0)">① 集成插件</button>
+    <button type="button" class="step-btn" onclick="showCozePlug(1)">② 个性化配置</button>
+    <button type="button" class="step-btn" onclick="showCozePlug(2)">③ 编排连接</button>
+  </div>
+  <div class="loop-panel" id="cozePlugPanel"></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-rss-why" data-label="为什么用 RSS 而不是爬虫" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · 设计选择</p>
+<h2 class="slide-title">插件生态降低「取数工程」</h2>
+<p>简报案例用 RSS/GitHub/arXiv 插件，而不是让你从零写爬虫与解析器。这正是低代码价值：把取数工程变成配置。</p>
+<ul>
+  <li>RSS：媒体稳定订阅源</li>
+  <li>GitHub：结构化仓库搜索</li>
+  <li>arXiv：学术更新接口化</li>
+</ul>
+<div class="note">若源站无 RSS 或反爬严格，才需要自定义插件/API——边界就出现了。</div>
+
+      </section>
+      <section class="slide" data-id="coze-s2a" data-label="步骤二 · 角色设定" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · Step 2</p>
+<h2 class="slide-title">资深且权威的科技媒体编辑</h2>
+<p>角色设定与提示词是定义行为与输出质量的核心。把抽象指令变成智能体可理解并执行的具体任务。</p>
+<p>我们将智能体设定为<strong>资深且权威的科技媒体编辑</strong>——赋予专业定位，使其在内容创作中模仿专业编辑：筛选、整合、概括。</p>
+<div class="callout" data-label="为什么要角色">
+  <p>没有角色，模型容易「什么都会一点、什么都不专业」。角色像给输出定「人格与标准」。</p>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-s2b" data-label="步骤二 · System Prompt" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · Step 2</p>
+<h2 class="slide-title">系统提示：长期准则与格式规范</h2>
+<details class="expand-card"><summary>System Prompt 核心条款（展开）</summary><div class="expand-body">
+<ul>
+<li>角色：资深科技媒体编辑，擅 AI 动态 / 学术 / 开源整合</li>
+<li>日报开头标注「AI日报」、作者与当天日期</li>
+<li>每条标题加<strong>独有</strong> Emoji（&lt;!!!important!!!&gt;）</li>
+<li>内容必须高度相关 AI/LLM/AIGC，排除广告营销</li>
+<li>每条提供原始链接 + 短概况</li>
+</ul>
+</div></details>
+<div class="note"><strong>设计意图：</strong>System 管「怎么当这个编辑」；不要把一次性任务细节全塞进 System。</div>
+
+      </section>
+      <section class="slide" data-id="coze-s2c" data-label="步骤二 · User Prompt" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · Step 2</p>
+<h2 class="slide-title">用户提示：具体任务与数据源</h2>
+<ul>
+  <li>从 <code>articles*</code> 筛选 AI 相关 →「AI技术新闻」</li>
+  <li>从 <code>arxiv</code> 按 title/link 整理 →「AI学术论文」</li>
+  <li>从 GitHub 筛最受瞩目的 <strong>5</strong> 个项目 →「AI开源项目」</li>
+</ul>
+<div class="callout" data-label="数量硬约束">
+  <p>输出总量：<strong>10</strong> 条新闻 + <strong>5</strong> 篇论文 + <strong>5</strong> 个开源项目。硬性数量能显著提高版式稳定性。</p>
+</div>
+<div class="analogy">工作流像流水线：前一节点数据流入下一节点——与第四章范式比，这里更强调「画出来、连起来、观察起来」。</div>
+
+      </section>
+      <section class="slide" data-id="coze-prompt-full" data-label="简报 Prompt 完整要点" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · Prompt 深挖</p>
+<h2 class="slide-title">把「可检查」写进提示词</h2>
+<p>好 Prompt 不是文学，是验收标准：</p>
+<ol>
+  <li>开头格式是否可正则检查（日期、作者）</li>
+  <li>Emoji 是否「每条独有」</li>
+  <li>是否强制带原始链接</li>
+  <li>模块数量是否硬约束（10/5/5）</li>
+  <li>是否明确排除广告营销</li>
+</ol>
+<div class="analogy">像给实习生写 checklist：你不写清楚，对方只能「凭感觉写漂亮话」。</div>
+
+      </section>
+      <section class="slide" data-id="coze-s3a" data-label="步骤三 · 预览与样例" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · Step 3</p>
+<h2 class="slide-title">运行预览：检查结构与风格</h2>
+<p>在预览界面运行，观察简报。期望结构类似：</p>
+<div class="code-block"># AI日报 by@jasonhuang 2025-09-24
+
+## 🚀 AI技术新闻
+🤖 **某开源基座模型全面开源** · 链接 · 概况……
+
+## 📚 AI学术论文
+🧪 **某生成式 3D 重建论文** · 链接 · 概况……
+
+## 💻 AI开源项目
+🤖 **某多智能体框架** · 链接 · 概况……</div>
+<p>仔细检查：内容准确性、格式完整性、语言风格。不符预期则回改 Prompt 或插件参数。</p>
+
+      </section>
+      <section class="slide" data-id="coze-s3b" data-label="步骤三 · 调试策略" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · Step 3</p>
+<h2 class="slide-title">哪里不对就改哪里</h2>
+<div class="kw-grid">
+  <div class="kw"><h4>内容不精炼</h4><p>改提示词中的概括要求、字数与风格约束。</p></div>
+  <div class="kw"><h4>数据不准</h4><p>查插件配置：RSS URL、关键词、数量、排序。</p></div>
+  <div class="kw"><h4>掺杂广告</h4><p>强化 System 中的相关性过滤与排除规则。</p></div>
+  <div class="kw"><h4>缺链接/Emoji</h4><p>把格式条款写得更硬、更可检查。</p></div>
+</div>
+<div class="loop-stepper" id="cozePub">
+  <div class="steps steps3">
+    <button type="button" class="step-btn on" onclick="showCozePub(0)">① 运行预览</button>
+    <button type="button" class="step-btn" onclick="showCozePub(1)">② 迭代调试</button>
+    <button type="button" class="step-btn" onclick="showCozePub(2)">③ 发布配置</button>
+  </div>
+  <div class="loop-panel" id="cozePubPanel"></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-pub" data-label="多渠道发布 · 图5.10–5.12" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · 发布</p>
+<h2 class="slide-title">一键发到微信 / 飞书 / 豆包等</h2>
+<p>Coze 支持将智能体一键发布到多个主流应用平台，扩展应用场景。发布后可在扣子商店看到，也可集成到 AI 应用中。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-10.png" alt="图 5.10 多元发布渠道" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>选择微信、飞书、豆包等发布目标。</div>
+  <div class="fig-cap">图 5.10 多元发布渠道</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-11.png" alt="图 5.11 AI智能体-每日AI新闻" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>商店中的智能体卡片。</div>
+  <div class="fig-cap">图 5.11 AI智能体-每日AI新闻</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-12.png" alt="图 5.12 AI应用中的每日AI新闻" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>应用内嵌简报体验。</div>
+  <div class="fig-cap">图 5.12 AI应用中的每日AI新闻</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-pub2" data-label="发布前基础信息 · 图5.13–5.14" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.2 · 发布配置</p>
+<h2 class="slide-title">名称、头像、欢迎语与预设问题</h2>
+<p>想发布自己的智能体，还需配置恰当的名称、头像及欢迎语，提供更友好的用户体验；并设置开场白与预设问题降低冷启动成本。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-13.png" alt="图 5.13 配置基础信息" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>名称、头像等基础资料。</div>
+  <div class="fig-cap">图 5.13 配置基础信息</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/coze-14.png" alt="图 5.14 开场白和预设问题" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>欢迎语与一键提问。</div>
+  <div class="fig-cap">图 5.14 开场白和预设问题</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="coze-pros" data-label="Coze 四大优势" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.3</p>
+<h2 class="slide-title">优势分析</h2>
+<details class="expand-card"><summary>1 · 强大的插件生态系统</summary><div class="expand-body"><p>丰富插件库，轻松接入外部服务与数据源，功能高度可扩展。</p></div></details>
+<details class="expand-card"><summary>2 · 直观的可视化编排</summary><div class="expand-body"><p>低门槛拖拽构建复杂工作流，大大降低开发难度。</p></div></details>
+<details class="expand-card"><summary>3 · 灵活的提示词控制</summary><div class="expand-body"><p>角色设定 + Prompt 细粒度控制行为与生成；支持提示词管理与模板。</p></div></details>
+<details class="expand-card"><summary>4 · 便捷的多平台部署</summary><div class="expand-body"><p>同一智能体发布到不同平台；生态持续整合新渠道与硬件厂商。</p></div></details>
+
+      </section>
+      <section class="slide" data-id="coze-cons" data-label="Coze 三大局限" data-group="5.2 Coze">
+
+<p class="slide-sub">5.2.3</p>
+<h2 class="slide-title">局限性（写书时的判断）</h2>
+<ul>
+  <li><strong>不支持 MCP：</strong>作者认为这是最致命限制之一；插件市场虽丰富，缺 MCP 可能锁住生态扩展。若放开将是杀手锏。（注：路线图曾出现相关讨论，以平台最新能力为准。）</li>
+  <li><strong>部分插件配置复杂：</strong>需 API Key 或高级参数时仍要技术背景；复杂工作流也可能需要 JS/Python 基础。</li>
+  <li><strong>导入导出形态：</strong>付费版可导出导入，但是 zip 而非像 Dify/n8n 的标准 JSON；跨平台迁移不便。可取巧：编排界面全选复制粘贴。</li>
+</ul>
+
+      </section>
+      <section class="slide" data-id="quiz52" data-label="检测 · 5.2 节" data-group="5.2 Coze">
+
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">Coze 小节检测</h2>
+<div class="quiz-score" id="score-q52"></div>
+<div class="quiz-item" data-quiz="q52" data-answer="2">
+  <h4>每日AI简报案例中，RSS / GitHub / arXiv 在编排里主要扮演？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">最终发布渠道</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">效果评测模块</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">数据输入节点，再连接大模型处理</button>
+  <div class="quiz-explain">它们是信息源输入，随后交给大模型做筛选整合与格式化。</div>
+</div>
+<div class="quiz-item" data-quiz="q52" data-answer="0">
+  <h4>System Prompt 与 User Prompt 的分工更接近？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">长期准则/格式 vs 具体任务/数据源</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">都只写欢迎语</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">User 管模型选型，System 管发布渠道</button>
+  <div class="quiz-explain">System 定义编辑人格与输出规范；User 指定从哪些变量取数、产出哪些模块。</div>
+</div>
+<div class="quiz-item" data-quiz="q52" data-answer="1">
+  <h4>作者强调的 Coze 重要局限之一是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">完全没有插件</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">不支持 MCP（以及导出形态非标准 JSON）</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">不能发布到任何外部平台</button>
+  <div class="quiz-explain">插件丰富但缺 MCP；导出为 zip 而非跨平台 JSON。</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="s53" data-label="5.3 节导读" data-group="5.3 Dify">
+
+<p class="slide-sub">§ 5.3</p>
+<h2 class="slide-title">平台二：Dify</h2>
+<p class="lead">开源、功能全面的 LLM 应用开发与运营平台。相对 Coze 的「快速上线」，Dify 更偏「把 Agent 当产品来组织与部署」。</p>
+<div class="note"><strong>保姆级操作：</strong>完整点击路径见仓库 Extra03《Dify智能体创建保姆级操作流程》；本章聚焦架构与知识点。</div>
+
+      </section>
+      <section class="slide" data-id="dify-intro" data-label="Dify 是什么" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.1</p>
+<h2 class="slide-title">BaaS + LLMOps 的全流程平台</h2>
+<p>Dify 融合后端即服务（BaaS）与 LLMOps 理念，为从原型设计到生产部署提供全流程支持。分层模块化：数据层、开发层、编排层、基础层，各层解耦便于扩展。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-01.png" alt="图 5.15 Dify 官网" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>Dify 官网首页与产品定位。</div>
+  <div class="fig-cap">图 5.15 Dify 官网</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-baas" data-label="BaaS 与 LLMOps 白话" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.1 · 术语</p>
+<h2 class="slide-title">两个缩写别被吓到</h2>
+<ul>
+  <li><strong>BaaS（Backend as a Service）：</strong>后端能力（鉴权、存储、API）以服务形式提供，你少搭脚手架</li>
+  <li><strong>LLMOps：</strong>面向大模型应用的运营工程——模型管理、提示迭代、数据、监控、部署</li>
+</ul>
+<p>Dify 把两者捏在一起：你既能「搭应用」，也能「长期运营」。</p>
+
+      </section>
+      <section class="slide" data-id="dify-model" data-label="模型中立与部署" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.1</p>
+<h2 class="slide-title">接得进模型，选得了部署方式</h2>
+<ul>
+  <li><strong>模型中立：</strong>开源或商业模型可通过简单配置接入，统一接口调用；内置支持数百种 LLM（GPT、DeepSeek、Llama 等）及兼容 OpenAI API 的模型。</li>
+  <li><strong>本地部署：</strong>官方 Docker Compose 一键启动，适合数据隐私与内网安全。</li>
+  <li><strong>云端部署：</strong>官方 SaaS，运维更省心。</li>
+</ul>
+<div class="analogy">像「厨房可自建也可租共享厨房」：敏感食材留家里做；赶时间就用共享厨房。</div>
+
+      </section>
+      <section class="slide" data-id="dify-mkt" data-label="Marketplace 插件生态" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.1</p>
+<h2 class="slide-title">模型可换、编排可复制，工具决定上限</h2>
+<p>Marketplace 一站式插件管理与一键部署，类型包括：Models、Tools、Agent Strategies、Extensions、Bundles。书中数据：已有超过 <strong>8677</strong> 个插件。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-02.png" alt="图 5.16 Dify Marketplace" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>插件市场一览。</div>
+  <div class="fig-cap">图 5.16 Dify Marketplace</div>
+</div>
+<details class="expand-card"><summary>官方推荐示例</summary><div class="expand-body">
+<ul>
+<li>Google Search: langgenius/google</li>
+<li>Azure OpenAI: langgenius/azure_openai</li>
+<li>Notion: langgenius/notion</li>
+<li>DuckDuckGo: langgenius/duckduckgo</li>
+</ul>
+</div></details>
+<div class="callout" data-label="生态洞察">
+  <p>模型都能接、Prompt/编排可复制；真正拉开差距的，往往是<strong>工具插件是否丰富、是否好用</strong>。</p>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-dev" data-label="插件开发者支持" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.1</p>
+<h2 class="slide-title">远程调试与本地转发</h2>
+<p>Dify 为插件开发者提供远程调试，可与流行 IDE 协作，环境设置成本低。开发者可连接 Dify SaaS，同时把插件操作转发到本地测试——加速生态创新，也是它成为成功平台之一的原因。</p>
+
+      </section>
+      <section class="slide" data-id="dify-ui" data-label="界面巡礼 · 图5.17–5.21" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · 开工前</p>
+<h2 class="slide-title">先认路：主页 / 模板 / 知识库 / 插件 / 模型</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-14.png" alt="图 5.17 Dify 智能体搭建主页" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>应用与编排入口。</div>
+  <div class="fig-cap">图 5.17 Dify 智能体搭建主页</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-18.png" alt="图 5.18 官方模板库" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>可一键复制的模板。</div>
+  <div class="fig-cap">图 5.18 官方模板库</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-15.png" alt="图 5.19 知识库" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>文档上传与检索配置。</div>
+  <div class="fig-cap">图 5.19 知识库</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-16.png" alt="图 5.20 插件市场" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>安装工具与策略。</div>
+  <div class="fig-cap">图 5.20 插件市场</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-17.png" alt="图 5.21 大模型配置" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>接入与管理模型。</div>
+  <div class="fig-cap">图 5.21 大模型配置</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-case" data-label="超级个人助手总览" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2</p>
+<h2 class="slide-title">从「单一简报」升级到「多场景助手」</h2>
+<p>Coze 案例功能明确但偏单一。本节用 Dify 构建功能全面的超级个人助手，覆盖：</p>
+<ul>
+  <li>日常生活问答</li>
+  <li>文案润色优化</li>
+  <li>多模态内容生成（图片、视频）</li>
+  <li>数据查询与可视化分析</li>
+  <li>MCP 工具集成（高德、饮食、新闻）</li>
+</ul>
+
+      </section>
+      <section class="slide" data-id="dify-plug" data-label="插件安装 · 图5.22" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · (1)</p>
+<h2 class="slide-title">先装齐核心插件</h2>
+<p>构建前先完成必要插件安装。红框标注插件需从 Marketplace 搜索安装，可点详情了解功能。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-19.png" alt="图 5.22 Dify 插件安装配置" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>案例所需核心插件清单。</div>
+  <div class="fig-cap">图 5.22 Dify 插件安装配置</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-mcp1" data-label="配置 MCP · 魔搭市场" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · MCP</p>
+<h2 class="slide-title">用云端 Hosted MCP（SSE）</h2>
+<p>MCP（Model Context Protocol）原理本章不展开；重点演示云端 MCP。案例用国内魔搭社区 MCP 市场，选择 <strong>hosted</strong> 类型。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-20.png" alt="图 5.23 魔搭社区 MCP 市场" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>hosted MCP 列表。</div>
+  <div class="fig-cap">图 5.23 魔搭社区 MCP 市场</div>
+</div>
+<p>以高德 MCP 为例：进入主页 → 右侧选 <strong>SSE</strong> → 连接配置 → 生成专属 MCP 配置 JSON。Dify 中 SSE 更流畅稳定，推荐 SSE。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-21.png" alt="图 5.24 高德 MCP 配置示例" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>SSE 模式与 JSON 配置。</div>
+  <div class="fig-cap">图 5.24 高德 MCP 配置示例</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-arch" data-label="编排架构与问题分类器" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · (2)</p>
+<h2 class="slide-title">多智能体：分类器做智能路由</h2>
+<p>针对多智能体架构，用<strong>问题分类器</strong>做智能路由：为每个子智能体定义核心功能与任务范围，确保请求准确分发。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-12.png" alt="图 5.25 智能体编排" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>分类器 → 各能力模块分支。</div>
+  <div class="fig-cap">图 5.25 智能体编排</div>
+</div>
+<div class="analogy">像医院分诊台：先判断去内科还是外科，再进专科——避免一个「全能医生」什么都含糊处理。</div>
+
+      </section>
+      <section class="slide" data-id="dify-router-why" data-label="为何不用单智能体包办" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · 架构思考</p>
+<h2 class="slide-title">分类器的优势（对应习题）</h2>
+<ul>
+  <li>提示词更短、更聚焦，减少互相干扰</li>
+  <li>工具权限可按模块最小化</li>
+  <li>某一模块失败不影响其它模块迭代</li>
+  <li>评估与日志可分模块观测</li>
+</ul>
+<p>若单一智能体处理所有任务：上下文膨胀、工具误用、风格串味、排错困难——都更常见。</p>
+
+      </section>
+      <section class="slide" data-id="dify-daily" data-label="日常助手模块" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · 模块</p>
+<h2 class="slide-title">兜底通用问答：LLM + 时间工具</h2>
+<p>基础对话模块，配置大语言模型和时间工具，作为兜底通用问答服务。提示词采用 Role / Profile / Skills / Rules / Workflows / Initialization 结构化写法。</p>
+<details class="expand-card"><summary>提示词结构要点</summary><div class="expand-body">
+<ul>
+<li>Role：日常问题咨询专家</li>
+<li>Skills：问题分析、解答提供、沟通表达</li>
+<li>Rules：实用性、准确性、中立、适度深度</li>
+<li>Workflows：理解→分析→建议→组织→安全检查</li>
+</ul>
+</div></details>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-03.png" alt="图 5.26 日常助手" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>日常问答效果演示。</div>
+  <div class="fig-cap">图 5.26 日常助手</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-copy" data-label="文案优化模块" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · 模块</p>
+<h2 class="slide-title">高频场景：润色 / 扩写 / 转化</h2>
+<p>据 OpenAI 数据报告，超 60% 用户用 ChatGPT 做文本优化。案例把文案优化作为第二核心模块。</p>
+<details class="expand-card"><summary>提示词五段式</summary><div class="expand-body">
+<p>角色人设 → 背景 → 任务目标 → 限制提示 → 输出格式要求。案例要求优化后文案更丰富，甚至「超过 500 字」（习题会讨论硬性长度是否合理）。</p>
+</div></details>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-04.png" alt="图 5.27 文案助手" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>文案优化效果。</div>
+  <div class="fig-cap">图 5.27 文案助手</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-mm" data-label="多模态生成模块" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · 模块</p>
+<h2 class="slide-title">豆包生图 / 生视频</h2>
+<p>随着豆包生图、Imagen、可灵、Veo、Sora 等进化，多模态生成已达实用水平。案例用豆包插件：</p>
+<ol>
+  <li>工作流添加豆包生图/生视频插件</li>
+  <li>配置参数（如图片比例 1:1，模型 doubao seedream）</li>
+  <li>将生成的 file 文件输出</li>
+</ol>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-13.png" alt="图 5.28 生图设置" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>比例与模型参数。</div>
+  <div class="fig-cap">图 5.28 生图设置</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-05.png" alt="图 5.29 生图助手" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>图片生成效果。</div>
+  <div class="fig-cap">图 5.29 生图助手</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-06.png" alt="图 5.30 视频助手" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>视频生成效果。</div>
+  <div class="fig-cap">图 5.30 视频助手</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-data" data-label="数据查询模块" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · 模块</p>
+<h2 class="slide-title">Text2SQL：表结构要喂清楚</h2>
+<p>安装如 <code>rookie-text2data</code> 插件。关键：为大模型提供清晰表结构与字段信息，才能生成准确 SQL。常见做法：直接提供 DDL，或提供表名/字段说明。</p>
+<p>配置数据库连接（IP、库名、端口、账号、密码）。查询结果经大模型节点整理为自然语言。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-22.png" alt="图 5.31 数据库配置" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>连接信息面板。</div>
+  <div class="fig-cap">图 5.31 数据库配置</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-07.png" alt="图 5.32 数据查询助手" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>查询结果自然语言展示。</div>
+  <div class="fig-cap">图 5.32 数据查询助手</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-ddl" data-label="大库表时怎么办" data-group="5.3 Dify">
+
+<p class="slide-sub">习题延伸 · 数据模块</p>
+<h2 class="slide-title">50 张表 × 20 字段塞不进 Prompt</h2>
+<p>直接把全部 DDL 塞进提示词会导致上下文过长。更智能的方案方向：</p>
+<ul>
+  <li>先做「表路由」：根据用户问题检索相关表名（可用小型检索/规则）</li>
+  <li>只注入候选表的 DDL/字段说明</li>
+  <li>分层：schema 目录 → 表详情 → SQL 生成</li>
+</ul>
+<div class="note">这和 RAG「先检索再生成」是同一思想——只是检索对象变成了数据库元数据。</div>
+
+      </section>
+      <section class="slide" data-id="dify-viz" data-label="数据分析与可视化" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · 模块</p>
+<h2 class="slide-title">在查询之上加 BI 图表工具</h2>
+<p>与查询模块的差异：增加可视化工具插件——<code>generate_pie_chart</code> / <code>generate_column_chart</code> / <code>generate_line_chart</code>。提示词要求至少生成 1 幅图，并做数据概况总结。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-08.png" alt="图 5.33 数据分析助手" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>图表 + 文字总结。</div>
+  <div class="fig-cap">图 5.33 数据分析助手</div>
+</div>
+<div class="note"><strong>限制提示：</strong>勿篡改真实值、勿泄露隐私、图表保持简洁易懂。</div>
+
+      </section>
+      <section class="slide" data-id="dify-mcp2" data-label="MCP 工具集成 · 高德/饮食/新闻" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · MCP 应用</p>
+<h2 class="slide-title">ReAct 策略挂上 MCP 服务</h2>
+<ol>
+  <li>选择支持 MCP 调用的智能体策略</li>
+  <li>选择 ReAct 模式</li>
+  <li>配置 MCP 服务（注意删除 <code>mcp-server</code> 前缀，选 SSE）</li>
+  <li>填写相应提示词</li>
+</ol>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-23.png" alt="图 5.34 智能体的 MCP 配置" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>策略与服务绑定。</div>
+  <div class="fig-cap">图 5.34 智能体的 MCP 配置</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-09.png" alt="图 5.35 高德助手" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>路线/地图类能力。</div>
+  <div class="fig-cap">图 5.35 高德助手</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-10.png" alt="图 5.36 饮食助手" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>饮食推荐。</div>
+  <div class="fig-cap">图 5.36 饮食助手</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/dify-11.png" alt="图 5.37 新闻助手" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>资讯获取。</div>
+  <div class="fig-cap">图 5.37 新闻助手</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-wrap" data-label="案例收束：一个助手多种生活场景" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.2 · 小结</p>
+<h2 class="slide-title">搭完之后你得到了什么</h2>
+<p>功能全面的超级个人助手：要新衣服可让豆包生成设计；出门前高德规划路线；不知道吃什么有饮食推荐；想了解学习情况可做数据分析。</p>
+<div class="callout" data-label="架构收获">
+  <p>记住模式：<strong>分类器路由 + 专长子模块 + 工具/MCP</strong>。比「一个巨型 Prompt 包打天下」更可维护、更可控。</p>
+</div>
+
+      </section>
+      <section class="slide" data-id="dify-pros" data-label="Dify 核心优势" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.3</p>
+<h2 class="slide-title">为什么它像「企业级一站式」</h2>
+<ul>
+  <li><strong>全栈式开发体验：</strong>RAG、工作流、模型管理等整合在一个平台</li>
+  <li><strong>低代码与高扩展平衡：</strong>便利性与专业灵活性兼顾</li>
+  <li><strong>企业级安全合规：</strong>AES-256、RBAC、审计日志等</li>
+  <li><strong>丰富工具集成：</strong>9000+ 工具与 API 扩展（书中表述）</li>
+  <li><strong>活跃开源社区：</strong>学习资源与支持丰富</li>
+</ul>
+
+      </section>
+      <section class="slide" data-id="dify-cons" data-label="Dify 主要局限" data-group="5.3 Dify">
+
+<p class="slide-sub">5.3.3</p>
+<h2 class="slide-title">选型前必须知道的短板</h2>
+<ul>
+  <li><strong>学习曲线较陡：</strong>完全无技术背景仍有门槛</li>
+  <li><strong>性能瓶颈：</strong>高并发可能挑战；核心服务端 Python 实现，相对 C++/Go/Rust 性能较弱</li>
+  <li><strong>多模态支持仍不足：</strong>仍以文本为主（尽管案例演示了生图生视频插件路径）</li>
+  <li><strong>企业版成本：</strong>可能超出小型团队预算</li>
+  <li><strong>API 兼容性：</strong>API 格式不兼容 OpenAI，可能限制部分第三方集成</li>
+</ul>
+
+      </section>
+      <section class="slide" data-id="quiz53" data-label="检测 · 5.3 节" data-group="5.3 Dify">
+
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">Dify 小节检测</h2>
+<div class="quiz-score" id="score-q53"></div>
+<div class="quiz-item" data-quiz="q53" data-answer="1">
+  <h4>超级个人助手用问题分类器，主要是为了？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">提高模型参数量</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">把不同类型请求路由到专长子模块</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">替代所有提示词</button>
+  <div class="quiz-explain">分类器做智能路由，避免单智能体包办所有任务导致混乱。</div>
+</div>
+<div class="quiz-item" data-quiz="q53" data-answer="0">
+  <h4>在 Dify 中接入魔搭 Hosted MCP，书中更推荐？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">SSE 模式</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">只能用本地 stdio</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">必须手写 TCP</button>
+  <div class="quiz-explain">书中指出 Dify 中 SSE 通信更流畅稳定。</div>
+</div>
+<div class="quiz-item" data-quiz="q53" data-answer="2">
+  <h4>数据查询模块要生成准确 SQL，关键前置是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">只提高 temperature</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">关掉所有工具</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">提供清晰表结构/DDL 或字段说明</button>
+  <div class="quiz-explain">模型需要知道有哪些表和字段，才能写出可用 SQL。</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="s54" data-label="5.4 节导读" data-group="5.4 n8n">
+
+<p class="slide-sub">§ 5.4</p>
+<h2 class="slide-title">平台三：n8n</h2>
+<p class="lead">n8n 的核心身份是<strong>通用工作流自动化平台</strong>，而非纯粹的 LLM 应用构建工具。理解这一点，是掌握 n8n 的关键。</p>
+<div class="callout" data-label="关键认知">
+  <p>在 n8n 里构建智能应用，实质是设计更宏大的自动化流程；大模型只是流程中的一个（或多个）强大「处理节点」。</p>
+</div>
+
+      </section>
+      <section class="slide" data-id="n8n-key" data-label="关键认知再强调" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4 开场</p>
+<h2 class="slide-title">先改心态：不是「做 Bot」，是「串业务」</h2>
+<p>如果你把 n8n 当 Coze/Dify 的换皮版，会很难受——它的强项是把 CRM、邮件、数据库、Webhook、LLM 串成端到端自动化。</p>
+<div class="compare">
+  <div class="compare-col a"><h3>传统自动化</h3><ul><li>线性：收到 → 规则 → 动作</li><li>路径基本写死</li></ul></div>
+  <div class="compare-col b"><h3>AI Agent 工作流</h3><ul><li>接收 → 思考 → 决策 → 工具调用 → 回复</li><li>Agent 在多个工具中自主选择</li></ul></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="n8n-node" data-label="节点：最小操作单元" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.1</p>
+<h2 class="slide-title">Node = 有特定功能的积木块</h2>
+<p>n8n 提供数百种预置节点：发邮件、读写数据库、调 API、处理文件……每个节点有输入输出与图形化配置。</p>
+<div class="kw-grid">
+  <div class="kw"><h4>触发节点 Trigger</h4><p>工作流起点：新邮件、定时、Webhook 等。<strong>一个工作流必须有且仅有一个触发节点。</strong></p></div>
+  <div class="kw"><h4>常规节点 Regular</h4><p>处理数据与逻辑：读表格、调 OpenAI、写库等。</p></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="n8n-wf" data-label="工作流：节点连成的路径" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.1</p>
+<h2 class="slide-title">数据以 JSON 在节点间传递</h2>
+<p>工作流由多个节点连接而成，定义数据从触发节点开始如何被传递、处理并完成任务。结构化 JSON 传递让你可以精确控制每环输入输出。</p>
+<div class="analogy">像快递分拣线：每个工位只干一件事，包裹（JSON）带着标签往下传。你要盯的是「这一站吃什么字段、吐什么字段」。</div>
+<div class="note"><strong>真正威力：</strong>把孤立的应用与服务串联，实现过去要复杂编码才能完成的端到端业务自动化。</div>
+
+      </section>
+      <section class="slide" data-id="n8n-mail" data-label="智能邮件助手架构" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.2</p>
+<h2 class="slide-title">接收 → AI Agent → 回复</h2>
+<p>环境配置见项目 <code>Additional-Chapter</code>。本案例展示现代 AI Agent 与传统自动化的区别：Agent 节点思考、理解意图，并在多个工具中决策。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-01.png" alt="图 5.38 一体化智能邮件 Agent 架构" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>Gmail 触发 → AI Agent（模型/记忆/工具）→ 回复。</div>
+  <div class="fig-cap">图 5.38 一体化智能邮件 Agent 架构</div>
+</div>
+<p>与拆成多个子工作流的传统方法不同，n8n 的 <code>AI Agent</code> 节点允许把 LLM、Memory、Tools 整合在统一界面。</p>
+
+      </section>
+      <section class="slide" data-id="n8n-vs-trad" data-label="传统流 vs Agent 流" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.2 · 对照</p>
+<h2 class="slide-title">同一张画布，两种智能等级</h2>
+<p>传统流程：如果主题含「发票」→ 转财务邮箱。路径写死。</p>
+<p>本案例 Agent：读懂问题 → 决定要不要搜网 → 查工时策略 → 生成带状态前缀的回复 → 结构化交给 Send。</p>
+<div class="callout" data-label="第四章回响">
+  <p>你在第四章写的 Thought/Action/Observation，在这里变成了平台节点上的「可配置大脑」。</p>
+</div>
+
+      </section>
+      <section class="slide" data-id="n8n-two" data-label="搭建分两步" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.2</p>
+<h2 class="slide-title">先准备「记忆」，再构建「主体」</h2>
+<ol>
+  <li><strong>准备 Agent 的记忆：</strong>独立流程加载私有知识库（通常只在更新知识时跑一次）</li>
+  <li><strong>构建 Agent 主体：</strong>接收邮件、思考并回复的主工作流</li>
+</ol>
+<div class="note"><strong>为什么拆开？</strong>知识加载是「写库」；邮件处理是「读库+推理」。职责分离后更清晰，也避免每次来信都重建向量。</div>
+
+      </section>
+      <section class="slide" data-id="n8n-kb1" data-label="知识库① Code 定义知识源" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.3</p>
+<h2 class="slide-title">用 Code 节点写入 JSON 文档</h2>
+<p>为让 Agent 回答特定领域问题，先准备「外部大脑」——向量知识库。案例用 <code>Simple Vector Store</code> 在内存中快速构建。</p>
+<p>先用 <code>Code</code> 节点存放原始知识文本（也可来自文件/数据库）。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-02.png" alt="图 5.39 在 Code 节点中定义知识源" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>JSON 文档：工作时间、非工作策略、自动回复指令。</div>
+  <div class="fig-cap">图 5.39 在 Code 节点中定义知识源</div>
+</div>
+<div class="code-block">return [
+  {"doc_id":"work-schedule-001","content":"工作时间周一至周五 9–17，时区 AEST。"},
+  {"doc_id":"off-hours-policy-001","content":"非工作时间无法立即回复。"},
+  {"doc_id":"auto-reply-instruction-001","content":"非工作时间应告知已收到，下个工作日处理。"}
+];</div>
+
+      </section>
+      <section class="slide" data-id="n8n-kb2" data-label="知识库② 文本向量化" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.3</p>
+<h2 class="slide-title">Embeddings：把文本翻译成向量</h2>
+<p>计算机无法直接理解文本。使用 Embeddings 节点完成「翻译」。案例：<code>Embeddings Google Gemini</code>，模型 <code>gemini-embedding-exp-03-07</code>（演示用 Google API）。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-03.png" alt="图 5.40 对 Code 中数据进行向量化" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>Code → Embeddings。</div>
+  <div class="fig-cap">图 5.40 对 Code 中数据进行向量化</div>
+</div>
+<div class="analogy">像给每本书做「坐标标签」：以后检索不是比关键词字面，而是比语义远近。</div>
+
+      </section>
+      <section class="slide" data-id="n8n-kb3" data-label="知识库③ 存入向量存储" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.3</p>
+<h2 class="slide-title">Insert Documents + Memory Key</h2>
+<ul>
+  <li>节点：<code>Simple Vector Store</code></li>
+  <li>Operation Mode：<code>Insert Documents</code>（写入）</li>
+  <li>Memory Key：唯一名字，如 <code>my-dailytime</code>（相当于表名）</li>
+</ul>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-04.png" alt="图 5.41 存入向量存储" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>Insert + Memory Key。</div>
+  <div class="fig-cap">图 5.41 存入向量存储</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-05.png" alt="图 5.42 完整知识库加载工作流" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>Code → Embeddings → Vector Store。</div>
+  <div class="fig-cap">图 5.42 完整知识库加载工作流</div>
+</div>
+<p><strong>手动执行一次</strong>该流程，知识即加载到 n8n 内存。</p>
+<div class="loop-stepper" id="n8nKb">
+  <div class="steps steps3">
+    <button type="button" class="step-btn on" onclick="showN8nKb(0)">① Code</button>
+    <button type="button" class="step-btn" onclick="showN8nKb(1)">② Embeddings</button>
+    <button type="button" class="step-btn" onclick="showN8nKb(2)">③ Vector Store</button>
+  </div>
+  <div class="loop-panel" id="n8nKbPanel"></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="n8n-gmail" data-label="主流程① Gmail 触发" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.4</p>
+<h2 class="slide-title">新建 Agent: Customer Support</h2>
+<p>用 Gmail 节点作触发器，Event 设为 <code>Message Received</code>，配置邮箱账号。有新邮件即触发。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-06.png" alt="图 5.43 新建 Gmail 节点" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>Message Received 触发。</div>
+  <div class="fig-cap">图 5.43 新建 Gmail 节点</div>
+</div>
+<details class="expand-card"><summary>OAuth 配置要点（展开）</summary><div class="expand-body">
+<p>参考 n8n 官方 Google OAuth 文档；在 Google Cloud 启用 Gmail API；创建 Web 应用凭证；把 n8n 的 OAuth Redirect URL 加到已授权重定向 URI；在目标对象里 Add users 自己的邮箱。完成后 Fetch Test Event 拉测试邮件。</p>
+</div></details>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-07.png" alt="图 5.44 Gmail 账号加载成功" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>凭证配置完成。</div>
+  <div class="fig-cap">图 5.44 Gmail 账号加载成功</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-08.png" alt="图 5.45 获取实时邮件" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>Fetch Test Event。</div>
+  <div class="fig-cap">图 5.45 获取实时邮件</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="n8n-agent" data-label="主流程② AI Agent 节点" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.4</p>
+<h2 class="slide-title">整个工作流的大脑</h2>
+<ul>
+  <li><strong>Chat Model：</strong>如 Google Gemini Chat Model——思考核心</li>
+  <li><strong>Memory：</strong>Simple Memory，记住同一线索多封往来</li>
+  <li><strong>Tools：</strong>SerpAPI（上网搜公开信息）+ Simple Vector Store（查私有知识）</li>
+</ul>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-09.png" alt="图 5.46 AI Agent 节点设置" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>模型、记忆、工具挂载。</div>
+  <div class="fig-cap">图 5.46 AI Agent 节点设置</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="n8n-prompt" data-label="主流程③ Prompt 设计" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.4</p>
+<h2 class="slide-title">User Message + System Message</h2>
+<p>Prompt 设计至关重要。把邮件正文与主题等变量传入。主要填 User Message 与 System Message。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-10.png" alt="图 5.47 AI Agent 节点详解" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>Prompt 配置区。</div>
+  <div class="fig-cap">图 5.47 AI Agent 节点详解</div>
+</div>
+<details class="expand-card"><summary>执行步骤精华</summary><div class="expand-body">
+<ol>
+<li>分析问题，提炼核心诉求</li>
+<li>并行：SerpAPI 搜答案 + Vector Store 查工作时间</li>
+<li>草拟核心回复</li>
+<li>按是否工作时间添加状态前缀并拼接</li>
+<li>强制 JSON 输出：shouldReply / subject / body；body 换行用 <code>&lt;br&gt;</code></li>
+</ol>
+</div></details>
+
+      </section>
+      <section class="slide" data-id="n8n-json" data-label="强制 JSON 输出的原因" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.4 · Prompt 细节</p>
+<h2 class="slide-title">为什么要 shouldReply / subject / body</h2>
+<p>下游 Gmail Send 需要稳定字段。若模型自由散文输出，表达式映射会碎。</p>
+<div class="code-block">{
+  "shouldReply": true,
+  "subject": "Re: [原始邮件主题]",
+  "body": "完整正文，换行用 &lt;br&gt;"
+}</div>
+<p>规则还包括：永远优先尝试用 SerpAPI 回答；非工作时间必须声明状态并附准确工时；工时以 Vector Store 为准，不编造。</p>
+
+      </section>
+      <section class="slide" data-id="n8n-tools" data-label="主流程④ 工具与 Memory Key" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.4</p>
+<h2 class="slide-title">Retrieve 模式必须与写入侧一致</h2>
+<p>Simple Vector Store 作为工具时：</p>
+<ul>
+  <li>Operation Mode：<code>Retrieve Documents (As Tool for AI Agent)</code></li>
+  <li>Memory Key：必须与知识库加载流<strong>完全相同</strong></li>
+  <li>Embeddings：必须与加载流<strong>完全相同</strong>的模型</li>
+</ul>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-11.png" alt="图 5.48 Simple Vector Store 工具配置" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>Retrieve + 同 Key + 同 Embeddings。</div>
+  <div class="fig-cap">图 5.48 Simple Vector Store 工具配置</div>
+</div>
+<div class="callout" data-label="致命一致性">
+  <p>Key 或 Embedding 模型不一致 = 用错钥匙/语言，Agent 读不到知识。</p>
+</div>
+<p>Memory 建议用邮箱线程 ID 作唯一键，如 <code>{{ $('Gmail').item.json.threadId }}</code>。</p>
+
+      </section>
+      <section class="slide" data-id="n8n-send" data-label="主流程⑤ 发送最终回复" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.4</p>
+<h2 class="slide-title">Gmail Send 接上 Agent 输出</h2>
+<p>将 AI Agent 输出连到 Gmail 节点，Operation=<code>Send</code>：</p>
+<ul>
+  <li>To：<code>{{ $('Gmail').item.json.From }}</code></li>
+  <li>Subject：<code>Re: {{ $('Gmail').item.json.Subject }}</code></li>
+  <li>Message：<code>{{ $json.output }}</code></li>
+</ul>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-12.png" alt="图 5.49 最终回复工具" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>Send 字段映射。</div>
+  <div class="fig-cap">图 5.49 最终回复工具</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-13.png" alt="图 5.50 个人邮箱返回邮件格式" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>真实收件效果。</div>
+  <div class="fig-cap">图 5.50 个人邮箱返回邮件格式</div>
+</div>
+<p>扩展性：向 AI Agent 继续加日历/数据库/CRM 等工具，并在 Prompt 中教会用法即可。</p>
+<div class="loop-stepper" id="n8nMain">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showN8nMain(0)">① Gmail</button>
+    <button type="button" class="step-btn" onclick="showN8nMain(1)">② Agent</button>
+    <button type="button" class="step-btn" onclick="showN8nMain(2)">③ 工具</button>
+    <button type="button" class="step-btn" onclick="showN8nMain(3)">④ Prompt</button>
+    <button type="button" class="step-btn" onclick="showN8nMain(4)">⑤ Send</button>
+  </div>
+  <div class="loop-panel" id="n8nMainPanel"></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="n8n-pros" data-label="n8n 优势三板斧" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.5</p>
+<h2 class="slide-title">效率 · 集成 · 私有化</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/5-figures/n8n-14.png" alt="表 5.1 n8n 优势与局限性总结" loading="lazy" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线步骤卡</strong><br/>对照表总览。</div>
+  <div class="fig-cap">表 5.1 n8n 优势与局限性总结</div>
+</div>
+<ul>
+  <li><strong>开发效率：</strong>复杂逻辑可视化，缩短想法到原型距离</li>
+  <li><strong>功能强大且高度集成：</strong>数百节点 + AI Agent 整合模型/记忆/工具；Code 节点保上限</li>
+  <li><strong>部署运维：</strong>支持私有化部署，敏感数据可不出自有环境</li>
+</ul>
+
+      </section>
+      <section class="slide" data-id="n8n-cons" data-label="n8n 局限与生产警示" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.5</p>
+<h2 class="slide-title">调试 · 非持久化 · 协作 · 性能</h2>
+<ul>
+  <li><strong>调试相对繁琐：</strong>复杂流出错时常需逐节点查输入输出</li>
+  <li><strong>内置存储非持久：</strong>Simple Memory / Simple Vector Store 基于内存，重启即丢——生产必须换 Redis、Pinecone 等</li>
+  <li><strong>版本协作不如 Git 成熟：</strong>可导出 JSON，但 diff/多人同编易冲突</li>
+  <li><strong>性能：</strong>中低频自动化足够；超高并发下节点调度开销可能逊于纯代码服务</li>
+</ul>
+<div class="callout" data-label="生产红线">
+  <p>演示可以内存；上线必须持久化。否则「昨晚好好的，重启全没了」。</p>
+</div>
+
+      </section>
+      <section class="slide" data-id="persist" data-label="持久化对照清单" data-group="5.4 n8n">
+
+<p class="slide-sub">5.4.5 · 生产化</p>
+<h2 class="slide-title">演示组件 → 生产替换</h2>
+<ul>
+  <li>Simple Vector Store → Pinecone / Qdrant / PGVector 等</li>
+  <li>Simple Memory → Redis 等会话存储</li>
+  <li>单机调试 → 可观测与告警、密钥与权限管理</li>
+  <li>手动执行知识加载 → 变更时的受控流水线</li>
+</ul>
+
+      </section>
+      <section class="slide" data-id="quiz54" data-label="检测 · 5.4 节" data-group="5.4 n8n">
+
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">n8n 小节检测</h2>
+<div class="quiz-score" id="score-q54"></div>
+<div class="quiz-item" data-quiz="q54" data-answer="0">
+  <h4>关于触发节点，正确的是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">一个工作流必须有且仅有一个触发节点</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">可以没有触发节点</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">必须至少三个触发节点</button>
+  <div class="quiz-explain">书中明确：工作流必须有且仅有一个触发节点。</div>
+</div>
+<div class="quiz-item" data-quiz="q54" data-answer="2">
+  <h4>Agent 要读到私有知识库，最关键的一致性是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">工作流名字必须叫 Demo</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">只能用中文 Prompt</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">Memory Key 与 Embeddings 模型与写入侧完全一致</button>
+  <div class="quiz-explain">Retrieve 时 Key 与 Embedding 必须与 Insert 时一致。</div>
+</div>
+<div class="quiz-item" data-quiz="q54" data-answer="1">
+  <h4>Simple Vector Store / Simple Memory 上生产前通常要？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">什么都不用改</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">换成 Redis / Pinecone 等持久化存储</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">删掉所有工具</button>
+  <div class="quiz-explain">内存存储重启即丢失，生产环境必须持久化。</div>
+</div>
+
+      </section>
+      <section class="slide" data-id="flash" data-label="闪卡复习" data-group="综合巩固">
+
+<p class="slide-sub">巩固</p>
+<h2 class="slide-title">关键概念闪卡</h2>
+<div class="flash" id="flash1" data-cards='[
+  {"q":"低代码平台相对纯代码的核心价值？","a":"降门槛、提效率、可视化可观测、沉淀标准；是更高层抽象，不取代代码。"},
+  {"q":"Coze / Dify / n8n 一句话定位？","a":"Coze=应用上线；Dify=Agent产品组织；n8n=系统集成自动化。"},
+  {"q":"每日AI简报三步？","a":"插件取数配置→角色与System/User Prompt→预览调试与多渠道发布。"},
+  {"q":"Dify 超级助手如何路由？","a":"问题分类器把请求分到日常/文案/多模态/数据/MCP 等子模块。"},
+  {"q":"n8n 知识库三连？","a":"Code定义→Embeddings向量化→Simple Vector Store Insert（定 Memory Key）。"},
+  {"q":"n8n 生产红线？","a":"内存型 Memory/Vector 重启即丢，须换持久化；注意协作与高并发边界。"}
+]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button type="button" class="btn" onclick="moveFlash('flash1',-1)">上一张</button>
+    <span class="flash-idx"></span>
+    <button type="button" class="btn" onclick="moveFlash('flash1',1)">下一张</button>
+  </div>
+</div>
+
+      </section>
+      <section class="slide" data-id="compare-all" data-label="三平台总对比" data-group="综合巩固">
+
+<p class="slide-sub">对照表</p>
+<h2 class="slide-title">选型时把这一页钉在脑子里</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>Coze</h3><p style="margin:0;font-size:0.85rem"><strong>强：</strong>插件、可视化、多端发布<br/><strong>弱：</strong>MCP、标准 JSON 迁移<br/><strong>适合：</strong>快验、非技术、C端上线</p></div>
+  <div class="compare-col b"><h3>Dify</h3><p style="margin:0;font-size:0.85rem"><strong>强：</strong>全栈、RAG、编排、私有化<br/><strong>弱：</strong>学习曲线、高并发、企业成本<br/><strong>适合：</strong>企业应用、复杂业务</p></div>
+  <div class="compare-col c"><h3>n8n</h3><p style="margin:0;font-size:0.85rem"><strong>强：</strong>连接、自动化、私有部署<br/><strong>弱：</strong>内存非持久、协作、极限性能<br/><strong>适合：</strong>业务链路深度集成</p></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="select" data-label="选型建议三条" data-group="综合巩固">
+
+<p class="slide-sub">5.5 预告</p>
+<h2 class="slide-title">快速决策口诀</h2>
+<ul>
+  <li><strong>快速原型验证、非技术用户</strong> → 优先 Coze</li>
+  <li><strong>企业级应用、复杂业务逻辑</strong> → 优先 Dify</li>
+  <li><strong>深度业务集成、自动化流程</strong> → 优先 n8n</li>
+</ul>
+<div class="note"><strong>混合开发：</strong>用平台快速验证想法，用代码实现精细化控制；用平台处理标准化流程，用代码处理特殊逻辑。</div>
+
+      </section>
+      <section class="slide" data-id="hybrid" data-label="混合开发思维" data-group="综合巩固">
+
+<p class="slide-sub">工程哲学</p>
+<h2 class="slide-title">平台与代码是光谱，不是阵营</h2>
+<p>值得强调：低代码并非要取代代码开发，而是互补选择。实际项目中可按阶段灵活切换：</p>
+<ul>
+  <li>用低代码快速验证想法</li>
+  <li>用代码实现精细化控制</li>
+  <li>用平台处理标准化流程</li>
+  <li>用代码处理特殊逻辑与性能关键路径</li>
+</ul>
+<p>这种「混合开发」思维，才是智能体工程化的最佳实践。</p>
+
+      </section>
+      <section class="slide" data-id="prompt-cmp" data-label="三平台 Prompt 差异" data-group="综合巩固">
+
+<p class="slide-sub">习题 5 热身</p>
+<h2 class="slide-title">结构不同，因为平台职责不同</h2>
+<ul>
+  <li><strong>Coze 简报：</strong>强格式媒体编辑 + 多源变量抽取</li>
+  <li><strong>Dify 模块：</strong>Role/Skills/Rules 或五段式，服务「专长子智能体」</li>
+  <li><strong>n8n 邮件：</strong>工具清单 + 并行步骤 + 强制 JSON，服务「自动化下游节点」</li>
+</ul>
+<p>差异与平台特性相关：越靠近业务自动化，越强调<strong>结构化输出与工具契约</strong>。</p>
+
+      </section>
+      <section class="slide" data-id="mcp-why" data-label="MCP 为什么重要" data-group="综合巩固">
+
+<p class="slide-sub">习题延伸</p>
+<h2 class="slide-title">工具调用的「新标准」视角</h2>
+<p>相对传统 REST 与散落的 Tool Calling 定义，MCP 试图提供更统一的工具发现与调用协议，让「模型侧」和「工具侧」解耦。</p>
+<ul>
+  <li>对平台：可插拔接入大量 Hosted 工具（如高德）</li>
+  <li>对生态：减少每个平台各写一套插件适配</li>
+  <li>对 Coze：书中认为缺 MCP 是关键局限之一</li>
+</ul>
+
+      </section>
+      <section class="slide" data-id="summary" data-label="5.5 本章小结" data-group="小结与自测">
+
+<p class="slide-sub">§ 5.5</p>
+<h2 class="slide-title">从手写代码到平台化开发</h2>
+<p>本章系统介绍了基于低代码平台构建智能体应用的理念、方法与实践。</p>
+<details class="expand-card"><summary>5.1 回顾</summary><div class="expand-body"><p>四大价值：门槛、效率、可观测、标准化。平台是更高层抽象，不取代代码。</p></div></details>
+<details class="expand-card"><summary>Coze 回顾</summary><div class="expand-body"><p>每日AI简报：多源插件→Prompt→多渠道发布。适合快验；注意 MCP 与导出形态。</p></div></details>
+<details class="expand-card"><summary>Dify 回顾</summary><div class="expand-body"><p>超级个人助手：分类器+多模块+MCP。开源企业级；注意学习曲线与并发。</p></div></details>
+<details class="expand-card"><summary>n8n 回顾</summary><div class="expand-body"><p>智能邮件：知识库加载 + AI Agent 主流程。连接力强；生产须持久化。</p></div></details>
+
+      </section>
+      <section class="slide" data-id="myths" data-label="三个常见坑" data-group="小结与自测">
+
+<p class="slide-sub">纠偏</p>
+<h2 class="slide-title">别把平台用歪了</h2>
+<div class="kw-grid">
+  <div class="kw"><h4>坑1 · 以为零思考</h4><p>节点拖完就完事。其实 Prompt、路由规则、知识质量决定上限。</p></div>
+  <div class="kw"><h4>坑2 · 演示当生产</h4><p>内存向量/记忆直接上线。重启丢数据是典型事故。</p></div>
+  <div class="kw"><h4>坑3 · 平台原教旨</h4><p>非要用一个平台打天下。该混合就混合，该下沉代码就下沉。</p></div>
+</div>
+
+      </section>
+      <section class="slide" data-id="checklist" data-label="自测清单" data-group="小结与自测">
+
+<p class="slide-sub">Checklist</p>
+<h2 class="slide-title">合上书前过一遍</h2>
+<ul>
+  <li>□ 能说出低代码四大价值与「不取代代码」的边界</li>
+  <li>□ 能一句话区分 Coze / Dify / n8n</li>
+  <li>□ 能口述每日AI简报三步与 System/User 分工</li>
+  <li>□ 能解释 Dify 分类器路由与 MCP（SSE）配置思路</li>
+  <li>□ 能画出 n8n：知识库流 + 邮件 Agent 主流</li>
+  <li>□ 知道 Simple Vector/Memory 的生产替换必要性</li>
+  <li>□ 能按场景给出选型或混合方案</li>
+</ul>
+
+      </section>
+      <section class="slide" data-id="exercises" data-label="习题要点" data-group="小结与自测">
+
+<p class="slide-sub">习题</p>
+<h2 class="slide-title">原书习题导向（热身）</h2>
+<details class="expand-card"><summary>1 · 三平台定位与三种开发模式</summary><div class="expand-body"><p>对比定位痛点；纯代码 / 低代码 / 混合各自适合场景并举例。</p></div></details>
+<details class="expand-card"><summary>2 · Coze 扩展</summary><div class="expand-body"><p>定时早 8 点推飞书/公众号；优化 Prompt；简述 MCP 为何重要。</p></div></details>
+<details class="expand-card"><summary>3 · Dify 深入</summary><div class="expand-body"><p>分类器优势；大库表 DDL 过长怎么办；本地 vs 云部署权衡。</p></div></details>
+<details class="expand-card"><summary>4 · n8n 生产化</summary><div class="expand-body"><p>持久化向量/记忆；附件理解；电商下单多系统联动设计。</p></div></details>
+<details class="expand-card"><summary>5–6 · Prompt 与工具</summary><div class="expand-body"><p>三平台提示词差异；「超 500 字」是否合理；缺插件怎么办；MCP vs REST vs Tool Calling。</p></div></details>
+<details class="expand-card"><summary>7 · 选型实战 A/B/C</summary><div class="expand-body">
+<ul>
+<li><strong>A</strong> AI 写作小程序、小团队快验 → 倾向 Coze</li>
+<li><strong>B</strong> 合同审核、私有环境深度集成 → Dify 私有化 / n8n / 代码混合</li>
+<li><strong>C</strong> 研发效能多流程自动化 → n8n 或代码</li>
+</ul>
+</div></details>
+
+      </section>
+      <section class="slide" data-id="map-ex" data-label="习题7 选型草图" data-group="小结与自测">
+
+<p class="slide-sub">习题 7</p>
+<h2 class="slide-title">A / B / C 三个应用怎么选</h2>
+<details class="expand-card"><summary>应用 A：C 端 AI 写作小程序</summary><div class="expand-body"><p>小团队、预算有限、要快验 → <strong>Coze</strong> 优先（上线与分发快）。有前端也可 Coze+轻量前端。</p></div></details>
+<details class="expand-card"><summary>应用 B：企业智能合同审核</summary><div class="expand-body"><p>敏感文档、私有环境、对接 OA/文档系统 → <strong>Dify 私有化</strong> 或 <strong>n8n+私有模型</strong>，常需<strong>代码混合</strong>做深度集成与合规。</p></div></details>
+<details class="expand-card"><summary>应用 C：研发效能自动化</summary><div class="expand-body"><p>多系统联动（审查、测试、Bug、进度）→ <strong>n8n</strong> 很合适；团队强也可核心链路纯代码。</p></div></details>
+
+      </section>
+      <section class="slide" data-id="refs" data-label="参考文献与下一章" data-group="小结与自测">
+
+<p class="slide-sub">收束</p>
+<h2 class="slide-title">站在平台肩上，继续下探框架</h2>
+<ul>
+<li>[1] Coze — <a href="https://www.coze.cn/" target="_blank" rel="noopener">https://www.coze.cn/</a></li>
+<li>[2] Dify — <a href="https://dify.ai/" target="_blank" rel="noopener">https://dify.ai/</a></li>
+<li>[3] n8n — <a href="https://n8n.io/" target="_blank" rel="noopener">https://n8n.io/</a></li>
+</ul>
+<div class="callout" data-label="下一章预告">
+  <p>下一章将探讨更底层的智能体框架，帮助构建更可靠、有趣的应用——平台与框架，仍是同一工程光谱上的不同刻度。</p>
+</div>
+<p class="kbd-hint">恭喜完成本章互动教程。可用侧栏回到任意小节复习。</p>
+
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+initFlash("flash1");
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+const cozePlugTexts = [
+  { t: "① 集成插件", p: "在插件库搜索添加：RSS 订阅媒体源、GitHub 追踪开源、arXiv 获取论文。" },
+  { t: "② 个性化配置", p: "填入具体 RSS URL；GitHub 设关键词与 per_page/sort；arXiv 设领域词与 count。" },
+  { t: "③ 编排连接", p: "将已配置插件作为输入节点，连接到大模型等逻辑模块，形成完整数据处理路径。" }
+];
+function showCozePlug(n) {
+  const root = document.getElementById("cozePlug");
+  if (!root) return;
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("cozePlugPanel").innerHTML = `<h4>${cozePlugTexts[n].t}</h4><p>${cozePlugTexts[n].p}</p>`;
+}
+showCozePlug(0);
+
+const cozePubTexts = [
+  { t: "① 运行预览", p: "在预览界面跑一遍，检查新闻/论文/开源三块结构、Emoji、链接与概况是否合规。" },
+  { t: "② 迭代调试", p: "内容不精炼→改 Prompt；数据不准→查插件参数；排除广告与无关项。" },
+  { t: "③ 发布配置", p: "配置名称、头像、欢迎语与预设问题，再一键发布到微信/飞书/豆包等渠道。" }
+];
+function showCozePub(n) {
+  const root = document.getElementById("cozePub");
+  if (!root) return;
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("cozePubPanel").innerHTML = `<h4>${cozePubTexts[n].t}</h4><p>${cozePubTexts[n].p}</p>`;
+}
+showCozePub(0);
+
+const n8nKbTexts = [
+  { t: "① Code 定义知识源", p: "用 Code 节点写入 JSON 文档（工作时间、非工作策略、自动回复指令）；也可来自文件/数据库。" },
+  { t: "② 文本向量化", p: "Embeddings（如 Google Gemini embedding）把文本「翻译」成向量，接在 Code 之后。" },
+  { t: "③ 存入向量存储", p: "Simple Vector Store · Insert Documents；设唯一 Memory Key。手动执行一次完成加载。" }
+];
+function showN8nKb(n) {
+  const root = document.getElementById("n8nKb");
+  if (!root) return;
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("n8nKbPanel").innerHTML = `<h4>${n8nKbTexts[n].t}</h4><p>${n8nKbTexts[n].p}</p>`;
+}
+showN8nKb(0);
+
+const n8nMainTexts = [
+  { t: "① Gmail 触发", p: "工作流 Agent: Customer Support；Message Received；配置 Google OAuth 与重定向 URI，Fetch Test Event。" },
+  { t: "② AI Agent 节点", p: "挂载 Chat Model、Simple Memory、Tools（SerpAPI + Simple Vector Store），作为思考大脑。" },
+  { t: "③ 工具配置", p: "向量库设 Retrieve Documents；Memory Key 与 Embeddings 必须与知识库加载流完全一致。" },
+  { t: "④ Prompt 设计", p: "User/System：并行搜答案+查工时；按是否工作时间加前缀；强制 JSON 输出与 <br> 换行。" },
+  { t: "⑤ 发送最终回复", p: "Gmail Send：To←发件人，Subject←Re:原主题，Message←Agent 输出；可扩展日历/CRM 等工具。" }
+];
+function showN8nMain(n) {
+  const root = document.getElementById("n8nMain");
+  if (!root) return;
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("n8nMainPanel").innerHTML = `<h4>${n8nMainTexts[n].t}</h4><p>${n8nMainTexts[n].p}</p>`;
+}
+showN8nMain(0);
+
+goTo(0);
+</script>
+
+</body>
+</html>

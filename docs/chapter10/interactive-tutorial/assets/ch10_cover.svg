@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="960" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0a1520"/>
+      <stop offset="1" stop-color="#0f2430"/>
+    </linearGradient>
+    <linearGradient id="neon" x1="80" y1="80" x2="880" y2="340" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2ee6c5"/>
+      <stop offset="0.55" stop-color="#3da8b8"/>
+      <stop offset="1" stop-color="#5ff5d8"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="rgba(46,230,197,0.12)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="960" height="420" fill="url(#bg)"/>
+  <rect width="960" height="420" fill="url(#grid)"/>
+  <circle cx="820" cy="70" r="120" fill="rgba(46,230,197,0.08)"/>
+  <circle cx="120" cy="340" r="90" fill="rgba(61,168,184,0.08)"/>
+
+  <rect x="90" y="150" width="150" height="90" rx="2" stroke="url(#neon)" stroke-width="1.5" fill="rgba(15,30,44,0.9)"/>
+  <text x="165" y="185" text-anchor="middle" fill="#5ff5d8" font-family="Oxanium, sans-serif" font-size="13" letter-spacing="2">HOST</text>
+  <text x="165" y="210" text-anchor="middle" fill="#9aafb8" font-family="Source Serif 4, serif" font-size="12">宿主 / 客户端</text>
+
+  <rect x="405" y="150" width="150" height="90" rx="2" stroke="url(#neon)" stroke-width="1.5" fill="rgba(15,30,44,0.9)"/>
+  <text x="480" y="185" text-anchor="middle" fill="#5ff5d8" font-family="Oxanium, sans-serif" font-size="13" letter-spacing="2">PROTOCOL</text>
+  <text x="480" y="210" text-anchor="middle" fill="#9aafb8" font-family="Source Serif 4, serif" font-size="12">MCP · A2A · ANP</text>
+
+  <rect x="720" y="110" width="140" height="58" rx="2" stroke="#2ee6c5" stroke-width="1.2" fill="rgba(15,30,44,0.85)"/>
+  <text x="790" y="145" text-anchor="middle" fill="#e6ede9" font-family="Oxanium, sans-serif" font-size="12">TOOLS</text>
+
+  <rect x="720" y="185" width="140" height="58" rx="2" stroke="#3da8b8" stroke-width="1.2" fill="rgba(15,30,44,0.85)"/>
+  <text x="790" y="220" text-anchor="middle" fill="#e6ede9" font-family="Oxanium, sans-serif" font-size="12">AGENTS</text>
+
+  <rect x="720" y="260" width="140" height="58" rx="2" stroke="#6bc89a" stroke-width="1.2" fill="rgba(15,30,44,0.85)"/>
+  <text x="790" y="295" text-anchor="middle" fill="#e6ede9" font-family="Oxanium, sans-serif" font-size="12">NETWORK</text>
+
+  <path d="M240 195 H405" stroke="url(#neon)" stroke-width="2" stroke-dasharray="6 4"/>
+  <path d="M555 180 H720" stroke="#2ee6c5" stroke-width="1.5" opacity="0.85"/>
+  <path d="M555 195 H720" stroke="#3da8b8" stroke-width="1.5" opacity="0.85"/>
+  <path d="M555 210 H720" stroke="#6bc89a" stroke-width="1.5" opacity="0.85"/>
+
+  <circle cx="322" cy="195" r="5" fill="#2ee6c5"/>
+  <circle cx="322" cy="195" r="12" stroke="#2ee6c5" stroke-width="1" opacity="0.4"/>
+
+  <text x="90" y="70" fill="#2ee6c5" font-family="Oxanium, sans-serif" font-size="14" letter-spacing="4">LAB 10 · PROTOCOL HANDSHAKE</text>
+  <text x="90" y="105" fill="#e6ede9" font-family="Oxanium, sans-serif" font-size="28" font-weight="600">智能体通信协议</text>
+  <text x="90" y="360" fill="#9aafb8" font-family="Source Serif 4, serif" font-size="15">工具桥梁 · 点对点协作 · 网络发现 · 握手消息流</text>
+</svg>

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <rect width="960" height="420" fill="#0a1520"/>
+  <defs>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="rgba(32,201,151,0.16)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#20c997" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#3da8b8" stop-opacity="0.14"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="420" fill="url(#g)"/>
+  <ellipse cx="700" cy="80" rx="300" ry="150" fill="url(#glow)"/>
+
+  <g font-family="Oxanium, sans-serif">
+    <!-- Plan -->
+    <rect x="70" y="90" width="170" height="72" fill="#0f1e2c" stroke="#20c997" stroke-width="1.5"/>
+    <text x="110" y="120" fill="#5eead4" font-size="14" letter-spacing="2">PLAN</text>
+    <text x="92" y="142" fill="#9aafb8" font-size="12">TODO Planner</text>
+
+    <path d="M250 126h36" stroke="#e8a84a" stroke-width="2"/>
+    <polygon points="286,126 278,121 278,131" fill="#e8a84a"/>
+
+    <!-- Execute -->
+    <rect x="296" y="90" width="200" height="72" fill="#0f1e2c" stroke="#e8a84a" stroke-width="1.5"/>
+    <text x="340" y="120" fill="#e8a84a" font-size="14" letter-spacing="2">EXECUTE</text>
+    <text x="318" y="142" fill="#9aafb8" font-size="12">Search + Summarize</text>
+
+    <path d="M506 126h36" stroke="#3da8b8" stroke-width="2"/>
+    <polygon points="542,126 534,121 534,131" fill="#3da8b8"/>
+
+    <!-- Report -->
+    <rect x="552" y="90" width="180" height="72" fill="#0f1e2c" stroke="#3da8b8" stroke-width="1.5"/>
+    <text x="592" y="120" fill="#5ed4e0" font-size="14" letter-spacing="2">REPORT</text>
+    <text x="568" y="142" fill="#9aafb8" font-size="12">Report Writer</text>
+
+    <!-- Three agents -->
+    <rect x="70" y="220" width="200" height="48" fill="#0f1e2c" stroke="rgba(32,201,151,0.5)" stroke-width="1"/>
+    <text x="100" y="250" fill="#d8e4e8" font-size="13">` TODO Planner</text>
+
+    <rect x="300" y="220" width="220" height="48" fill="#0f1e2c" stroke="rgba(232,168,74,0.5)" stroke-width="1"/>
+    <text x="318" y="250" fill="#d8e4e8" font-size="13">a Task Summarizer</text>
+
+    <rect x="550" y="220" width="200" height="48" fill="#0f1e2c" stroke="rgba(61,168,184,0.5)" stroke-width="1"/>
+    <text x="575" y="250" fill="#d8e4e8" font-size="13">b Report Writer</text>
+
+    <!-- Tools -->
+    <text x="70" y="330" fill="#20c997" font-size="12" letter-spacing="3">TOOLS</text>
+    <text x="70" y="358" fill="#9aafb8" font-size="13">SearchTool · NoteTool · ToolRegistry · SSE /research/stream</text>
+    <text x="70" y="390" fill="#6d8490" font-size="12">Lab 14 · Automated Deep Research Agent</text>
+  </g>
+</svg>

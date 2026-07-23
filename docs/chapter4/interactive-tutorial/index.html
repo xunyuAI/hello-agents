@@ -1,0 +1,2309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第四章 · 智能体经典范式构建 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="if(window.renderMathInElement){}"></script>
+<style>
+
+
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 04 Signal
+   Same product line as Ch1–Ch3; amber primary + violet accent
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(232, 168, 74, 0.18);
+  --line-strong: rgba(232, 168, 74, 0.4);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #e8a84a;
+  --signal-bright: #f0c06a;
+  --violet: #a78bfa;
+  --violet-dim: rgba(167, 139, 250, 0.16);
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.18);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(232, 168, 74, 0.14), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(167, 139, 250, 0.1), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--violet), var(--mint));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(232, 168, 74, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--violet); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(232, 168, 74, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(240, 192, 106, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(232,168,74,0.08);
+  padding: 0.05em 0.3em;
+}
+.note {
+  border-left: 3px solid var(--violet); background: var(--violet-dim);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--violet); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(232, 168, 74, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--violet); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre;
+}
+.formula {
+  font-family: var(--font-mono); font-size: 0.9rem;
+  background: rgba(232, 168, 74, 0.06);
+  border: 1px solid var(--line-strong);
+  padding: 0.9rem 1.1rem; margin: 1rem 0;
+  color: var(--signal-bright); overflow-x: auto;
+  text-align: center; line-height: 1.6;
+}
+.formula .katex { font-size: 1.05em; color: var(--paper); }
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--violet); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--violet); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.timeline {
+  position: relative; margin: 1.25rem 0; padding-left: 1.4rem;
+  border-left: 2px solid var(--line-strong);
+}
+.tl-item { position: relative; margin-bottom: 1.15rem; padding-left: 0.5rem; }
+.tl-item::before {
+  content: ""; position: absolute; left: -1.55rem; top: 0.45rem;
+  width: 10px; height: 10px; background: var(--signal);
+  border: 2px solid var(--ink); box-shadow: 0 0 0 2px var(--signal);
+}
+.tl-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--signal-bright); margin-bottom: 0.25rem;
+}
+.tl-item .tag {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: var(--violet); display: block; margin-bottom: 0.3rem;
+}
+.loop-viz {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  align-items: center; gap: 0.5rem; margin: 1.4rem 0;
+  padding: 1.25rem; border: 1px solid var(--line-strong);
+  background: rgba(15, 30, 44, 0.8);
+}
+.loop-node {
+  font-family: var(--font-display); font-size: 0.82rem;
+  padding: 0.75rem 1rem; border: 1px solid var(--signal);
+  background: var(--panel-2); color: var(--signal-bright);
+  min-width: 100px; text-align: center;
+  animation: pulseNode 2.8s ease-in-out infinite;
+}
+.loop-node:nth-child(1) { animation-delay: 0s; }
+.loop-node:nth-child(3) { animation-delay: 0.7s; }
+.loop-node:nth-child(5) { animation-delay: 1.4s; }
+.loop-node:nth-child(7) { animation-delay: 2.1s; }
+@keyframes pulseNode {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 168, 74, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(232, 168, 74, 0.15); background: rgba(232, 168, 74, 0.15); }
+}
+.loop-arrow {
+  font-family: var(--font-display); color: var(--violet); font-size: 1.2rem;
+}
+.loop-desc {
+  width: 100%; text-align: center; font-family: var(--font-display);
+  font-size: 0.78rem; color: var(--violet); letter-spacing: 0.08em; margin-top: 0.5rem;
+}
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps6 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: var(--amber-dim);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--violet); }
+.arch-block.head { border-left: 3px solid var(--mint); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: center; text-align: center;
+  transition: border-color 0.25s; user-select: none;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.15rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; font-size: 0.98rem; color: var(--paper); line-height: 1.55;
+}
+.flash-card.revealed .q { display: none; }
+.flash-card.revealed .a { display: block; }
+.flash-card.revealed { border-color: var(--violet); background: var(--violet-dim); }
+.flash-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 0.75rem; font-family: var(--font-display);
+  font-size: 0.72rem; color: var(--text-mute);
+}
+.flash-controls { display: flex; gap: 0.4rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); margin-bottom: 0.75rem; line-height: 1.4;
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.35rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: rgba(107, 200, 154, 0.15); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224, 107, 90, 0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.65rem; padding: 0.7rem 0.85rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(232, 168, 74, 0.08); color: var(--paper);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.85rem;
+  color: var(--violet); margin: 0.5rem 0 1rem;
+}
+.check-list { list-style: none; margin: 1rem 0; padding: 0; }
+.check-list li {
+  display: flex; gap: 0.65rem; align-items: flex-start;
+  padding: 0.55rem 0.7rem; border: 1px solid var(--line);
+  margin-bottom: 0.4rem; background: var(--panel);
+  cursor: pointer; transition: all 0.2s;
+}
+.check-list li:hover { border-color: var(--line-strong); }
+.check-list li.done {
+  border-color: var(--mint); background: rgba(107, 200, 154, 0.08);
+}
+.check-list li.done .ck-text { color: var(--mint); text-decoration: line-through; opacity: 0.85; }
+.ck-box {
+  width: 18px; height: 18px; border: 1px solid var(--signal);
+  flex-shrink: 0; margin-top: 0.15rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: transparent;
+}
+.check-list li.done .ck-box {
+  background: var(--mint); border-color: var(--mint); color: var(--ink);
+}
+.ck-text { font-size: 0.9rem; color: var(--text-dim); }
+.cover { text-align: left; padding: 1rem 0 2rem; }
+.cover-badge {
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--signal); border: 1px solid var(--line-strong);
+  display: inline-block; padding: 0.3rem 0.7rem; margin-bottom: 1.25rem;
+}
+.cover h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1.1; margin-bottom: 0.75rem; max-width: 16ch;
+}
+.cover .tagline {
+  font-size: 1.1rem; color: var(--paper);
+  max-width: 36em; margin-bottom: 1.5rem;
+}
+.goals { display: grid; gap: 0.55rem; margin: 1.25rem 0 1.75rem; }
+.goal {
+  display: grid; grid-template-columns: auto 1fr; gap: 0.85rem;
+  align-items: start; padding: 0.85rem 1rem;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.goal-n {
+  font-family: var(--font-display); font-size: 1.2rem;
+  color: var(--violet); line-height: 1;
+}
+.goal p { margin: 0; font-size: 0.92rem; }
+.cover-img {
+  margin-top: 1.5rem; border: 1px solid var(--line-strong);
+  max-width: 100%; width: 100%; background: var(--panel);
+}
+.kbd-hint {
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.04em;
+}
+.kbd {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  border: 1px solid var(--line-strong); padding: 0.1rem 0.35rem;
+  color: var(--signal); background: var(--panel);
+}
+.kw-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem; margin: 1rem 0;
+}
+.kw {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.9rem 1rem;
+}
+.kw h4 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.kw p { margin: 0; font-size: 0.85rem; }
+.path-hint {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--violet); background: rgba(167, 139, 250, 0.08);
+  border: 1px dashed rgba(167, 139, 250, 0.35);
+  padding: 0.65rem 0.85rem; margin: 0.85rem 0;
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0;
+    width: min(86vw, 300px); z-index: 40;
+    transform: translateX(-105%); transition: transform 0.3s ease;
+    box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3, .kw-grid { grid-template-columns: 1fr; }
+  .loop-stepper .steps, .loop-stepper .steps.steps5, .loop-stepper .steps.steps3, .loop-stepper .steps.steps6 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 35;
+  }
+  .overlay.show { display: block; }
+}
+@media (max-width: 520px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+}
+
+
+</style>
+</head>
+<body>
+<!--
+  COVERAGE CHECKLIST (原书 ∪ 学习版 · 扩写后 108 页)
+  [x] 章首：分水岭、能力边界、造轮子、三种范式、工具手脚、路线图
+  [x] 4.1.1–4.1.3 依赖、.env、HelloAgentsLLM init/think/demo、读代码四问、护栏、quiz
+  [x] 4.2.1 背景 CoT/纯行动、T/A/O、公式、图4.1、场景、华为目标
+  [x] 4.2.2 SerpApi、三要素、search、解析优先级、ToolExecutor、英伟达测试
+  [x] 4.2.3 Prompt、循环、解析、Finish、history、运行轨迹、拼装步进
+  [x] 4.2.4 特点、局限、调试五条、闪卡、quiz
+  [x] 4.3.1–4.3.4 两阶段、公式、图4.2、不用工具、水果店、Planner/Executor/Agent、实例、对比、quiz
+  [x] 4.4.1–4.4.5 三步、四维、公式、图4.3、Memory、三角色、终稿代码、成本收益、闪卡、quiz
+  [x] 4.5 小结、表4.1/图4.4、脑内小图、三坑、清单、习题1–7引导、文献、下一章
+-->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 04</div>
+      <h1>智能体经典范式构建<br/>互动教程</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>学习进度</span>
+        <span id="progressText">1 / 108</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav" aria-label="章节目录"></nav>
+    <div class="sidebar-foot">Lab 04 · Amber · ← → 翻页 · 108 页</div>
+  </aside>
+  <main class="stage">
+    <div class="topbar">
+      <button type="button" class="menu-btn" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button type="button" class="btn" id="btnPrev">上一页</button>
+        <button type="button" class="btn btn-primary" id="btnNext">下一页</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+      <section class="slide active" data-id="cover" data-label="封面 · 学习目标" data-group="开篇">
+
+        <div class="cover">
+          <div class="cover-badge">Hello-Agents · Lab 04 · Amber Signal</div>
+          <h2>智能体经典范式构建</h2>
+          <p class="tagline">把会说话的模型，训练成会做事的系统——学会安排模型什么时候思考、什么时候行动、什么时候停下来。</p>
+          <div class="goals">
+            <div class="goal"><div class="goal-n">01</div><p>搭好共用地基：环境、密钥、<code>HelloAgentsLLM</code> 与工具接口。</p></div>
+            <div class="goal"><div class="goal-n">02</div><p>亲手实现三种范式：ReAct、Plan-and-Solve、Reflection——原理、代码、运行轨迹与适用边界。</p></div>
+            <div class="goal"><div class="goal-n">03</div><p>建立编排思维：Agent「聪明程度」= 模型能力 × 流程设计；并能按任务选型与混合。</p></div>
+          </div>
+          <p class="kbd-hint">侧栏目录 · <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · 本教程约百页，对齐原书全部知识点</p>
+          <img class="cover-img" src="assets/ch4_cover.svg" alt="Lab 04 三种范式封面示意图"/>
+        </div>
+
+      </section>
+      <section class="slide" data-id="watershed" data-label="分水岭：从认知到搭系统" data-group="开篇">
+
+        <div class="slide-sub">章首 · 承接第三章</div>
+        <h2 class="slide-title">上一章是「大脑」，这一章是「会做事」</h2>
+        <p class="lead">第三章讲清了 LLM 的 Transformer、交互方法与能力边界。现在要把理论变成可运行的智能体。</p>
+        <p>现代智能体的核心：把大模型的<strong>推理能力</strong>与外部世界联通——理解意图、拆解任务，再调用代码解释器、搜索引擎、API 等<strong>工具</strong>获取信息、执行操作、达成目标。</p>
+        <div class="callout" data-label="本章真正教什么">
+          <p style="margin:0">难点不在多写几行代码，而在学会<strong>编排</strong>：模型何时思考、何时行动、何时停下来。同一模型，不同流程，表现可以完全不同。</p>
+        </div>
+
+      </section>
+      <section class="slide" data-id="boundary" data-label="智能体也有能力边界" data-group="开篇">
+
+        <div class="slide-sub">章首 · 边界意识</div>
+        <h2 class="slide-title">不是万能：幻觉、死循环、工具误用</h2>
+        <p>智能体同样面临来自大模型本身的挑战——这些也构成其能力边界：</p>
+        <div class="kw-grid">
+          <div class="kw"><h4>幻觉</h4><p>编造事实或编造工具返回；无 Observation 校验时尤其危险。</p></div>
+          <div class="kw"><h4>推理循环</h4><p>复杂任务中反复同一 Action，或 Thought 原地打转，耗尽步数与费用。</p></div>
+          <div class="kw"><h4>工具误用</h4><p>选错工具、参数格式不对、忽略 Observation 错误信息继续硬推。</p></div>
+          <div class="kw"><h4>工程对策预告</h4><p><code>max_steps</code>、输出解析校验、工具描述质量、Reflection 事后纠错——本章都会碰到。</p></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="why" data-label="为何亲手造轮子" data-group="开篇">
+
+        <div class="slide-sub">章首 · 动机</div>
+        <h2 class="slide-title">已有 LangChain / LlamaIndex，为何还要自己搭？</h2>
+        <div class="card-grid">
+          <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+            <div class="flip-face front"><h3>看清机制</h3><div class="en">Mechanism</div><div class="flip-hint">点击翻转</div></div>
+            <div class="flip-face back"><h3>不只调用</h3><p>高度抽象掩盖了思考/行动如何编排——亲手实现才能理解设计好处。</p></div>
+          </div></div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+            <div class="flip-face front"><h3>暴露工程坑</h3><div class="en">Engineering</div><div class="flip-hint">点击翻转</div></div>
+            <div class="flip-face back"><h3>框架替你挡了</h3><p>格式解析、工具失败重试、防死循环……自己处理一遍，才是系统设计能力。</p></div>
+          </div></div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+            <div class="flip-face front"><h3>使用者→创造者</h3><div class="en">Creator</div><div class="flip-hint">点击翻转</div></div>
+            <div class="flip-face back"><h3>可定制</h3><p>标准组件不够时，你能深度定制甚至从零构建全新智能体。</p></div>
+          </div></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="map" data-label="三种范式速览" data-group="开篇">
+
+        <div class="slide-sub">关键词地图</div>
+        <h2 class="slide-title">三种做事风格，不是「谁更高级」</h2>
+        <div class="compare3">
+          <div class="compare-col a"><h3>ReAct</h3><p style="margin:0;font-size:0.88rem"><strong>边想边做</strong>（Yao, 2022）。路径不确定、需边查边改。Thought→Action→Observation。</p></div>
+          <div class="compare-col b"><h3>Plan-and-Solve</h3><p style="margin:0;font-size:0.88rem"><strong>先规划再执行</strong>（Wang, 2023）。步骤清晰、任务链长更稳。Plan→Solve。</p></div>
+          <div class="compare-col c"><h3>Reflection</h3><p style="margin:0;font-size:0.88rem"><strong>做完回头检查</strong>（Reflexion / Shinn, 2023）。易错、要质量。执行→反思→优化。</p></div>
+        </div>
+        <div class="analogy">考试：ReAct≈边想边翻资料；P&amp;S≈先列完整步骤再下笔；Reflection≈做完自己验算。风格/代价/适用面不同。</div>
+
+      </section>
+      <section class="slide" data-id="tools-why" data-label="工具=手脚" data-group="开篇">
+
+        <div class="slide-sub">章首 · 接口意识</div>
+        <h2 class="slide-title">工具不是附属品，是接触世界的手脚</h2>
+        <p>LLM 是大脑；Tools 是手脚。工具接口清晰与否，直接影响 Agent 稳定性——后面 ReAct 一节会把 Name / Description / Execution 三要素写透。</p>
+        <div class="note"><strong>读本章建议：</strong>每遇一段代码先问四件事（见 4.1.3）：定义能力还是组织流程？操作模型/工具/状态/解析？删掉会丢什么？业务逻辑还是工程护栏？</div>
+
+      </section>
+      <section class="slide" data-id="roadmap" data-label="本章学习路线图" data-group="开篇">
+
+        <div class="slide-sub">导航</div>
+        <h2 class="slide-title">按原书小节走完一遍</h2>
+        <div class="timeline">
+          <div class="tl-item"><span class="tag">4.1</span><h4>环境与 HelloAgentsLLM</h4><p>依赖、.env、流式 think()</p></div>
+          <div class="tl-item"><span class="tag">4.2</span><h4>ReAct</h4><p>流程·工具·Agent 编码·特点局限调试</p></div>
+          <div class="tl-item"><span class="tag">4.3</span><h4>Plan-and-Solve</h4><p>规划器·执行器与状态·水果店实例</p></div>
+          <div class="tl-item"><span class="tag">4.4</span><h4>Reflection</h4><p>Memory·三角色 Prompt·素数优化·成本收益</p></div>
+          <div class="tl-item"><span class="tag">4.5+</span><h4>小结·习题·文献</h4><p>选型表、三坑、自测、七道习题引导</p></div>
+        </div>
+        <div class="path-hint">完整可运行代码：code/chapter4/llm_client.py · tools.py · ReAct.py · Plan_and_solve.py · Reflection.py</div>
+
+      </section>
+      <section class="slide" data-id="s41" data-label="4.1 节导读" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">§ 4.1</div>
+        <h2 class="slide-title">先打地基，再谈「聪明逻辑」</h2>
+        <p class="lead">正式搭 Agent 前先把地基打好。很多人卡在环境配置、API、工具接口不统一——这部分干净，后面不同范式才能复用。</p>
+        <div class="timeline">
+          <div class="tl-item"><span class="tag">4.1.1</span><h4>安装依赖</h4><p><code>openai</code> + <code>python-dotenv</code>；Python 3.10+</p></div>
+          <div class="tl-item"><span class="tag">4.1.2</span><h4>配置密钥</h4><p><code>.env</code>：LLM_API_KEY / MODEL_ID / BASE_URL</p></div>
+          <div class="tl-item"><span class="tag">4.1.3</span><h4>封装 LLM 客户端</h4><p><code>HelloAgentsLLM</code>——整章共用底座</p></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="deps" data-label="4.1.1 安装依赖" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">§ 4.1.1</div>
+        <h2 class="slide-title">Python 3.10+ 与两块积木</h2>
+        <p>本书实战主要用 Python，建议 <strong>3.10 或更高</strong>。需要：</p>
+        <ul>
+          <li><code>openai</code>：与大语言模型交互（兼容 OpenAI 接口的服务均可）</li>
+          <li><code>python-dotenv</code>：安全加载 API 密钥，避免写进源码</li>
+        </ul>
+        <div class="code-block">pip install openai python-dotenv</div>
+
+      </section>
+      <section class="slide" data-id="deps2" data-label="依赖各自干什么" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">§ 4.1.1 · 补充</div>
+        <h2 class="slide-title">后面还会陆续装什么？</h2>
+        <div class="kw-grid">
+          <div class="kw"><h4>openai</h4><p>统一客户端；本章 <code>HelloAgentsLLM</code> 内部创建 <code>OpenAI(...)</code>。</p></div>
+          <div class="kw"><h4>python-dotenv</h4><p><code>load_dotenv()</code> 读项目根目录 <code>.env</code>。</p></div>
+          <div class="kw"><h4>google-search-results</h4><p>4.2 节 SerpApi 搜索工具（ReAct 实战）。</p></div>
+          <div class="kw"><h4>标准库</h4><p><code>re</code>（解析 Thought/Action）、<code>ast</code>（安全解析计划列表）、<code>os</code>/<code>typing</code>。</p></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="env" data-label="4.1.2 配置 API 密钥" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">§ 4.1.2</div>
+        <h2 class="slide-title">把密钥放进 .env，别写进代码</h2>
+        <ol>
+          <li>在项目根目录创建名为 <code>.env</code> 的文件</li>
+          <li>写入模型 ID、API 密钥、服务地址（可指向官方或兼容本地/第三方）</li>
+          <li>不确定如何获取时，参考仓库 <strong>Extra07-环境配置</strong></li>
+        </ol>
+        <div class="code-block"># .env file
+LLM_API_KEY="YOUR-API-KEY"
+LLM_MODEL_ID="YOUR-MODEL"
+LLM_BASE_URL="YOUR-URL"</div>
+        <p>代码将从此文件自动加载这些配置。</p>
+
+      </section>
+      <section class="slide" data-id="env2" data-label=".env 变量与超时" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">§ 4.1.2 · 细节</div>
+        <h2 class="slide-title">三个必填 + 一个可选超时</h2>
+        <div class="arch-stack">
+          <div class="arch-block enc"><strong>LLM_MODEL_ID</strong><div class="sub">模型名，如兼容接口上的 chat 模型标识。</div></div>
+          <div class="arch-block enc"><strong>LLM_API_KEY</strong><div class="sub">密钥；勿提交到 Git。</div></div>
+          <div class="arch-block enc"><strong>LLM_BASE_URL</strong><div class="sub">服务根地址；本地代理/第三方兼容站均可。</div></div>
+          <div class="arch-block head"><strong>LLM_TIMEOUT</strong><div class="sub">可选；代码默认 <code>int(os.getenv("LLM_TIMEOUT", 60))</code> 秒。</div></div>
+        </div>
+        <div class="note"><strong>兼容性：</strong>任何兼容 OpenAI Chat Completions 的服务都能接——这是本章「通用客户端」设计的前提。</div>
+
+      </section>
+      <section class="slide" data-id="llm-intro" data-label="4.1.3 为何要封装客户端" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">§ 4.1.3 · 导读</div>
+        <h2 class="slide-title">统一模型接口：后面三种范式都靠它</h2>
+        <p>你可以把它想成「统一的模型接口」。ReAct / Plan-and-Solve / Reflection 工作方式不同，但都要向模型发请求、拿回结果。封装好像搭积木；封装乱则每种范式重复踩坑。</p>
+        <div class="callout" data-label="类职责">
+          <p style="margin:0"><code>HelloAgentsLLM</code>：为本书定制的 LLM 客户端；调用任何兼容 OpenAI 接口的服务，并<strong>默认使用流式响应</strong>。</p>
+        </div>
+
+      </section>
+      <section class="slide" data-id="llm-init" data-label="HelloAgentsLLM.__init__" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">§ 4.1.3 · 构造</div>
+        <h2 class="slide-title">参数优先，否则读环境变量</h2>
+        <div class="code-block">class HelloAgentsLLM:
+    def __init__(self, model=None, apiKey=None, baseUrl=None, timeout=None):
+        self.model = model or os.getenv("LLM_MODEL_ID")
+        apiKey = apiKey or os.getenv("LLM_API_KEY")
+        baseUrl = baseUrl or os.getenv("LLM_BASE_URL")
+        timeout = timeout or int(os.getenv("LLM_TIMEOUT", 60))
+        if not all([self.model, apiKey, baseUrl]):
+            raise ValueError("模型ID、API密钥和服务地址必须被提供或在.env中定义。")
+        self.client = OpenAI(api_key=apiKey, base_url=baseUrl, timeout=timeout)</div>
+        <div class="note"><strong>护栏：</strong>缺任一配置直接抛错，避免「默默用空密钥打到一半才失败」。</div>
+
+      </section>
+      <section class="slide" data-id="llm-think" data-label="think() 流式调用" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">§ 4.1.3 · think</div>
+        <h2 class="slide-title">流式拼接 delta，得到完整字符串</h2>
+        <div class="code-block">def think(self, messages: List[Dict[str, str]], temperature: float = 0) -> str:
+    print(f"🧠 正在调用 {self.model} 模型...")
+    try:
+        response = self.client.chat.completions.create(
+            model=self.model, messages=messages,
+            temperature=temperature, stream=True,
+        )
+        collected = []
+        for chunk in response:
+            content = chunk.choices[0].delta.content or ""
+            print(content, end="", flush=True)
+            collected.append(content)
+        print()
+        return "".join(collected)
+    except Exception as e:
+        print(f"❌ 调用LLM API时发生错误: {e}")
+        return None</div>
+        <p><code>temperature=0</code> 默认更稳，利于格式化输出与调试。</p>
+
+      </section>
+      <section class="slide" data-id="llm-demo" data-label="客户端调用示例" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">§ 4.1.3 · 示例</div>
+        <h2 class="slide-title">system + user → 快速排序 demo</h2>
+        <div class="code-block">if __name__ == '__main__':
+    llmClient = HelloAgentsLLM()
+    exampleMessages = [
+        {"role": "system", "content": "You are a helpful assistant that writes Python code."},
+        {"role": "user", "content": "写一个快速排序算法"}
+    ]
+    responseText = llmClient.think(exampleMessages)</div>
+        <div class="code-block" style="color:#9aafb8">--- 调用LLM ---
+🧠 正在调用 xxxxxx 模型...
+✅ 大语言模型响应成功:
+快速排序是一种非常高效的排序算法...</div>
+        <div class="path-hint">完整文件：code/chapter4/llm_client.py</div>
+
+      </section>
+      <section class="slide" data-id="readcode" data-label="读代码四问" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">学习版脚手架</div>
+        <h2 class="slide-title">别从上到下死读，先问四件事</h2>
+        <div class="kw-grid">
+          <div class="kw"><h4>① 能力还是流程？</h4><p>这段是在定义能力，还是在组织流程？</p></div>
+          <div class="kw"><h4>② 操作对象？</h4><p>模型、工具、状态，还是输出解析？</p></div>
+          <div class="kw"><h4>③ 删掉会怎样？</h4><p>整个 Agent 会失去什么能力？</p></div>
+          <div class="kw"><h4>④ 业务还是护栏？</h4><p>循环上限、异常、解析——往往不如 Prompt 酷，但决定稳不稳。</p></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="guardrails" data-label="工程护栏意识" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">§ 4.1.3 · 延伸</div>
+        <h2 class="slide-title">后面会反复出现的「不酷但关键」</h2>
+        <ul>
+          <li><strong>配置校验</strong>：缺密钥立即 ValueError</li>
+          <li><strong>API 异常</strong>：think 捕获后返回 None，上层须判断</li>
+          <li><strong>max_steps / max_iterations</strong>：防死循环</li>
+          <li><strong>结构化输出解析</strong>：正则 / ast.literal_eval，失败要打印原文</li>
+          <li><strong>空计划终止</strong>：Planner 失败则不再盲目执行</li>
+        </ul>
+
+      </section>
+      <section class="slide" data-id="quiz41" data-label="检测 · 4.1 节" data-group="4.1 环境与地基">
+
+        <div class="slide-sub">自测</div>
+        <h2 class="slide-title">环境与底座</h2>
+        <div class="quiz-score" id="score-q41">本组已答：0 / 0 正确</div>
+        <div class="quiz-item" data-quiz="q41" data-answer="1">
+          <h4>1. HelloAgentsLLM 缺 API Key 时通常会？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">静默用空字符串继续调用</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">在 __init__ 抛出 ValueError</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">自动改用本地离线模型</button>
+          <div class="quiz-explain">构造时 <code>if not all([model, apiKey, baseUrl])</code> 直接报错，强迫先配好环境。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q41" data-answer="2">
+          <h4>2. think() 默认 temperature=0 的主要好处？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">生成更有创意的散文</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">强制关闭流式输出</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">输出更确定，利于格式遵循与调试</button>
+          <div class="quiz-explain">Agent 依赖稳定的 Thought/Action 或列表格式，低温度更合适。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q41" data-answer="0">
+          <h4>3. .env 里与模型服务无关、后面 ReAct 才加的是？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">SERPAPI_API_KEY</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">LLM_BASE_URL</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">LLM_MODEL_ID</button>
+          <div class="quiz-explain">搜索工具密钥；LLM 三变量是底座通用配置。</div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="s42" data-label="4.2 节导读" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2</div>
+        <h2 class="slide-title">最经典、最适合建立直觉的范式</h2>
+        <p class="lead">ReAct（Reason + Act）由 Shunyu Yao 于 2022 提出。核心：模仿人类解决问题，把<strong>推理</strong>与<strong>行动</strong>显式结合，形成「思考-行动-观察」循环。</p>
+        <div class="analogy">像认真做题：先想下一步 → 查资料/调工具 → 根据新结果再想。没有一开始规划整条路线，而是边走边修正。适合信息不完整、路径不确定的场景。</div>
+
+      </section>
+      <section class="slide" data-id="react-paper" data-label="ReAct 论文定位" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2 · 出处</div>
+        <h2 class="slide-title">Reasoning and Acting · ICLR 2023</h2>
+        <p>文献 [1]：Yao et al. <em>ReAct: Synergizing reasoning and acting in language models</em>。</p>
+        <div class="callout" data-label="一句话">
+          <p style="margin:0">让模型每一步输出都遵循固定轨迹：Thought → Action →（环境返回）Observation，再进入下一轮，直到 Finish。</p>
+        </div>
+
+      </section>
+      <section class="slide" data-id="react-vs" data-label="纯思考 vs 纯行动" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.1 · 背景</div>
+        <h2 class="slide-title">ReAct 诞生前的两类主流</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>纯思考 · CoT</h3><ul><li>能引导复杂逻辑推理</li><li>无法与外部世界交互</li><li>易产生事实幻觉</li></ul></div>
+          <div class="compare-col b"><h3>纯行动</h3><ul><li>直接输出要执行的动作</li><li>缺乏规划与纠错</li><li>难根据中间结果改道</li></ul></div>
+        </div>
+        <div class="compare-vs">ReAct 的洞察</div>
+        <p style="text-align:center;color:var(--paper)"><strong>思考与行动相辅相成</strong>：思考指导行动，行动结果反过来修正思考。</p>
+
+      </section>
+      <section class="slide" data-id="thought" data-label="Thought 思考" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.1 · 三拍之一</div>
+        <h2 class="slide-title">Thought：智能体的内心独白</h2>
+        <p>分析当前情况、分解任务、制定下一步计划，或反思上一步结果。这是可解释性的关键来源——调试时先看 Thought 链。</p>
+        <div class="code-block">Thought: 要回答这个问题，我需要查找华为最新发布的手机型号及其主要特点。
+这些信息可能在我的现有知识库之外，因此需要使用搜索引擎来获取最新数据。</div>
+
+      </section>
+      <section class="slide" data-id="action" data-label="Action 行动" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.1 · 三拍之二</div>
+        <h2 class="slide-title">Action：调用工具或宣布结束</h2>
+        <p>具体动作通常是外部工具调用，格式固定为 <code>工具名[输入]</code>；任务完成时用 <code>Finish[最终答案]</code>。</p>
+        <div class="code-block">Action: Search[华为最新款手机]
+# 或
+Action: Finish[根据搜索结果，最新旗舰是……]</div>
+        <div class="note"><strong>格式规约是机制基石：</strong>代码靠正则精确解析意图；模型若不守格式，整条流水线会断。</div>
+
+      </section>
+      <section class="slide" data-id="observation" data-label="Observation 观察" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.1 · 三拍之三</div>
+        <h2 class="slide-title">Observation：工具返回的事实</h2>
+        <p>执行 Action 后从外部工具回来的结果——搜索摘要、API 返回值、错误信息等。必须写回历史，下一轮 Thought 才能「看见」。</p>
+        <div class="loop-viz">
+          <div class="loop-node">Thought</div><div class="loop-arrow">→</div>
+          <div class="loop-node">Action</div><div class="loop-arrow">→</div>
+          <div class="loop-node">Observation</div><div class="loop-arrow">→</div>
+          <div class="loop-node">…循环</div>
+          <div class="loop-desc">推理使行动有目的 · 行动为推理提供事实依据</div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="react-formula" data-label="ReAct 形式化" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.1 · 公式</div>
+        <h2 class="slide-title">策略 π 与工具 T</h2>
+        <p>时间步 \(t\)：根据问题 \(q\) 与历史行动-观察轨迹，生成思考与行动：</p>
+        <div class="formula">\[\left(th_t,a_t\right)=\pi\left(q,(a_1,o_1),\ldots,(a_{t-1},o_{t-1})\right)\]</div>
+        <p>环境工具执行行动并返回观察：</p>
+        <div class="formula">\[o_t = T(a_t)\]</div>
+        <p>新的 \((a_t,o_t)\) 追加到历史，直到 Thought 判定任务完成。</p>
+
+      </section>
+      <section class="slide" data-id="fig41" data-label="图 4.1 协同循环" data-group="4.2 ReAct">
+
+        <div class="slide-sub">图 4.1</div>
+        <h2 class="slide-title">「思考-行动-观察」协同循环</h2>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/4-figures/4-1.png" alt="ReAct范式中的思考-行动-观察协同循环"/>
+          <div class="fig-cap">图 4.1 ReAct 范式中的「思考-行动-观察」协同循环</div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="react-when" data-label="ReAct 适用场景" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.1 · 场景</div>
+        <h2 class="slide-title">需要「手脚」碰外部世界时</h2>
+        <div class="kw-grid">
+          <div class="kw"><h4>外部知识</h4><p>实时信息：天气、新闻、股价；专业领域检索。</p></div>
+          <div class="kw"><h4>精确计算</h4><p>把数学交给计算器工具，避免 LLM 算错。</p></div>
+          <div class="kw"><h4>API 交互</h4><p>操作数据库、调用业务服务完成特定功能。</p></div>
+          <div class="kw"><h4>本章目标题</h4><p>「华为最新手机是哪一款？主要卖点？」——需搜索再总结。</p></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="tools-intro" data-label="4.2.2 工具导读" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.2</div>
+        <h2 class="slide-title">大脑之外，还要手脚</h2>
+        <p>针对「华为最新手机」，我们提供网页搜索工具。选用 <strong>SerpApi</strong>：通过 API 提供结构化 Google 结果，可返回答案摘要框或知识图谱信息。</p>
+        <div class="note"><strong>学习版提醒：</strong>别只盯 Prompt——工具设计同样关键；Description 写得好不好，直接决定模型何时调用它。</div>
+
+      </section>
+      <section class="slide" data-id="serpapi" data-label="SerpApi 安装与密钥" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.2 · 准备</div>
+        <h2 class="slide-title">pip + SERPAPI_API_KEY</h2>
+        <div class="code-block">pip install google-search-results</div>
+        <p>前往 SerpApi 官网注册免费账户，把密钥追加到 <code>.env</code>：</p>
+        <div class="code-block"># .env（保留之前的 LLM 配置）
+SERPAPI_API_KEY="YOUR_SERPAPI_API_KEY"</div>
+
+      </section>
+      <section class="slide" data-id="tool-3" data-label="工具三要素" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.2 · 定义</div>
+        <h2 class="slide-title">Name · Description · Execution</h2>
+        <div class="arch-stack">
+          <div class="arch-block enc"><strong>名称 Name</strong><div class="sub">简洁唯一标识，如 <code>Search</code>，供 Action 调用。</div></div>
+          <div class="arch-block head"><strong>描述 Description（最关键）</strong><div class="sub">自然语言说明用途；LLM 靠它判断何时用哪个工具。</div></div>
+          <div class="arch-block dec"><strong>执行逻辑 Execution</strong><div class="sub">真正干活的函数，如 <code>search(query)</code>。</div></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="tool-desc" data-label="Description 示例" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.2 · 描述写作</div>
+        <h2 class="slide-title">写给模型看的「使用说明书」</h2>
+        <div class="code-block">search_description = (
+  "一个网页搜索引擎。当你需要回答关于时事、事实"
+  "以及在你的知识库中找不到的信息时，应使用此工具。"
+)
+toolExecutor.registerTool("Search", search_description, search)</div>
+        <p>描述含糊 → 该搜不搜或乱搜；描述清晰 → Action 选择更稳。</p>
+
+      </section>
+      <section class="slide" data-id="search-code" data-label="search() 核心实现" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.2 · 代码</div>
+        <h2 class="slide-title">SerpApi 查询与区域参数</h2>
+        <div class="code-block">def search(query: str) -> str:
+    api_key = os.getenv("SERPAPI_API_KEY")
+    if not api_key:
+        return "错误:SERPAPI_API_KEY 未在 .env 文件中配置。"
+    params = {
+        "engine": "google", "q": query, "api_key": api_key,
+        "gl": "cn",   # 国家代码
+        "hl": "zh-cn", # 语言代码
+    }
+    client = SerpApiClient(params)
+    results = client.get_dict()
+    # …智能解析见下一页…</div>
+
+      </section>
+      <section class="slide" data-id="search-pri" data-label="智能解析优先级" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.2 · 解析</div>
+        <h2 class="slide-title">优先直接答案，再退回有机结果</h2>
+        <div class="loop-stepper" id="searchPri">
+          <div class="steps steps5">
+            <button type="button" class="step-btn on" onclick="showSearchPri(0)">1 answer_box_list</button>
+            <button type="button" class="step-btn" onclick="showSearchPri(1)">2 answer_box</button>
+            <button type="button" class="step-btn" onclick="showSearchPri(2)">3 knowledge_graph</button>
+            <button type="button" class="step-btn" onclick="showSearchPri(3)">4 organic 前3</button>
+            <button type="button" class="step-btn" onclick="showSearchPri(4)">5 兜底</button>
+          </div>
+          <div class="loop-panel" id="searchPriPanel"></div>
+        </div>
+        <div class="note">这种「智能解析」能为 LLM 提供质量更高的 Observation。</div>
+
+      </section>
+      <section class="slide" data-id="tool-exec" data-label="ToolExecutor 类" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.2 · 管理器</div>
+        <h2 class="slide-title">统一注册与调度多种工具</h2>
+        <div class="code-block">class ToolExecutor:
+    def __init__(self):
+        self.tools: Dict[str, Dict[str, Any]] = {}
+    def registerTool(self, name, description, func):
+        if name in self.tools:
+            print(f"警告:工具 '{name}' 已存在，将被覆盖。")
+        self.tools[name] = {"description": description, "func": func}
+    def getTool(self, name):
+        return self.tools.get(name, {}).get("func")
+    def getAvailableTools(self) -> str:
+        return "\n".join([f"- {n}: {i['description']}" for n,i in self.tools.items()])</div>
+
+      </section>
+      <section class="slide" data-id="tool-test" data-label="英伟达搜索测试" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.2 · 测试</div>
+        <h2 class="slide-title">注册 Search → Observation 样例</h2>
+        <div class="code-block">toolExecutor.registerTool("Search", search_description, search)
+# Action 模拟：Search['英伟达最新的GPU型号是什么']
+observation = tool_function("英伟达最新的GPU型号是什么")</div>
+        <div class="code-block" style="color:#9aafb8">[1] GeForce RTX 50 系列显卡
+GeForce RTX™ 50 系列GPU 搭载NVIDIA Blackwell 架构...
+[2] 比较GeForce 系列最新一代显卡和前代显卡
+[3] GeForce 显卡| NVIDIA
+...</div>
+        <div class="path-hint">code/chapter4/tools.py</div>
+
+      </section>
+      <section class="slide" data-id="react-asm-intro" data-label="4.2.3 拼装现场" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · 导读</div>
+        <h2 class="slide-title">把 LLM 客户端 + 工具执行器装成 Agent</h2>
+        <p>用 <code>ReActAgent</code> 封装核心逻辑。拆开看四件事：</p>
+        <div class="kw-grid">
+          <div class="kw"><h4>循环</h4><p>格式化 Prompt → 调 LLM → 解析 → 执行 → 整合</p></div>
+          <div class="kw"><h4>解析</h4><p>从纯文本抽出 Thought / Action</p></div>
+          <div class="kw"><h4>回流</h4><p>Action + Observation 进 history</p></div>
+          <div class="kw"><h4>结束</h4><p>Finish 或触达 max_steps</p></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="react-prompt" data-label="REACT_PROMPT 模板" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · (1) 提示词</div>
+        <h2 class="slide-title">提示词是整套机制的基石</h2>
+        <div class="code-block">REACT_PROMPT_TEMPLATE = """
+请注意，你是一个有能力调用外部工具的智能助手。
+可用工具如下:
+{tools}
+请严格按照以下格式进行回应:
+Thought: 你的思考过程……
+Action: 必须是以下格式之一:
+- `{{tool_name}}[{{tool_input}}]`:调用工具
+- `Finish[最终答案]`:已获得最终答案时
+Question: {question}
+History: {history}
+"""</div>
+
+      </section>
+      <section class="slide" data-id="react-prompt2" data-label="Prompt 四要素" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · 模板解剖</div>
+        <h2 class="slide-title">角色 · 工具 · 格式 · 动态上下文</h2>
+        <div class="arch-stack">
+          <div class="arch-block enc"><strong>角色定义</strong><div class="sub">「有能力调用外部工具的智能助手」</div></div>
+          <div class="arch-block enc"><strong>工具清单 {tools}</strong><div class="sub">来自 getAvailableTools()</div></div>
+          <div class="arch-block head"><strong>格式规约 Thought/Action</strong><div class="sub">强制结构化，便于代码解析</div></div>
+          <div class="arch-block dec"><strong>{question} / {history}</strong><div class="sub">原始问题 + 累积轨迹</div></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="react-init" data-label="ReActAgent.__init__" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · (2) 类结构</div>
+        <h2 class="slide-title">注入 LLM、工具箱与步数上限</h2>
+        <div class="code-block">class ReActAgent:
+    def __init__(self, llm_client, tool_executor, max_steps: int = 5):
+        self.llm_client = llm_client
+        self.tool_executor = tool_executor
+        self.max_steps = max_steps
+        self.history = []</div>
+        <div class="note"><strong>max_steps 是安全阀</strong>：防止无限循环耗尽资源。默认 5，可按任务调。</div>
+
+      </section>
+      <section class="slide" data-id="react-while" data-label="run() while 循环" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · 核心循环</div>
+        <h2 class="slide-title">格式化 → 思考 →（解析/执行/整合）</h2>
+        <div class="code-block">def run(self, question: str):
+    self.history = []
+    current_step = 0
+    while current_step &lt; self.max_steps:
+        current_step += 1
+        tools_desc = self.tool_executor.getAvailableTools()
+        history_str = "\n".join(self.history)
+        prompt = REACT_PROMPT_TEMPLATE.format(
+            tools=tools_desc, question=question, history=history_str)
+        messages = [{"role": "user", "content": prompt}]
+        response_text = self.llm_client.think(messages=messages)
+        if not response_text: break
+        # …解析、执行、整合…</div>
+
+      </section>
+      <section class="slide" data-id="react-parse" data-label="输出解析器" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · (3) 解析</div>
+        <h2 class="slide-title">正则抽出 Thought 与 Action</h2>
+        <div class="code-block">def _parse_output(self, text: str):
+    thought_match = re.search(r"Thought:\s*(.*?)(?=\nAction:|$)", text, re.DOTALL)
+    action_match = re.search(r"Action:\s*(.*?)$", text, re.DOTALL)
+    thought = thought_match.group(1).strip() if thought_match else None
+    action = action_match.group(1).strip() if action_match else None
+    return thought, action
+
+def _parse_action(self, action_text: str):
+    match = re.match(r"(\w+)\[(.*)\]", action_text, re.DOTALL)
+    if match: return match.group(1), match.group(2)
+    return None, None</div>
+        <p>例：<code>Search[华为最新手机]</code> → 名 <code>Search</code>，输入 <code>华为最新手机</code>。</p>
+
+      </section>
+      <section class="slide" data-id="react-exec" data-label="Finish 与工具调用" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · (4) 执行</div>
+        <h2 class="slide-title">先判 Finish，再调工具</h2>
+        <div class="code-block">if action.startswith("Finish"):
+    final_answer = re.match(r"Finish\[(.*)\]", action).group(1)
+    return final_answer
+tool_name, tool_input = self._parse_action(action)
+if not tool_name or not tool_input:
+    continue  # 无效格式
+tool_function = self.tool_executor.getTool(tool_name)
+if not tool_function:
+    observation = f"错误:未找到名为 '{tool_name}' 的工具。"
+else:
+    observation = tool_function(tool_input)</div>
+
+      </section>
+      <section class="slide" data-id="react-hist" data-label="观测回流历史" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · (5) 闭环</div>
+        <h2 class="slide-title">Action + Observation 写入 history</h2>
+        <div class="code-block">print(f"👀 观察: {observation}")
+self.history.append(f"Action: {action}")
+self.history.append(f"Observation: {observation}")
+# 循环耗尽：
+print("已达到最大步数，流程终止。")
+return None</div>
+        <p>下一轮生成 Prompt 时就能「看到」上一步结果，并据此新规划。</p>
+
+      </section>
+      <section class="slide" data-id="react-asm" data-label="拼装步进总览" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · 互动</div>
+        <h2 class="slide-title">五段逻辑点一点</h2>
+        <div class="loop-stepper" id="reactAsm">
+          <div class="steps steps5">
+            <button type="button" class="step-btn on" onclick="showReactAsm(0)">① Prompt</button>
+            <button type="button" class="step-btn" onclick="showReactAsm(1)">② while</button>
+            <button type="button" class="step-btn" onclick="showReactAsm(2)">③ 解析</button>
+            <button type="button" class="step-btn" onclick="showReactAsm(3)">④ 执行</button>
+            <button type="button" class="step-btn" onclick="showReactAsm(4)">⑤ 回流</button>
+          </div>
+          <div class="loop-panel" id="reactAsmPanel"></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="react-run1" data-label="运行轨迹 · 第1步" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · (6) 实例</div>
+        <h2 class="slide-title">意识到知识不足 → Search</h2>
+        <div class="code-block" style="color:#9aafb8">--- 第 1 步 ---
+Thought: …需要使用搜索引擎来获取最新数据。
+Action: Search[华为最新手机型号及主要卖点]
+👀 观察: [1] 华为官网 Mate / Pura / Pocket …
+[2][3] 2025 年评测与推荐摘要…</div>
+
+      </section>
+      <section class="slide" data-id="react-run2" data-label="运行轨迹 · 第2步 Finish" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.3 · (6) 实例</div>
+        <h2 class="slide-title">根据 Observation 总结并 Finish</h2>
+        <div class="code-block" style="color:#9aafb8">--- 第 2 步 ---
+Thought: …Mate 70 与 Pura 80 Pro+ …
+Action: Finish[…机型与卖点总结…]
+🎉 最终答案: …</div>
+        <div class="note"><strong>时效性：</strong>截止原书写于 2025-09-08，Mate 70 / Pura 80 Pro+ 为当时旗舰表述；你本地运行结果会随网络变化。</div>
+        <div class="path-hint">code/chapter4/ReAct.py</div>
+
+      </section>
+      <section class="slide" data-id="react-run-step" data-label="运行轨迹步进器" data-group="4.2 ReAct">
+
+        <div class="slide-sub">互动复习</div>
+        <h2 class="slide-title">两步内完成时效性问题</h2>
+        <div class="loop-stepper" id="reactRun">
+          <div class="steps steps3">
+            <button type="button" class="step-btn on" onclick="showReactRun(0)">Search</button>
+            <button type="button" class="step-btn" onclick="showReactRun(1)">Observation</button>
+            <button type="button" class="step-btn" onclick="showReactRun(2)">Finish</button>
+          </div>
+          <div class="loop-panel" id="reactRunPanel"></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="react-pros" data-label="4.2.4 三大特点" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.4 · 特点</div>
+        <h2 class="slide-title">透明 · 动态 · 工具协同</h2>
+        <ol>
+          <li><strong>高可解释性</strong>：Thought 链展示心路历程，利于信任与调试。</li>
+          <li><strong>动态规划与纠错</strong>：走一步看一步；搜索不佳可下一步改查询。</li>
+          <li><strong>工具协同</strong>：LLM 运筹帷幄，工具解决时效/计算等固有局限。</li>
+        </ol>
+
+      </section>
+      <section class="slide" data-id="react-cons" data-label="四大局限性" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.4 · 局限</div>
+        <h2 class="slide-title">能力依赖 · 费用 · 脆弱 · 局部最优</h2>
+        <div class="kw-grid">
+          <div class="kw"><h4>强依赖 LLM</h4><p>推理/指令遵循/格式输出不足会断流程。</p></div>
+          <div class="kw"><h4>效率与费用</h4><p>多轮串行调用 → 延迟与成本升高。</p></div>
+          <div class="kw"><h4>提示词脆弱</h4><p>模板微调或模型不守格式 → 不稳定。</p></div>
+          <div class="kw"><h4>局部最优</h4><p>缺全局规划；可能原地打转。</p></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="react-debug" data-label="调试技巧五条" data-group="4.2 ReAct">
+
+        <div class="slide-sub">§ 4.2.4 · 调试</div>
+        <h2 class="slide-title">行为不符预期时从这里下手</h2>
+        <details class="expand-card" open><summary>① 打印完整格式化 Prompt</summary><div class="expand-body">含全部 History 的最终提示——追溯决策源头。</div></details>
+        <details class="expand-card"><summary>② 解析失败打印原始输出</summary><div class="expand-body">判断是模型没守格式，还是正则写错。</div></details>
+        <details class="expand-card"><summary>③ 验证 tool_input / observation</summary><div class="expand-body">入参是否工具期望；返回是否模型可理解。</div></details>
+        <details class="expand-card"><summary>④ Few-shot 成功轨迹</summary><div class="expand-body">在 Prompt 里加完整 T-A-O 范例引导格式。</div></details>
+        <details class="expand-card"><summary>⑤ 换模型或 temperature=0</summary><div class="expand-body">有时直接解决问题。</div></details>
+
+      </section>
+      <section class="slide" data-id="flash42" data-label="闪卡 · ReAct" data-group="4.2 ReAct">
+
+        <div class="slide-sub">记忆巩固</div>
+        <h2 class="slide-title">闪卡：ReAct 与工具</h2>
+        <div class="flash-wrap" id="flash1" data-cards='[
+          {"q":"ReAct 三拍循环是什么？","a":"Thought → Action → Observation，直到 Finish。"},
+          {"q":"工具三要素里哪一项对选工具最关键？","a":"Description：模型靠自然语言描述决定何时调用。"},
+          {"q":"search 解析优先返回什么？","a":"answer_box_list → answer_box → knowledge_graph → organic 前3。"},
+          {"q":"max_steps 的作用？","a":"安全阀，防止死循环耗尽资源。"},
+          {"q":"Action 两种合法形态？","a":"ToolName[input] 或 Finish[最终答案]。"},
+          {"q":"CoT 相对 ReAct 缺什么？","a":"无法与外部世界交互，易事实幻觉。"}
+        ]'>
+          <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+          <div class="flash-meta"><span class="flash-idx"></span>
+            <div class="flash-controls">
+              <button type="button" class="btn" onclick="moveFlash('flash1',-1)">上一张</button>
+              <button type="button" class="btn" onclick="moveFlash('flash1',1)">下一张</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="quiz42" data-label="检测 · 4.2 节" data-group="4.2 ReAct">
+
+        <div class="slide-sub">自测</div>
+        <h2 class="slide-title">ReAct</h2>
+        <div class="quiz-score" id="score-q42">本组已答：0 / 0 正确</div>
+        <div class="quiz-item" data-quiz="q42" data-answer="1">
+          <h4>1. Observation 应写回哪里？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">只打印，不进 Prompt</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">history，供下一轮格式化</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">写入 .env</button>
+          <div class="quiz-explain">闭环靠历史轨迹；否则模型看不见工具结果。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q42" data-answer="0">
+          <h4>2. 正则解析最脆弱的一点通常是？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">模型输出偏离 Thought/Action 格式</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">Python 版本过新</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">SerpApi 返回过快</button>
+          <div class="quiz-explain">习题 2 亦强调：格式偏离、多 Action、嵌套括号等会导致失败。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q42" data-answer="2">
+          <h4>3. ReAct 相对一次性完整计划，更突出？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">全局最优保证</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">零 API 调用成本</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">根据 Observation 动态纠错</button>
+          <div class="quiz-explain">走一步看一步；但也因此可能局部最优。</div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="s43" data-label="4.3 节导读" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3</div>
+        <h2 class="slide-title">先画完整蓝图，再按图施工</h2>
+        <p class="lead">Plan-and-Solve：先规划 (Plan)，后执行 (Solve)。与 ReAct「边走边看」风格迥异。</p>
+        <div class="analogy">ReAct 像经验丰富的侦探，根据现场蛛丝马迹随时改调查方向；Plan-and-Solve 像建筑师，动工前必须绘完整蓝图，再严格按图施工。许多现代大模型 Agent 模式都融入了这种设计。</div>
+
+      </section>
+      <section class="slide" data-id="ps-origin" data-label="动机与出处" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.1 · 背景</div>
+        <h2 class="slide-title">缓解 CoT 多步「偏离轨道」</h2>
+        <p>Plan-and-Solve Prompting 由 Lei Wang 于 2023 提出（文献 [2]）。核心动机：思维链处理多步骤复杂问题时容易偏离。</p>
+        <p>与 ReAct 每步融合思考与行动不同，P&amp;S 将流程<strong>解耦</strong>为规划阶段与执行阶段。</p>
+
+      </section>
+      <section class="slide" data-id="ps-flow" data-label="两阶段工作流" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.1</div>
+        <h2 class="slide-title">Planning → Solving</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>规划阶段</h3><p>接收完整问题；不急着解题或调工具，而是<strong>分解问题并制定清晰分步计划</strong>（一次 LLM 调用产物）。</p></div>
+          <div class="compare-col b"><h3>执行阶段</h3><p><strong>严格按计划逐步执行</strong>；每步可为独立 LLM 调用或对上步结果加工，直至得出答案。</p></div>
+        </div>
+        <div class="callout" data-label="先谋后动"><p style="margin:0">处理需长远规划的复杂任务时，目标一致性更高，减少中间迷失。</p></div>
+
+      </section>
+      <section class="slide" data-id="ps-formula" data-label="形式化公式" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.1 · 公式</div>
+        <h2 class="slide-title">π_plan 与 π_solve</h2>
+        <p>规划模型生成含 \(n\) 步的计划 \(P=(p_1,\ldots,p_n)\)：</p>
+        <div class="formula">\[P = \pi_{\text{plan}}(q)\]</div>
+        <p>第 \(i\) 步解依赖问题、完整计划与历史结果；最终答案为 \(s_n\)：</p>
+        <div class="formula">\[s_i = \pi_{\text{solve}}(q, P, (s_1, \ldots, s_{i-1}))\]</div>
+
+      </section>
+      <section class="slide" data-id="fig42" data-label="图 4.2" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">图 4.2</div>
+        <h2 class="slide-title">Plan-and-Solve 两阶段工作流</h2>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/4-figures/4-2.png" alt="Plan-and-Solve范式的两阶段工作流"/>
+          <div class="fig-cap">图 4.2 Plan-and-Solve 范式的两阶段工作流</div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="ps-when" data-label="适用场景" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.1 · 场景</div>
+        <h2 class="slide-title">结构性强、可清晰分解的任务</h2>
+        <ul>
+          <li><strong>多步数学应用题</strong>：先列计算步骤，再逐一求解</li>
+          <li><strong>多源报告撰写</strong>：先规划结构（引言、来源 A/B、总结），再填充</li>
+          <li><strong>代码生成</strong>：先构思函数/类/模块结构，再逐一实现</li>
+        </ul>
+
+      </section>
+      <section class="slide" data-id="ps-notool" data-label="本节不用工具" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.2 · 设定</div>
+        <h2 class="slide-title">纯提示词推理，凸显结构化优势</h2>
+        <p>为凸显 P&amp;S 在结构化推理上的优势，本节<strong>不使用外部工具</strong>，靠提示词设计完成推理任务。</p>
+        <p>特点：答案无法单次查询得出，必须分解为逻辑连贯子步骤再顺序求解——正好发挥「先规划后执行」。</p>
+
+      </section>
+      <section class="slide" data-id="ps-apple" data-label="水果店目标题" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.2 · 题目</div>
+        <h2 class="slide-title">三天苹果销量逻辑链</h2>
+        <div class="callout" data-label="问题">
+          <p style="margin:0">一个水果店周一卖出了 15 个苹果。周二卖出的苹果数量是周一的两倍。周三卖出的数量比周二少了 5 个。请问这三天总共卖出了多少个苹果？</p>
+        </div>
+        <ol>
+          <li>规划：拆成计算周二、周三、总销量等步骤</li>
+          <li>执行：逐步计算，上步结果作下步输入，得总和</li>
+        </ol>
+
+      </section>
+      <section class="slide" data-id="planner-prompt" data-label="PLANNER_PROMPT" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.2 · 规划提示词</div>
+        <h2 class="slide-title">强制输出可解析的 Python 列表</h2>
+        <div class="code-block">PLANNER_PROMPT_TEMPLATE = """
+你是一个顶级的AI规划专家。你的任务是将用户提出的复杂问题
+分解成一个由多个简单步骤组成的行动计划。
+……
+你的输出必须是一个Python列表……
+请严格按照以下格式输出你的计划,```python与```作为前后缀是必要的:
+```python
+["步骤1", "步骤2", "步骤3", ...]
+```
+"""</div>
+        <p>角色设定 + 任务描述 + <strong>格式约束</strong> → 比解析自然语言更稳。</p>
+
+      </section>
+      <section class="slide" data-id="planner-class" data-label="Planner 类与解析" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.2 · 代码</div>
+        <h2 class="slide-title">split 围栏 + ast.literal_eval</h2>
+        <div class="code-block">class Planner:
+    def plan(self, question: str) -> list[str]:
+        prompt = PLANNER_PROMPT_TEMPLATE.format(question=question)
+        response_text = self.llm_client.think(messages=[...]) or ""
+        try:
+            plan_str = response_text.split("```python")[1].split("```")[0].strip()
+            plan = ast.literal_eval(plan_str)
+            return plan if isinstance(plan, list) else []
+        except (ValueError, SyntaxError, IndexError) as e:
+            print(f"❌ 解析计划时出错: {e}")
+            print(f"原始响应: {response_text}")
+            return []</div>
+        <div class="note">解析失败返回空列表——上层应终止，避免空计划硬跑。</div>
+
+      </section>
+      <section class="slide" data-id="state-mgmt" data-label="状态管理=仪表盘" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.3 · 核心</div>
+        <h2 class="slide-title">执行器不仅解题，还要管状态</h2>
+        <p class="lead">Executor 记录每步结果，作为后续步骤上下文，保证信息在任务链中顺畅流动——像仪表盘/进度条。</p>
+        <p>提示词需含四块：<strong>原始问题</strong>、<strong>完整计划</strong>、<strong>历史步骤与结果</strong>、<strong>当前步骤</strong>；并要求「仅输出该步答案，不要额外解释」。</p>
+
+      </section>
+      <section class="slide" data-id="exec-prompt" data-label="EXECUTOR_PROMPT" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.3 · 执行提示词</div>
+        <h2 class="slide-title">专注当前步骤</h2>
+        <div class="code-block">EXECUTOR_PROMPT_TEMPLATE = """
+你是一位顶级的AI执行专家……
+# 原始问题: {question}
+# 完整计划: {plan}
+# 历史步骤与结果: {history}
+# 当前步骤: {current_step}
+请仅输出针对“当前步骤”的回答:
+"""</div>
+
+      </section>
+      <section class="slide" data-id="executor-code" data-label="Executor.execute" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.3 · 代码</div>
+        <h2 class="slide-title">for 循环累积 history 字符串</h2>
+        <div class="code-block">def execute(self, question, plan):
+    history = ""
+    for i, step in enumerate(plan):
+        prompt = EXECUTOR_PROMPT_TEMPLATE.format(
+            question=question, plan=plan,
+            history=history if history else "无",
+            current_step=step)
+        response_text = self.llm_client.think(...) or ""
+        history += f"步骤 {i+1}: {step}\n结果: {response_text}\n\n"
+    return response_text  # 最后一步即最终答案</div>
+
+      </section>
+      <section class="slide" data-id="ps-agent" data-label="PlanAndSolveAgent" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.3 · 编排</div>
+        <h2 class="slide-title">组合优于继承：Orchestrator</h2>
+        <div class="code-block">class PlanAndSolveAgent:
+    def __init__(self, llm_client):
+        self.planner = Planner(llm_client)
+        self.executor = Executor(llm_client)
+    def run(self, question: str):
+        plan = self.planner.plan(question)
+        if not plan:
+            print("无法生成有效的行动计划。"); return
+        final_answer = self.executor.execute(question, plan)</div>
+        <p>本身不含复杂逻辑，清晰调用内部组件。路径：<code>code/chapter4/Plan_and_solve.py</code></p>
+
+      </section>
+      <section class="slide" data-id="ps-run-plan" data-label="运行：计划输出" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.4 · 实例</div>
+        <h2 class="slide-title">四步列表（含周一基准）</h2>
+        <div class="code-block" style="color:#9aafb8">["计算周一卖出的苹果数量： 15个",
+ "计算周二……15 × 2 = 30个",
+ "计算周三……30 - 5 = 25个",
+ "计算三天总销量……15 + 30 + 25 = 70个"]</div>
+
+      </section>
+      <section class="slide" data-id="ps-run-exec" data-label="运行：逐步执行" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.4 · 实例</div>
+        <h2 class="slide-title">15 → 30 → 25 → 70</h2>
+        <div class="loop-stepper" id="psDemo">
+          <div class="steps steps3">
+            <button type="button" class="step-btn on" onclick="showPs(0)">规划</button>
+            <button type="button" class="step-btn" onclick="showPs(1)">执行传递</button>
+            <button type="button" class="step-btn" onclick="showPs(2)">最终 70</button>
+          </div>
+          <div class="loop-panel" id="psPanel"></div>
+        </div>
+        <p>历史传递保证步骤依赖正确（如步骤 2 用到「15」）。</p>
+
+      </section>
+      <section class="slide" data-id="ps-analysis" data-label="三点分析" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">§ 4.3.4 · 分析</div>
+        <h2 class="slide-title">规划清晰 · 执行有上下文 · 结果可追踪</h2>
+        <ol>
+          <li><strong>规划阶段</strong>：复杂应用题 → 结构化四步 Python 列表</li>
+          <li><strong>执行阶段</strong>：严格逐步；history 保证 15→30→25 传递</li>
+          <li><strong>结果</strong>：逻辑清晰，正确答案 70</li>
+        </ol>
+
+      </section>
+      <section class="slide" data-id="ps-vs" data-label="ReAct vs Plan-and-Solve" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">跨节对比</div>
+        <h2 class="slide-title">反应式 vs 先谋后动</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>ReAct</h3><ul><li>思考行动交织</li><li>依赖 Observation 改道</li><li>探索性/工具密集</li><li>可能局部最优</li></ul></div>
+          <div class="compare-col b"><h3>Plan-and-Solve</h3><ul><li>计划与执行解耦</li><li>静态计划（本章实现）</li><li>内部推理/结构任务</li><li>计划错则整链受影响</li></ul></div>
+        </div>
+        <div class="note">习题 4 追问：执行失败时如何「动态重规划」？旅行预订更适谁？分层规划优势？</div>
+
+      </section>
+      <section class="slide" data-id="quiz43" data-label="检测 · 4.3 节" data-group="4.3 Plan-and-Solve">
+
+        <div class="slide-sub">自测</div>
+        <h2 class="slide-title">Plan-and-Solve</h2>
+        <div class="quiz-score" id="score-q43">本组已答：0 / 0 正确</div>
+        <div class="quiz-item" data-quiz="q43" data-answer="2">
+          <h4>1. 本章 Planner 要求输出格式主要为了？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">让回答更有文学性</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">减少 Token 计费</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">代码可稳定解析为步骤列表</button>
+          <div class="quiz-explain">```python 列表 + literal_eval，比自然语言更可靠。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q43" data-answer="0">
+          <h4>2. Executor 第一步时 history 通常填？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">「无」</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">完整最终答案</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">空的 .env</button>
+          <div class="quiz-explain"><code>history if history else "无"</code>。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q43" data-answer="1">
+          <h4>3. plan 为空时 Agent 应？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">假装有一步「直接答」</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">终止并提示无法生成计划</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">改用 SerpApi</button>
+          <div class="quiz-explain">空计划检查是重要护栏。</div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="s44" data-label="4.4 节导读" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4</div>
+        <h2 class="slide-title">显式把「自我检查」写进流程</h2>
+        <p class="lead">ReAct / P&amp;S 完成后流程即结束，初稿可能有谬误。Reflection 引入<strong>事后（post-hoc）自我校正循环</strong>：审视工作、发现不足、迭代优化。</p>
+
+      </section>
+      <section class="slide" data-id="ref-origin" data-label="Reflexion 灵感" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.1 · 背景</div>
+        <h2 class="slide-title">像人类校对与验算</h2>
+        <p>灵感来自人类学习：初稿校对、解题验算。体现于 Shinn et al. 2023 Reflexion（文献 [3]）等。</p>
+        <p>核心三步：<strong>执行 → 反思 → 优化</strong>，可多轮直到无新问题或达迭代上限。</p>
+
+      </section>
+      <section class="slide" data-id="ref-loop" data-label="三步循环详解" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.1</div>
+        <h2 class="slide-title">Execution · Reflection · Refinement</h2>
+        <div class="timeline">
+          <div class="tl-item"><span class="tag">执行</span><h4>初稿</h4><p>用 ReAct/P&amp;S 等方法生成初步方案或轨迹。</p></div>
+          <div class="tl-item"><span class="tag">反思</span><h4>评审员</h4><p>独立/特殊 Prompt 的 LLM 评估并给结构化 Feedback。</p></div>
+          <div class="tl-item"><span class="tag">优化</span><h4>修订稿</h4><p>初稿 + Feedback → 更完善版本。</p></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="ref-dims" data-label="反思四维" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.1 · 评审维度</div>
+        <h2 class="slide-title">事实 · 逻辑 · 效率 · 遗漏</h2>
+        <div class="card-grid">
+          <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+            <div class="flip-face front"><h3>事实性错误</h3><div class="flip-hint">翻转</div></div>
+            <div class="flip-face back"><p>与常识或已知事实相悖？</p></div>
+          </div></div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+            <div class="flip-face front"><h3>逻辑漏洞</h3><div class="flip-hint">翻转</div></div>
+            <div class="flip-face back"><p>推理不连贯或自相矛盾？</p></div>
+          </div></div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+            <div class="flip-face front"><h3>效率问题</h3><div class="flip-hint">翻转</div></div>
+            <div class="flip-face back"><p>有更直接简洁的路径吗？</p></div>
+          </div></div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+            <div class="flip-face front"><h3>遗漏信息</h3><div class="flip-hint">翻转</div></div>
+            <div class="flip-face back"><p>忽略关键约束或方面？</p></div>
+          </div></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="ref-formula" data-label="Reflection 公式" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.1 · 公式</div>
+        <h2 class="slide-title">F_i 与 O_{i+1}</h2>
+        <div class="formula">\[F_i = \pi_{\text{reflect}}(\text{Task}, O_i)\]</div>
+        <div class="formula">\[O_{i+1} = \pi_{\text{refine}}(\text{Task}, O_i, F_i)\]</div>
+        <p>\(O_0\) 为初始输出；循环直到反馈无新问题或达上限。</p>
+
+      </section>
+      <section class="slide" data-id="fig43" data-label="图 4.3" data-group="4.4 Reflection">
+
+        <div class="slide-sub">图 4.3</div>
+        <h2 class="slide-title">执行-反思-优化迭代循环</h2>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/4-figures/4-3.png" alt="Reflection机制迭代循环"/>
+          <div class="fig-cap">图 4.3 Reflection 机制中的「执行-反思-优化」迭代循环</div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="ref-value" data-label="独特价值三点" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.1 · 价值</div>
+        <h2 class="slide-title">不只靠外部 Observation</h2>
+        <ol>
+          <li><strong>内部纠错回路</strong>：修正更高层逻辑/策略错误，不单依赖工具反馈。</li>
+          <li><strong>一次性→持续优化</strong>：提升复杂任务成功率与答案质量。</li>
+          <li><strong>短期记忆轨迹</strong>：记得如何从有缺陷初稿迭代到终版；可扩展多模态反思。</li>
+        </ol>
+
+      </section>
+      <section class="slide" data-id="ref-case" data-label="素数案例设定" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.2 · 任务</div>
+        <h2 class="slide-title">编写找出 1~n 素数的 Python 函数</h2>
+        <div class="kw-grid">
+          <div class="kw"><h4>优化路径明确</h4><p>初稿常是低效试除/递归。</p></div>
+          <div class="kw"><h4>反思点清晰</h4><p>时间复杂度过高、重复计算。</p></div>
+          <div class="kw"><h4>方向明确</h4><p>迭代版、备忘录、筛法。</p></div>
+          <div class="kw"><h4>需要记忆</h4><p>迭代前提是记住尝试与反馈。</p></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="memory-why" data-label="为何要 Memory" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.2 · 动机</div>
+        <h2 class="slide-title">反思需要「有东西可回看」</h2>
+        <p>若把全部冗余上下文塞给评审员，又贵又吵。短期记忆模块负责存储每次「执行-反思」轨迹，按需取出最近代码或序列化全文。</p>
+
+      </section>
+      <section class="slide" data-id="memory-api" data-label="Memory 四方法" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.2 · 代码</div>
+        <h2 class="slide-title">records · add · trajectory · last_execution</h2>
+        <div class="code-block">class Memory:
+    def __init__(self): self.records = []
+    def add_record(self, record_type, content): ...
+    def get_trajectory(self) -> str:
+        # 把 execution/reflection 序列化成可插入 Prompt 的文本
+    def get_last_execution(self):
+        # 倒序找最近一条 execution</div>
+        <div class="note">本章 ReflectionAgent 主循环主要用 <code>get_last_execution</code>；<code>get_trajectory</code> 为完整轨迹预留。</div>
+
+      </section>
+      <section class="slide" data-id="ref-prompts" data-label="三角色 Prompt" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.3 · (1)</div>
+        <h2 class="slide-title">执行者 · 评审员 · 修订者</h2>
+        <div class="loop-stepper" id="refAsm">
+          <div class="steps steps5">
+            <button type="button" class="step-btn on" onclick="showRefAsm(0)">初始执行</button>
+            <button type="button" class="step-btn" onclick="showRefAsm(1)">反思</button>
+            <button type="button" class="step-btn" onclick="showRefAsm(2)">终止</button>
+            <button type="button" class="step-btn" onclick="showRefAsm(3)">优化</button>
+            <button type="button" class="step-btn" onclick="showRefAsm(4)">角色影响</button>
+          </div>
+          <div class="loop-panel" id="refAsmPanel"></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="ref-prompt-init" data-label="INITIAL_PROMPT" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.3 · 模板</div>
+        <h2 class="slide-title">资深 Python 程序员 · 直接输出代码</h2>
+        <div class="code-block">INITIAL_PROMPT_TEMPLATE = """
+你是一位资深的Python程序员。请根据以下要求，编写一个Python函数。
+你的代码必须包含完整的函数签名、文档字符串，并遵循PEP 8编码规范。
+要求: {task}
+请直接输出代码，不要包含任何额外的解释。
+"""</div>
+
+      </section>
+      <section class="slide" data-id="ref-prompt-reflect" data-label="REFLECT_PROMPT" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.3 · 灵魂</div>
+        <h2 class="slide-title">极其严格 · 专注算法效率</h2>
+        <div class="code-block">REFLECT_PROMPT_TEMPLATE = """
+你是一位极其严格的代码评审专家和资深算法工程师……
+请分析时间复杂度，思考是否存在算法上更优方案……
+（例如，使用筛法替代试除法）
+如果代码在算法层面已经达到最优，才能回答“无需改进”。
+"""</div>
+        <p>角色设定会强烈影响反馈焦点（习题 6：改成「可读性维护者」观察变化）。</p>
+
+      </section>
+      <section class="slide" data-id="ref-prompt-refine" data-label="REFINE_PROMPT" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.3 · 优化模板</div>
+        <h2 class="slide-title">根据反馈生成新版本</h2>
+        <div class="code-block">REFINE_PROMPT_TEMPLATE = """
+你是一位资深的Python程序员。你正在根据评审专家的反馈优化代码。
+# 原始任务: {task}
+# 你上一轮尝试的代码: {last_code_attempt}
+评审员的反馈：{feedback}
+请生成优化后的新版本……直接输出代码……
+"""</div>
+
+      </section>
+      <section class="slide" data-id="ref-agent" data-label="ReflectionAgent.run" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.3 · (2)</div>
+        <h2 class="slide-title">初始执行 + for 反思/优化</h2>
+        <div class="code-block">class ReflectionAgent:
+    def __init__(self, llm_client, max_iterations=3):
+        self.memory = Memory(); self.max_iterations = max_iterations
+    def run(self, task):
+        initial_code = self._get_llm_response(INITIAL_PROMPT...)
+        self.memory.add_record("execution", initial_code)
+        for i in range(self.max_iterations):
+            feedback = self._get_llm_response(REFLECT...)
+            self.memory.add_record("reflection", feedback)
+            if "无需改进" in feedback: break
+            refined = self._get_llm_response(REFINE...)
+            self.memory.add_record("execution", refined)
+        return self.memory.get_last_execution()</div>
+
+      </section>
+      <section class="slide" data-id="ref-helper" data-label="_get_llm_response" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.3 · 辅助</div>
+        <h2 class="slide-title">统一封装一次 think 调用</h2>
+        <div class="code-block">def _get_llm_response(self, prompt: str) -> str:
+    messages = [{"role": "user", "content": prompt}]
+    return self.llm_client.think(messages=messages) or ""</div>
+        <div class="path-hint">code/chapter4/Reflection.py</div>
+
+      </section>
+      <section class="slide" data-id="ref-run1" data-label="运行：初稿试除" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.4</div>
+        <h2 class="slide-title">功能正确但 O(n√n)</h2>
+        <p>初始尝试生成可用的 <code>find_primes</code>（试除思路）；Memory 记一条 execution。</p>
+        <div class="code-block" style="color:#9aafb8">反思：当前代码时间复杂度 O(n * sqrt(n))……
+建议使用埃拉托斯特尼筛法 O(n log(log n))……</div>
+
+      </section>
+      <section class="slide" data-id="ref-run2" data-label="运行：筛法与收敛" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.4</div>
+        <h2 class="slide-title">优化实现 → 第二轮「无需改进」</h2>
+        <div class="loop-stepper" id="refRun">
+          <div class="steps steps3">
+            <button type="button" class="step-btn on" onclick="showRefRun(0)">初稿</button>
+            <button type="button" class="step-btn" onclick="showRefRun(1)">第1轮</button>
+            <button type="button" class="step-btn" onclick="showRefRun(2)">收敛</button>
+          </div>
+          <div class="loop-panel" id="refRunPanel"></div>
+        </div>
+        <p>第二轮可提及分段筛/奇数筛，但判定一般情况下<strong>无需改进</strong> → 触发终止。</p>
+
+      </section>
+      <section class="slide" data-id="ref-final-code" data-label="完整 find_primes 终稿" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.4 · 终稿</div>
+        <h2 class="slide-title">Sieve of Eratosthenes</h2>
+        <div class="code-block">def find_primes(n):
+    """Finds all prime numbers between 1 and n using Sieve of Eratosthenes."""
+    if n &lt; 2: return []
+    is_prime = [True] * (n + 1)
+    is_prime[0] = is_prime[1] = False
+    p = 2
+    while p * p &lt;= n:
+        if is_prime[p]:
+            for i in range(p * p, n + 1, p):
+                is_prime[i] = False
+        p += 1
+    return [num for num in range(2, n + 1) if is_prime[num]]</div>
+
+      </section>
+      <section class="slide" data-id="ref-analysis" data-label="运行三点分析" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.4 · 分析</div>
+        <h2 class="slide-title">批判前提 · 迭代改进 · 收敛终止</h2>
+        <ol>
+          <li><strong>有效批判是优化前提</strong>：「极严格+效率」让模型不满于功能正确，指出复杂度瓶颈并建议筛法。</li>
+          <li><strong>迭代式改进</strong>：按反馈实现 O(n log log n)。</li>
+          <li><strong>收敛</strong>：知深仍能判断「一般无需改进」，触发终止条件。</li>
+        </ol>
+        <div class="callout" data-label="价值"><p style="margin:0">不仅修错，更驱动质量/效率阶梯式提升。</p></div>
+
+      </section>
+      <section class="slide" data-id="ref-cost" data-label="成本三项" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.5 · 成本</div>
+        <h2 class="slide-title">调用 · 延迟 · 提示工程</h2>
+        <ul>
+          <li>每轮至少 +2 次 LLM（反思+优化）；多轮成倍</li>
+          <li>串行等待 → 总耗时显著，不适合强实时</li>
+          <li>多角色 Prompt 设计与调试成本上升</li>
+        </ul>
+
+      </section>
+      <section class="slide" data-id="ref-benefit" data-label="收益与选型" data-group="4.4 Reflection">
+
+        <div class="slide-sub">§ 4.4.5 · 收益</div>
+        <h2 class="slide-title">以成本换质量</h2>
+        <p><strong>收益：</strong>合格→优秀的质量跃迁；内部纠错增强鲁棒性。</p>
+        <p><strong>适合：</strong>关键业务代码/技术报告、科研推演、高可靠决策支持。</p>
+        <p><strong>不适合：</strong>需快速响应，或「大致正确」已够 → 更轻量的 ReAct / P&amp;S 更划算。</p>
+
+      </section>
+      <section class="slide" data-id="flash44" data-label="闪卡 · Reflection" data-group="4.4 Reflection">
+
+        <div class="slide-sub">记忆巩固</div>
+        <h2 class="slide-title">闪卡：反思与选型</h2>
+        <div class="flash-wrap" id="flash2" data-cards='[
+          {"q":"Reflection 三步？","a":"执行 → 反思 → 优化（可多轮）。"},
+          {"q":"终止条件常见两种？","a":"反馈含「无需改进」，或达到 max_iterations。"},
+          {"q":"Memory.get_last_execution 干什么？","a":"取最近一次生成的代码/初稿供反思。"},
+          {"q":"相对 ReAct，Reflection 纠错来源？","a":"内部评审 Feedback，不单靠外部 Observation。"},
+          {"q":"何时不该上 Reflection？","a":"强实时或大致正确即可——成本不划算。"},
+          {"q":"素数案例质量跃迁？","a":"试除 O(n√n) → 埃氏筛 O(n log log n)。"}
+        ]'>
+          <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+          <div class="flash-meta"><span class="flash-idx"></span>
+            <div class="flash-controls">
+              <button type="button" class="btn" onclick="moveFlash('flash2',-1)">上一张</button>
+              <button type="button" class="btn" onclick="moveFlash('flash2',1)">下一张</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="quiz44" data-label="检测 · 4.4 节" data-group="4.4 Reflection">
+
+        <div class="slide-sub">自测</div>
+        <h2 class="slide-title">Reflection</h2>
+        <div class="quiz-score" id="score-q44">本组已答：0 / 0 正确</div>
+        <div class="quiz-item" data-quiz="q44" data-answer="1">
+          <h4>1. 本章反思 Prompt 强调「无需改进」是为了？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">强制永远迭代满 max_iterations</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">给出可检测的收敛信号</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">关闭 Memory</button>
+          <div class="quiz-explain">代码用 <code>"无需改进" in feedback</code> 决定 break。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q44" data-answer="0">
+          <h4>2. Reflection 每轮相对「只执行一次」最少多几次 LLM？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">约 2 次（反思+优化）</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">0 次</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">固定 100 次</button>
+          <div class="quiz-explain">成本分析的核心账。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q44" data-answer="2">
+          <h4>3. 短期记忆模块主要解决？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">永久向量库检索</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">替代 SerpApi</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">存储执行/反思轨迹供迭代回看</button>
+          <div class="quiz-explain">有东西可回看，才谈得上反思。</div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="summary" data-label="4.5 本章小结" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">§ 4.5</div>
+        <h2 class="slide-title">能力来自流程设计</h2>
+        <p class="lead">亲手造轮子实现三种经典范式，摸清原理、优势、局限与场景。</p>
+        <ol>
+          <li><strong>ReAct</strong>：环境适应性 + 动态纠错；探索性、需外部工具时首选。</li>
+          <li><strong>Plan-and-Solve</strong>：结构性 + 稳定性；逻辑路径确定、内部推理密集。</li>
+          <li><strong>Reflection</strong>：显著提升质量；高准确/高可靠、可容忍延迟。</li>
+        </ol>
+
+      </section>
+      <section class="slide" data-id="table41" data-label="表 4.1 选型策略" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">表 4.1 · 图 4.4</div>
+        <h2 class="slide-title">不同 Agent Loop 的选择策略</h2>
+        <p>选哪一种，取决于任务核心需求——不是等级制度。</p>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/4-figures/4-4.png" alt="不同 Agent Loop 的选择策略"/>
+          <div class="fig-cap">表 4.1 / 图 4.4 不同 Agent Loop 的选择策略</div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="mental-map" data-label="脑内小图" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">学习版 · 压缩记忆</div>
+        <h2 class="slide-title">三范式流程一句话</h2>
+        <div class="arch-stack">
+          <div class="arch-block enc"><strong>ReAct</strong><div class="sub">问题 → 想一步 → 做一步 → 看结果 → 再想下一步</div></div>
+          <div class="arch-block dec"><strong>Plan-and-Solve</strong><div class="sub">问题 → 完整计划 → 按计划执行 → 汇总</div></div>
+          <div class="arch-block head"><strong>Reflection</strong><div class="sub">问题 → 初步结果 → 自我检查 → 修改 → 最终结果</div></div>
+        </div>
+        <p>以后看到新框架，先问：更接近哪一种？还是混合？</p>
+
+      </section>
+      <section class="slide" data-id="myths" data-label="三个常见坑" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">学习版 · 纠偏</div>
+        <h2 class="slide-title">别把范式想成这些</h2>
+        <div class="kw-grid">
+          <div class="kw"><h4>别背模板</h4><p>不是死背术语，是学「怎么编排流程」。</p></div>
+          <div class="kw"><h4>别只盯 Prompt</h4><p>解析器、工具接口、状态、循环边界、异常同样关键。</p></div>
+          <div class="kw"><h4>别迷信 Reflection</h4><p>可能提质，也增成本/延迟/复杂度；看任务收益。</p></div>
+          <div class="kw"><h4>Agent「变笨」?</h4><p>常常不是模型，而是工程编排。</p></div>
+        </div>
+
+      </section>
+      <section class="slide" data-id="checklist" data-label="自测清单" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">过关勾选</div>
+        <h2 class="slide-title">勾完这些，第四章就算「过关」</h2>
+        <ul class="check-list" id="ck">
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能配 .env 并跑通 HelloAgentsLLM.think</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能说清 T-A-O，并解释 max_steps / Finish</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能写出工具三要素，并说明 Description 为何关键</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能对比 ReAct 与 P&amp;S 的组织方式与适用场景</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能说明 Executor 状态管理与空计划终止</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能画出 Reflection 循环并说出成本账</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能按任务做范式选型（含「不选 Reflection」的理由）</span></li>
+        </ul>
+
+      </section>
+      <section class="slide" data-id="self-q" data-label="自测三问" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">学习版</div>
+        <h2 class="slide-title">没有标准答案，但能练判断</h2>
+        <ol>
+          <li>信息来源不确定、要边查边改方向 → 更适 ReAct 还是 P&amp;S？</li>
+          <li>步骤明确但不稳 → 优先加强规划，还是加反思？</li>
+          <li>代码里哪类最易被低估却最重要？（解析/护栏/工具描述……）</li>
+        </ol>
+
+      </section>
+      <section class="slide" data-id="hybrid" data-label="混合与延伸追问" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">§ 4.5 · 向前看</div>
+        <h2 class="slide-title">生产里很少「只用一种」</h2>
+        <p>更复杂 Agent 可否混合？例如：P&amp;S 出高层计划，每步用 ReAct 调工具，低置信时触发 Reflection。</p>
+        <p>速度极高时牺牲规划还是反思？优先优化模型还是流程？——下一章将探索低代码平台与轻代码构建方案。</p>
+
+      </section>
+      <section class="slide" data-id="ex12" data-label="习题 1–2 引导" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">习题</div>
+        <h2 class="slide-title">范式对比 · 解析鲁棒性</h2>
+        <details class="expand-card" open><summary>1. 三种范式本质区别与组合</summary><div class="expand-body">
+          <p>交织（ReAct）/ 解耦两阶段（P&amp;S）/ 事后迭代（Reflection）。</p>
+          <p>智能家居：多设备+习惯调节——可 ReAct 做感知与工具调用，习惯策略用 Reflection 审慎，日程类用 P&amp;S。</p>
+          <p>混合架构：规划器 + 工具循环 + 低置信反思。</p>
+        </div></details>
+        <details class="expand-card"><summary>2. 正则脆弱与更鲁棒方案</summary><div class="expand-body">
+          <p>脆弱：格式偏离、多 Action、嵌套括号、语言混杂。</p>
+          <p>替代：JSON / structured output / function calling；对比可维护性与模型支持度。</p>
+        </div></details>
+
+      </section>
+      <section class="slide" data-id="ex34" data-label="习题 3–4 引导" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">习题</div>
+        <h2 class="slide-title">工具扩展 · 动态重规划</h2>
+        <details class="expand-card" open><summary>3. ToolExecutor 扩展</summary><div class="expand-body">
+          <p>加 Calculator；错误调用多次时的引导（Observation 明示+Prompt 纠错）；50–100 工具时用检索/分层/embedding 组织描述。</p>
+        </div></details>
+        <details class="expand-card"><summary>4. 静态计划的局限</summary><div class="expand-body">
+          <p>执行失败 → 触发重规划（保留已成功步骤）。北京→上海差旅：工具多、不确定性高，常偏 ReAct 或「粗计划+ReAct 子步骤」。分层规划：控复杂度、可复用子计划。</p>
+        </div></details>
+
+      </section>
+      <section class="slide" data-id="ex567" data-label="习题 5–7 引导" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">习题</div>
+        <h2 class="slide-title">双模型反思 · Prompt · 电商客服</h2>
+        <details class="expand-card" open><summary>5. Reflection 深入</summary><div class="expand-body">强模型反思+快模型执行：质量/成本权衡。更智能终止：分数阈值、连续两轮无实质改动。论文助手：逻辑/创新/表达/引用多维反思。</div></details>
+        <details class="expand-card"><summary>6. 提示词工程</summary><div class="expand-body">ReAct Prompt 服务交织循环与格式；P&amp;S 服务列表计划。角色设定改变反馈焦点。Few-shot 提升格式遵循。</div></details>
+        <details class="expand-card"><summary>7. 电商客服综合</summary><div class="expand-body">组合：查单/政策用工具 ReAct，争议决策 Reflection。工具≥3：订单查询、物流、退款政策、发信。风险：幻觉同意退款、越权——加规则引擎、人工阈值、审计日志。</div></details>
+
+      </section>
+      <section class="slide" data-id="refs" data-label="参考文献" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">文献</div>
+        <h2 class="slide-title">想深挖时从这里进</h2>
+        <ol>
+          <li>Yao S, et al. ReAct: Synergizing reasoning and acting in language models. ICLR, 2023.</li>
+          <li>Wang L, et al. Plan-and-solve prompting… arXiv:2305.04091, 2023.</li>
+          <li>Shinn N, et al. Reflexion: Language agents with verbal reinforcement learning. NeurIPS, 2023.</li>
+        </ol>
+
+      </section>
+      <section class="slide" data-id="outro" data-label="收尾与下一章" data-group="4.5 小结与习题">
+
+        <div class="slide-sub">结束</div>
+        <h2 class="slide-title">单个智能体核心技术，你已上手</h2>
+        <p>下一章将探索不同<strong>低代码平台</strong>的使用方式，以及<strong>轻代码</strong>构建 Agent 的方案——把本章范式思维接到更贴近落地的工具链上。</p>
+        <div class="path-hint">互动教程目录：docs/chapter4/interactive-tutorial/ · 学习版 Markdown：docs/chapter4/第四章 智能体经典范式构建-学习版.md</div>
+        <p class="kbd-hint">可返回侧栏任意小节复习 · <span class="kbd">←</span> <span class="kbd">→</span></p>
+
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.renderMathInElement) {
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: "\\[", right: "\\]", display: true},
+        {left: "\\(", right: "\\)", display: false}
+      ],
+      throwOnError: false
+    });
+  }
+});
+
+const slides = [...document.querySelectorAll(".slide")];
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null, groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group || "其他";
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+  if (window.renderMathInElement) {
+    renderMathInElement(slides[idx], {
+      delimiters: [
+        {left: "\\[", right: "\\]", display: true},
+        {left: "\\(", right: "\\)", display: false}
+      ],
+      throwOnError: false
+    });
+  }
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+initFlash("flash1");
+initFlash("flash2");
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+const searchPriTexts = [
+  { t: "① answer_box_list", p: "若存在列表型答案摘要，直接 join 返回——最高优先级的「直接答案」。" },
+  { t: "② answer_box.answer", p: "单个答案框中的 answer 字段。" },
+  { t: "③ knowledge_graph.description", p: "知识图谱描述，结构化事实。" },
+  { t: "④ organic_results 前 3", p: "无直接答案时，返回标题+snippet 摘要拼接。" },
+  { t: "⑤ 兜底 / 异常", p: "找不到则返回抱歉文案；异常返回「搜索时发生错误」。缺 key 时提前返回配置错误。" }
+];
+function showSearchPri(n) {
+  document.querySelectorAll("#searchPri .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("searchPriPanel").innerHTML = `<h4>${searchPriTexts[n].t}</h4><p>${searchPriTexts[n].p}</p>`;
+}
+if (document.getElementById("searchPri")) showSearchPri(0);
+
+const reactAsmTexts = [
+  { t: "① 系统提示词", p: "注入工具清单 {tools}、Question、History；强制 Thought/Action；Finish[答案] 结束。" },
+  { t: "② while 核心循环", p: "格式化 Prompt → LLM.think → 解析 → 执行 → 整合；受 max_steps 限制。" },
+  { t: "③ 输出解析", p: "_parse_output 抽 Thought/Action；_parse_action 用 ToolName[input] 正则拆名与入参。" },
+  { t: "④ 工具调用", p: "若 Finish → 返回答案；否则 tool_executor.getTool 执行得 Observation；工具不存在则错误 Observation。" },
+  { t: "⑤ 历史回流", p: "history 追加 Action 与 Observation，下一轮 Prompt 可见，形成闭环。" }
+];
+function showReactAsm(n) {
+  document.querySelectorAll("#reactAsm .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("reactAsmPanel").innerHTML = `<h4>${reactAsmTexts[n].t}</h4><p>${reactAsmTexts[n].p}</p>`;
+}
+if (document.getElementById("reactAsm")) showReactAsm(0);
+
+const reactRunTexts = [
+  { t: "第 1 步 · Thought + Search", p: "意识到知识库可能过时 → Action: Search[华为最新手机型号及主要卖点]。" },
+  { t: "Observation", p: "返回官网与评测摘要（Mate / Pura 等），写入 History。" },
+  { t: "第 2 步 · Finish", p: "根据搜索结果推理总结，输出 Finish[…机型与卖点…]。两步内完成。" }
+];
+function showReactRun(n) {
+  document.querySelectorAll("#reactRun .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("reactRunPanel").innerHTML = `<h4>${reactRunTexts[n].t}</h4><p>${reactRunTexts[n].p}</p>`;
+}
+if (document.getElementById("reactRun")) showReactRun(0);
+
+const psTexts = [
+  { t: "规划阶段", p: "生成 4 步列表：周一 15 → 周二×2=30 → 周三−5=25 → 总和 70。" },
+  { t: "执行传递", p: "每步只答当前；history 带上前步结果，保证 15→30→25 正确传递。" },
+  { t: "最终答案", p: "最后一步输出 70。结构清晰、步骤明确、结果可追踪。" }
+];
+function showPs(n) {
+  document.querySelectorAll("#psDemo .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("psPanel").innerHTML = `<h4>${psTexts[n].t}</h4><p>${psTexts[n].p}</p>`;
+}
+if (document.getElementById("psDemo")) showPs(0);
+
+const refAsmTexts = [
+  { t: "初始执行 Prompt", p: "资深 Python 程序员：完整函数签名、文档字符串、PEP8；直接输出代码。" },
+  { t: "反思 Prompt", p: "极严格评审员，专注算法效率；可建议筛法；已最优才说「无需改进」。" },
+  { t: "终止条件", p: "反馈含「无需改进」则 break；否则进入优化；整体受 max_iterations 限制。" },
+  { t: "优化 Prompt", p: "根据评审反馈生成新版本代码；同样要求完整规范输出。" },
+  { t: "角色设定影响", p: "「效率评审」推算法升级；改成「可读性维护者」反馈焦点会变（见习题 6）。" }
+];
+function showRefAsm(n) {
+  document.querySelectorAll("#refAsm .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("refAsmPanel").innerHTML = `<h4>${refAsmTexts[n].t}</h4><p>${refAsmTexts[n].p}</p>`;
+}
+if (document.getElementById("refAsm")) showRefAsm(0);
+
+const refRunTexts = [
+  { t: "初始尝试", p: "生成可用但偏试除的 find_primes；Memory 记 execution。" },
+  { t: "第 1 轮迭代", p: "反思指出 O(n√n) → 建议埃氏筛 → 优化实现 O(n log log n)。" },
+  { t: "第 2 轮收敛", p: "肯定筛法已够用，可提分段筛但判定「无需改进」→ 完成。" }
+];
+function showRefRun(n) {
+  document.querySelectorAll("#refRun .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("refRunPanel").innerHTML = `<h4>${refRunTexts[n].t}</h4><p>${refRunTexts[n].p}</p>`;
+}
+if (document.getElementById("refRun")) showRefRun(0);
+
+goTo(0);
+</script>
+
+</body>
+</html>

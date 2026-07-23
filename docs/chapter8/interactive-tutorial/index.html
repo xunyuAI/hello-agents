@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第八章 · 记忆与检索 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 08 Signal
+   Same product line as Ch1–Ch7; lavender / indigo primary signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(139, 124, 246, 0.14);
+  --line-strong: rgba(139, 124, 246, 0.36);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #8b7cf6;
+  --signal-bright: #b4a8ff;
+  --violet: #c4b5fd;
+  --violet-dim: rgba(196, 181, 253, 0.14);
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(139, 124, 246, 0.18), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(61, 168, 184, 0.10), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--cyan), var(--amber));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(139, 124, 246, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(139, 124, 246, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(180, 168, 255, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(139,124,246,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(139, 124, 246, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.compare4 {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare4 .compare-col h3 { font-size: 0.85rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps6 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps2 { grid-template-columns: repeat(2, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: rgba(139,124,246,0.12);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.arch-block.base { border-left: 3px solid var(--mint); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: center; text-align: center;
+  transition: border-color 0.25s; user-select: none;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.15rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; font-size: 0.98rem; color: var(--paper); line-height: 1.55;
+}
+.flash-card.revealed .q { display: none; }
+.flash-card.revealed .a { display: block; }
+.flash-card.revealed { border-color: var(--cyan); background: rgba(61,168,184,0.1); }
+.flash-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 0.75rem; font-family: var(--font-display);
+  font-size: 0.72rem; color: var(--text-mute);
+}
+.flash-controls { display: flex; gap: 0.4rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); margin-bottom: 0.75rem; line-height: 1.4;
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.35rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224, 107, 90, 0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.65rem; padding: 0.7rem 0.85rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(139, 124, 246, 0.08); color: var(--paper);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.85rem;
+  color: var(--cyan-bright); margin: 0.5rem 0 1rem;
+}
+.check-list { list-style: none; margin: 1rem 0; padding: 0; }
+.check-list li {
+  display: flex; gap: 0.65rem; align-items: flex-start;
+  padding: 0.55rem 0.7rem; border: 1px solid var(--line);
+  margin-bottom: 0.4rem; background: var(--panel);
+  cursor: pointer; transition: all 0.2s;
+}
+.check-list li:hover { border-color: var(--line-strong); }
+.check-list li.done {
+  border-color: var(--mint); background: var(--mint-dim);
+}
+.check-list li.done .ck-text { color: var(--mint); text-decoration: line-through; opacity: 0.85; }
+.ck-box {
+  width: 18px; height: 18px; border: 1px solid var(--signal);
+  flex-shrink: 0; margin-top: 0.15rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: transparent;
+}
+.check-list li.done .ck-box {
+  background: var(--mint); border-color: var(--mint); color: var(--ink);
+}
+.ck-text { font-size: 0.9rem; color: var(--text-dim); }
+.cover { text-align: left; padding: 1rem 0 2rem; }
+.cover-badge {
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--signal); border: 1px solid var(--line-strong);
+  display: inline-block; padding: 0.3rem 0.7rem; margin-bottom: 1.25rem;
+}
+.cover h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1.1; margin-bottom: 0.75rem; max-width: 18ch;
+}
+.cover .tagline {
+  font-size: 1.1rem; color: var(--paper);
+  max-width: 36em; margin-bottom: 1.5rem;
+}
+.goals { display: grid; gap: 0.55rem; margin: 1.25rem 0 1.75rem; }
+.goal {
+  display: grid; grid-template-columns: auto 1fr; gap: 0.85rem;
+  align-items: start; padding: 0.85rem 1rem;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.goal-n {
+  font-family: var(--font-display); font-size: 1.2rem;
+  color: var(--cyan-bright); line-height: 1;
+}
+.goal p { margin: 0; font-size: 0.92rem; }
+.cover-img {
+  margin-top: 1.5rem; border: 1px solid var(--line-strong);
+  max-width: 100%; width: 100%; background: var(--panel);
+}
+.kbd-hint {
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.04em;
+}
+.kbd {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  border: 1px solid var(--line-strong); padding: 0.1rem 0.35rem;
+  color: var(--signal); background: var(--panel);
+}
+.kw-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem; margin: 1rem 0;
+}
+.kw {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.9rem 1rem;
+}
+.kw h4 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.kw p { margin: 0; font-size: 0.85rem; }
+.path-hint {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--cyan-bright); background: rgba(61, 168, 184, 0.08);
+  border: 1px dashed rgba(61, 168, 184, 0.35);
+  padding: 0.65rem 0.85rem; margin: 0.85rem 0;
+}
+.matrix {
+  width: 100%; border-collapse: collapse; margin: 1rem 0;
+  font-size: 0.82rem;
+}
+.matrix th, .matrix td {
+  border: 1px solid var(--line-strong); padding: 0.55rem 0.65rem;
+  text-align: left; vertical-align: top;
+}
+.matrix th {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.06em; color: var(--signal-bright);
+  background: var(--panel-2);
+}
+.matrix td { color: var(--text-dim); background: var(--panel); }
+.tag-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0; }
+.tag-pill {
+  font-family: var(--font-display); font-size: 0.68rem;
+  letter-spacing: 0.06em; padding: 0.25rem 0.55rem;
+  border: 1px solid var(--line-strong); color: var(--signal);
+  background: rgba(139,124,246,0.1);
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0;
+    width: min(86vw, 300px); z-index: 40;
+    transform: translateX(-105%); transition: transform 0.3s ease;
+    box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3, .kw-grid, .compare4 { grid-template-columns: 1fr; }
+  .loop-stepper .steps, .loop-stepper .steps.steps5, .loop-stepper .steps.steps4,
+  .loop-stepper .steps.steps3, .loop-stepper .steps.steps6, .loop-stepper .steps.steps2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 35;
+  }
+  .overlay.show { display: block; }
+}
+@media (max-width: 520px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 08</div>
+      <h1>记忆与检索</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta"><span>进度</span><span id="progressText">1 / 1</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">← → 翻页 · 工业蓝图实验室</div>
+  </aside>
+  <main class="stage">
+    <div class="topbar">
+      <button type="button" class="menu-btn" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button type="button" class="btn" id="btnPrev">上一页</button>
+        <button type="button" class="btn btn-primary" id="btnNext">下一页</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+
+<!--
+  COVERAGE CHECKLIST (扩写后 · 对齐 第八章 记忆与检索.md)
+  开篇 / 8.1.1–8.1.4 / 8.2.1–8.2.5 / 8.3.1–8.3.5 / 8.4.1–8.4.5 / 8.5 / 习题1–5
+  图 8.1–8.11 · 闪卡/自测 · 步进可视化
+  页数目标：约 112 页（原提纲约 42 页）
+-->
+<section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
+
+<div class="cover">
+  <div class="cover-badge">Hello-Agents · Lab 08</div>
+  <h2>记忆与检索</h2>
+  <p class="tagline">给 Agent 装上「记得住」与「查得到」——Memory System + RAG，从认知科学走到工程实现。本教程已扩写为详解页，对齐原书全部知识点。</p>
+  <div class="goals">
+    <div class="goal"><div class="goal-n">01</div><p>理解人类记忆分层如何映射到智能体四种记忆</p></div>
+    <div class="goal"><div class="goal-n">02</div><p>掌握 MemoryTool / MemoryManager 与评分公式</p></div>
+    <div class="goal"><div class="goal-n">03</div><p>跑通 RAG：MarkItDown→分块→嵌入→MQE/HyDE→生成</p></div>
+    <div class="goal"><div class="goal-n">04</div><p>用 PDF 问答助手把 Memory + RAG 合成闭环</p></div>
+  </div>
+  <p class="kbd-hint">键盘 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · 侧栏可跳转 · 约 120+ 页详解</p>
+  <img class="cover-img" src="assets/ch8_cover.svg" alt="Lab 08 记忆与检索封面" />
+</div>
+
+</section>
+<section class="slide" data-id="how-to-read" data-label="怎么用本教程" data-group="开篇">
+<h2 class="slide-title">怎么读这本互动教程</h2>
+<p class="slide-sub">学习方法</p>
+
+<p class="lead">原书偏工程实现；本教程把每个 dense 主题拆成独立页：概念 → 白话 → 对照 → 代码 → 自测。</p>
+<div class="kw-grid">
+  <div class="kw"><h4>建议节奏</h4><p>每节末的闪卡/自测过关再进下一节；代码页先读意图再对照仓库。</p></div>
+  <div class="kw"><h4>两条主线</h4><p><strong>Memory</strong>：对话与经验；<strong>RAG</strong>：外部知识库。先分清再看案例如何合流。</p></div>
+</div>
+<div class="note"><strong>配套：</strong>新手详细文字版见同目录上一级 <code>第八章 记忆与检索-学习版.md</code>；可运行代码在 <code>code/chapter8/</code>。</div>
+
+</section>
+<section class="slide" data-id="goals" data-label="本章地图" data-group="开篇">
+<h2 class="slide-title">本章地图</h2>
+<p class="slide-sub">8.1 → 8.5 · 框架扩展 + 知识科普</p>
+
+<p class="lead">第七章搭好框架底座；本章为 HelloAgents 增加两个核心能力：<strong>记忆系统</strong>与<strong>检索增强生成（RAG）</strong>。</p>
+<div class="arch-stack">
+  <div class="arch-block enc">8.1 认知科学启发 · 为何需要 Memory / RAG · 架构总览<div class="sub">感觉 / 工作 / 长期 → 工程四层</div></div>
+  <div class="arch-block dec">8.2 记忆系统 · MemoryTool · 四种记忆 · 评分公式<div class="sub">编码·存储·检索·整合·遗忘</div></div>
+  <div class="arch-block head">8.3 RAG · 五层七步 · MQE / HyDE<div class="sub">MarkItDown · 智能分块 · 统一嵌入</div></div>
+  <div class="arch-block base">8.4 实战 PDF 问答助手 · 8.5 总结与习题<div class="sub">Gradio · Memory + RAG 闭环</div></div>
+</div>
+<div class="note"><strong>学习路径：</strong>「先体验，后实现」——pip 装好跑通示例，再深挖源码。</div>
+
+</section>
+<section class="slide" data-id="design-principle" data-label="万物皆工具" data-group="开篇">
+<h2 class="slide-title">设计原则：不做新 Agent 类</h2>
+<p class="slide-sub">承接第七章</p>
+
+<p>遵循第七章：记忆与 RAG 封装为<strong>标准工具</strong>，挂到 <code>ToolRegistry</code>。</p>
+<div class="compare">
+  <div class="compare-col a"><h3>不这样做</h3><ul><li>新建 MemoryAgent / RAGAgent 子类</li><li>把存储逻辑写死在 Agent.run</li></ul></div>
+  <div class="compare-col b"><h3>这样做</h3><ul><li><code>MemoryTool</code> / <code>RAGTool</code></li><li>Agent 只调工具，能力可插拔</li></ul></div>
+</div>
+<div class="analogy">像给手机装 App：记忆与检索是 App，不是换一部新手机。</div>
+
+</section>
+<section class="slide" data-id="s81-intro" data-label="8.1 节导读" data-group="8.1 认知到工程">
+<h2 class="slide-title">从认知科学到智能体记忆</h2>
+<p class="slide-sub">§ 8.1 导读</p>
+
+<p class="lead">先理解人类如何记，再解释 LLM 为何「失忆」与「知识过时」，最后看 HelloAgents 的分层架构与快速体验。</p>
+<ul>
+  <li>8.1.1 感觉 / 工作 / 长期（程序·语义·情景）</li>
+  <li>8.1.2 无状态遗忘 + 知识静态 → Memory 与 RAG</li>
+  <li>8.1.3 记忆四层 + RAG 四层；两工具协作</li>
+  <li>8.1.4 安装、.env、30 秒跑通</li>
+</ul>
+
+</section>
+<section class="slide" data-id="human-mem" data-label="人类记忆启发" data-group="8.1 认知到工程">
+<h2 class="slide-title">人类记忆系统的启发</h2>
+<p class="slide-sub">8.1.1 · 认知心理学分层</p>
+
+<p>构建智能体记忆前，先看人脑：多层级、按重要性与时间整理。</p>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>感觉记忆</h3><div class="en">Sensory</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>0.5–3 秒 · 容量巨大 · 暂存感官输入（快门残影）。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>工作记忆</h3><div class="en">Working</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>15–30 秒 · 约 7±2 项 · 当前任务的「桌面便签」。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>长期 · 程序性</h3><div class="en">Procedural</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>技能与习惯（骑自行车）——会做，难用语言完整描述。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>长期 · 陈述性</h3><div class="en">Declarative</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p><strong>语义</strong>：巴黎是法国首都。<strong>情景</strong>：昨天会议内容。</p></div>
+  </div></div>
+</div>
+<div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-1.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-1.png" alt="图 8.1 人类记忆系统的层次结构" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">感觉 → 工作 → 长期（程序 / 语义 / 情景）</div>
+  <div class="fig-cap">图 8.1 人类记忆系统的层次结构</div>
+</div>
+</section>
+<section class="slide" data-id="human-map-agent" data-label="人类→Agent 映射" data-group="8.1 认知到工程">
+<h2 class="slide-title">人类记忆如何映射到工程</h2>
+<p class="slide-sub">8.1.1 → 8.2 预告</p>
+
+<table class="matrix">
+  <thead><tr><th>人类</th><th>Agent 工程</th><th>存什么</th></tr></thead>
+  <tbody>
+    <tr><td>工作记忆</td><td>WorkingMemory</td><td>当前会话临时上下文</td></tr>
+    <tr><td>情景记忆</td><td>EpisodicMemory</td><td>具体事件与时间线</td></tr>
+    <tr><td>语义记忆</td><td>SemanticMemory</td><td>概念、偏好、规则</td></tr>
+    <tr><td>多感官痕迹</td><td>PerceptualMemory</td><td>图/音等多模态</td></tr>
+  </tbody>
+</table>
+<div class="callout" data-label="注意">人类「感觉记忆」极短，工程上不单独建同名模块；多模态输入由感知记忆承接。</div>
+<div class="analogy">短期像手机「最近任务」；长期像相册+通讯录——要主动检索。</div>
+
+</section>
+<section class="slide" data-id="why-need" data-label="为何需要记忆与RAG" data-group="8.1 认知到工程">
+<h2 class="slide-title">为何智能体需要记忆与 RAG</h2>
+<p class="slide-sub">8.1.2 · 两大根本局限</p>
+
+<div class="compare">
+  <div class="compare-col a"><h3>局限一 · 无状态遗忘</h3>
+    <ul>
+      <li>每次 API 调用彼此独立</li>
+      <li>上下文窗口挤掉早期信息</li>
+      <li>无法记住偏好与习惯</li>
+      <li>难从成败经验中学习</li>
+      <li>多轮可能前后矛盾</li>
+    </ul>
+  </div>
+  <div class="compare-col b"><h3>局限二 · 知识静态</h3>
+    <ul>
+      <li>训练数据有截止时间</li>
+      <li>专业领域深度不足</li>
+      <li>幻觉：编造看似合理的内容</li>
+      <li>缺来源 → 可信度弱</li>
+    </ul>
+  </div>
+</div>
+<div class="callout" data-label="白话">
+<strong>记忆</strong>解决「上次聊过啥」；<strong>RAG</strong>解决「书里写了啥」。一个管对话经历，一个管外部知识库。
+</div>
+
+</section>
+<section class="slide" data-id="stateless-demo" data-label="无状态演示" data-group="8.1 认知到工程">
+<h2 class="slide-title">无状态有多尴尬？</h2>
+<p class="slide-sub">8.1.2 · 代码演示</p>
+
+<div class="code-block">from hello_agents import SimpleAgent, HelloAgentsLLM
+agent = SimpleAgent(name="学习助手", llm=HelloAgentsLLM())
+agent.run("我叫张三，正在学习Python，目前掌握了基础语法")
+# → 「很好！Python基础语法是编程的重要基础...」
+agent.run("你还记得我的学习进度吗？")
+# → 「抱歉，我不知道您的学习进度...」</div>
+<p>模型本身不会自动记住上次对话。要解决：引入<strong>记忆系统</strong>（外挂存储 + 检索回填）。</p>
+<div class="note">把整段历史塞进 Prompt 也能「假装有记忆」，但窗口有限、贵、且难做个性化持久化——故需要专门 Memory。</div>
+
+</section>
+<section class="slide" data-id="rag-one-liner" data-label="RAG 一句话" data-group="8.1 认知到工程">
+<h2 class="slide-title">RAG：开卷考试</h2>
+<p class="slide-sub">8.1.2 · 定义</p>
+
+<p class="lead">生成前先从外部知识库查出相关段落，塞进提示词，再让 LLM 作答——更准、可溯源。</p>
+<div class="kw-grid">
+  <div class="kw"><h4>检索 Retrieval</h4><p>从文档/库中找相关片段</p></div>
+  <div class="kw"><h4>增强 Augmented</h4><p>把片段写进 Prompt 当依据</p></div>
+  <div class="kw"><h4>生成 Generation</h4><p>LLM 基于依据写答案</p></div>
+  <div class="kw"><h4>收益</h4><p>时效、专业深度、减幻觉、可解释</p></div>
+</div>
+<div class="analogy">闭卷靠背训练语料；RAG 是<strong>开卷</strong>——先翻书再答题。</div>
+
+</section>
+<section class="slide" data-id="mem-vs-rag" data-label="Memory vs RAG" data-group="8.1 认知到工程">
+<h2 class="slide-title">Memory 与 RAG 不是一回事</h2>
+<p class="slide-sub">对照表 · 必记</p>
+
+<table class="matrix">
+  <thead><tr><th></th><th>Memory</th><th>RAG</th></tr></thead>
+  <tbody>
+    <tr><td>主要对象</td><td>对话、偏好、经历</td><td>外部文档知识库</td></tr>
+    <tr><td>典型问题</td><td>「我喜欢什么？上次学到哪？」</td><td>「教材第3章怎么说？」</td></tr>
+    <tr><td>工具</td><td>MemoryTool</td><td>RAGTool</td></tr>
+    <tr><td>可回写</td><td>—</td><td>重要检索结果可写入记忆</td></tr>
+  </tbody>
+</table>
+
+</section>
+<section class="slide" data-id="arch-overview" data-label="系统架构总览" data-group="8.1 认知到工程">
+<h2 class="slide-title">记忆与 RAG 系统架构</h2>
+<p class="slide-sub">8.1.3 · 两个独立工具协作</p>
+
+<p><code>memory_tool</code> 存维护对话交互；<code>rag_tool</code> 从知识库检索上下文，重要结果可回写记忆。</p>
+<div class="loop-stepper" id="memArch">
+  <div class="steps steps4">
+    <button type="button" class="step-btn on" onclick="showMemArch(0)">基础设施</button>
+    <button type="button" class="step-btn" onclick="showMemArch(1)">记忆类型</button>
+    <button type="button" class="step-btn" onclick="showMemArch(2)">存储后端</button>
+    <button type="button" class="step-btn" onclick="showMemArch(3)">嵌入服务</button>
+  </div>
+  <div class="loop-panel" id="memArchPanel"></div>
+</div>
+<div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-2.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-2.png" alt="图 8.2 HelloAgents 记忆与 RAG 整体架构" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">Memory 四层 + RAG 管道，共享嵌入与向量库</div>
+  <div class="fig-cap">图 8.2 HelloAgents 记忆与 RAG 整体架构</div>
+</div>
+</section>
+<section class="slide" data-id="arch-memory-layers" data-label="记忆四层详解" data-group="8.1 认知到工程">
+<h2 class="slide-title">记忆系统四层架构</h2>
+<p class="slide-sub">8.1.3 · 展开</p>
+
+<div class="arch-stack">
+  <div class="arch-block enc">基础设施：MemoryManager / MemoryItem / MemoryConfig / BaseMemory</div>
+  <div class="arch-block dec">记忆类型：Working / Episodic / Semantic / Perceptual</div>
+  <div class="arch-block head">存储后端：Qdrant · Neo4j · SQLiteDocumentStore</div>
+  <div class="arch-block base">嵌入服务：DashScope · LocalTransformer · TFIDF</div>
+</div>
+<div class="note">上层调统一接口，下层可替换——换嵌入模型不必改 MemoryTool 调用方式。</div>
+
+</section>
+<section class="slide" data-id="arch-rag-layers" data-label="RAG 四层详解" data-group="8.1 认知到工程">
+<h2 class="slide-title">RAG 系统四层</h2>
+<p class="slide-sub">8.1.3 · 展开</p>
+
+<ol>
+  <li><strong>文档处理</strong>：DocumentProcessor / Document / Pipeline</li>
+  <li><strong>嵌入表示</strong>：复用记忆系统统一嵌入接口</li>
+  <li><strong>向量存储</strong>：Qdrant（命名空间隔离）</li>
+  <li><strong>智能问答</strong>：向量 + MQE + HyDE → 上下文 → LLM</li>
+</ol>
+<details class="expand-card" open><summary>为何与 Memory 共享嵌入？</summary><div class="expand-body">同一套向量空间便于「检索结果写入记忆」时语义一致；也减少重复依赖。</div></details>
+
+</section>
+<section class="slide" data-id="module-tree" data-label="模块目录树" data-group="8.1 认知到工程">
+<h2 class="slide-title">本章代码落在哪？</h2>
+<p class="slide-sub">8.1.4 · hello_agents/memory</p>
+
+<div class="code-block">hello_agents/memory/
+  base.py          # MemoryItem, MemoryConfig, BaseMemory
+  manager.py       # MemoryManager
+  embedding.py     # DashScope / Local / TFIDF
+  types/           # working, episodic, semantic, perceptual
+  storage/         # qdrant, neo4j, document_store
+  rag/             # pipeline, document
+tools/builtin/
+  memory_tool.py · rag_tool.py</div>
+
+</section>
+<section class="slide" data-id="install" data-label="安装依赖" data-group="8.1 认知到工程">
+<h2 class="slide-title">安装 HelloAgents 本章能力</h2>
+<p class="slide-sub">8.1.4</p>
+
+<div class="path-hint">pip install "hello-agents[all]==0.2.0"<br/>python -m spacy download zh_core_web_sm<br/>python -m spacy download en_core_web_sm</div>
+<p>语义记忆抽实体依赖 spaCy 中英文模型；缺了会初始化失败或降级。</p>
+<div class="kw-grid">
+  <div class="kw"><h4>体验式</h4><p>pip 安装 → 跑示例 → 摸清边界</p></div>
+  <div class="kw"><h4>深度学习</h4><p>从零实现组件 → 跑测试校验</p></div>
+</div>
+
+</section>
+<section class="slide" data-id="env-qdrant" data-label=".env · Qdrant" data-group="8.1 认知到工程">
+<h2 class="slide-title">配置向量库 Qdrant</h2>
+<p class="slide-sub">8.1.4 · .env</p>
+
+<div class="code-block">QDRANT_URL=https://your-cluster.qdrant.tech:6333
+QDRANT_API_KEY=your_key
+QDRANT_COLLECTION=hello_agents_vectors
+QDRANT_VECTOR_SIZE=384
+QDRANT_DISTANCE=cosine
+QDRANT_TIMEOUT=30
+# 本地 Docker：QDRANT_URL=http://localhost:6333</div>
+<div class="note">云服务：cloud.qdrant.io · 维度须与嵌入模型一致（换模型可能要改 VECTOR_SIZE 或新集合）。</div>
+
+</section>
+<section class="slide" data-id="env-neo4j" data-label=".env · Neo4j" data-group="8.1 认知到工程">
+<h2 class="slide-title">配置图库 Neo4j</h2>
+<p class="slide-sub">8.1.4 · .env</p>
+
+<div class="code-block">NEO4J_URI=neo4j+s://your-instance.databases.neo4j.io
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=your_password
+NEO4J_DATABASE=neo4j
+# 本地：bolt://localhost:7687</div>
+<p>语义记忆用图存实体与关系；仅用工作/情景记忆时可暂缓，但完整体验建议配齐。</p>
+
+</section>
+<section class="slide" data-id="env-embed" data-label=".env · Embedding" data-group="8.1 认知到工程">
+<h2 class="slide-title">配置嵌入模型</h2>
+<p class="slide-sub">8.1.4 · 三级兜底</p>
+
+<div class="code-block">EMBED_MODEL_TYPE=dashscope
+EMBED_MODEL_NAME=
+EMBED_API_KEY=
+EMBED_BASE_URL=
+# 空则 dashscope→text-embedding-v3；local→all-MiniLM-L6-v2</div>
+<div class="compare3">
+  <div class="compare-col b"><h3>① DashScope</h3><p>云端质量高</p></div>
+  <div class="compare-col c"><h3>② Local</h3><p>离线/隐私</p></div>
+  <div class="compare-col a"><h3>③ TF-IDF</h3><p>极简兜底</p></div>
+</div>
+
+</section>
+<section class="slide" data-id="quickstart81" data-label="30秒体验 Agent" data-group="8.1 认知到工程">
+<h2 class="slide-title">30 秒：Memory + RAG 挂上 Agent</h2>
+<p class="slide-sub">8.1.4</p>
+
+<div class="code-block">from hello_agents import SimpleAgent, HelloAgentsLLM, ToolRegistry
+from hello_agents.tools import MemoryTool, RAGTool
+agent = SimpleAgent(name="智能助手", llm=HelloAgentsLLM(),
+    system_prompt="你是一个有记忆和知识检索能力的AI助手")
+reg = ToolRegistry()
+reg.register_tool(MemoryTool(user_id="user123"))
+reg.register_tool(RAGTool(knowledge_base_path="./knowledge_base"))
+agent.tool_registry = reg
+agent.run("你好！请记住我叫张三，我是一名Python开发者")</div>
+
+</section>
+<section class="slide" data-id="first-run-log" data-label="首次运行日志" data-group="8.1 认知到工程">
+<h2 class="slide-title">跑通时日志在说什么？</h2>
+<p class="slide-sub">排错信号</p>
+
+<ul>
+  <li>SQLite 建表 / 文档存储 OK</li>
+  <li>Qdrant 连接与集合就绪</li>
+  <li>Neo4j 健康检查</li>
+  <li>spaCy 中英模型加载</li>
+  <li>MemoryManager 启用 <code>['working','episodic','semantic']</code></li>
+  <li>RAG <code>namespace=default, collection=rag_knowledge_base</code></li>
+</ul>
+<div class="callout" data-label="常见失败">连不上 Qdrant/Neo4j、维度不匹配、缺 spaCy 模型、API Key 未进 .env。</div>
+
+</section>
+<section class="slide" data-id="terms81" data-label="新手术语加厚" data-group="8.1 认知到工程">
+<h2 class="slide-title">新手术语卡 · 先把词说人话</h2>
+<p class="slide-sub">贯穿全章</p>
+
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>Embedding</h3><div class="en">嵌入</div><p class="flip-hint">翻转</p></div>
+    <div class="flip-face back"><p>文字→向量；语义近则空间近——给句子标 GPS。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>向量检索</h3><div class="en">Vector Search</div><p class="flip-hint">翻转</p></div>
+    <div class="flip-face back"><p>问「意思近不近」，不是「字一样不一样」。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>RAG</h3><div class="en">检索增强生成</div><p class="flip-hint">翻转</p></div>
+    <div class="flip-face back"><p>检索→增强 Prompt→生成。开卷考试。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>短时/长时</h3><div class="en">Working / LTM</div><p class="flip-hint">翻转</p></div>
+    <div class="flip-face back"><p>短时=TTL 便签；长时=情景+语义，可持久化。</p></div>
+  </div></div>
+</div>
+
+</section>
+<section class="slide" data-id="flash81" data-label="闪卡 · 8.1" data-group="8.1 认知到工程">
+<h2 class="slide-title">闪卡 · 认知到工程</h2>
+<p class="slide-sub">点击看答案</p>
+
+<div class="flash-wrap" id="flash81" data-cards='[
+  {"q":"LLM 无状态意味着什么？","a":"每次请求独立计算，模型不会自动记住上次对话；需外挂记忆或把历史塞进上下文。"},
+  {"q":"Memory 与 RAG 各解决什么？","a":"Memory：对话经历与偏好；RAG：外部知识库时效与可溯源，减轻幻觉。"},
+  {"q":"为何做成 Tool？","a":"万物皆工具：用 ToolRegistry 挂 MemoryTool / RAGTool，不新建 Agent 类。"},
+  {"q":"记忆四层从上到下？","a":"基础设施 → 记忆类型 → 存储后端 → 嵌入服务。"}
+]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta"><span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash81',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash81',1)">下一张</button>
+    </div>
+  </div>
+</div>
+
+</section>
+<section class="slide" data-id="quiz81" data-label="检测 · 8.1" data-group="8.1 认知到工程">
+<h2 class="slide-title">自测 · 8.1</h2>
+
+<div class="quiz-score" id="score-q81"></div>
+<div class="quiz-item" data-quiz="q81" data-answer="1">
+  <h4>1. 「巴黎是法国首都」属于？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">程序性记忆</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">语义记忆</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">感觉记忆</button>
+  <div class="quiz-explain">语义=一般知识；情景=个人经历；程序=技能习惯。</div>
+</div>
+<div class="quiz-item" data-quiz="q81" data-answer="2">
+  <h4>2. RAG 核心步骤？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">先生成再检索</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">只微调权重</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">检索 → 注入上下文 → 生成</button>
+  <div class="quiz-explain">先查再写。</div>
+</div>
+<div class="quiz-item" data-quiz="q81" data-answer="0">
+  <h4>3. 本章存储后端不含？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">Redis Streams</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">Qdrant</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">Neo4j</button>
+  <div class="quiz-explain">文中为 Qdrant + Neo4j + SQLite。</div>
+</div>
+
+</section>
+<section class="slide" data-id="s82-intro" data-label="8.2 节导读" data-group="8.2 记忆系统">
+<h2 class="slide-title">记忆系统：让智能体拥有记忆</h2>
+<p class="slide-sub">§ 8.2</p>
+
+<p class="lead">从认知五阶段到 MemoryTool / Manager，再到四种记忆的存储与评分——本章最 dense 的工程块之一。</p>
+
+</section>
+<section class="slide" data-id="mem-flow" data-label="记忆工作流程" data-group="8.2 记忆系统">
+<h2 class="slide-title">记忆系统的工作流程</h2>
+<p class="slide-sub">8.2.1 · 认知五阶段</p>
+
+<div class="loop-stepper" id="cogFlow">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showCog(0)">编码</button>
+    <button type="button" class="step-btn" onclick="showCog(1)">存储</button>
+    <button type="button" class="step-btn" onclick="showCog(2)">检索</button>
+    <button type="button" class="step-btn" onclick="showCog(3)">整合</button>
+    <button type="button" class="step-btn" onclick="showCog(4)">遗忘</button>
+  </div>
+  <div class="loop-panel" id="cogPanel"></div>
+</div>
+<div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-3.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-3.png" alt="图 8.3 记忆形成的认知过程" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">编码 → 存储 → 检索 → 整合 → 遗忘</div>
+  <div class="fig-cap">图 8.3 记忆形成的认知过程</div>
+</div>
+</section>
+<section class="slide" data-id="mem-flow-eng" data-label="工程流程闭环" data-group="8.2 记忆系统">
+<h2 class="slide-title">工程侧：添加 / 检索 / 整合 / 遗忘</h2>
+<p class="slide-sub">图 8.4</p>
+
+<div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-4.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-4.png" alt="图 8.4 HelloAgents 记忆系统完整工作流程" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">添加 / 检索 / 整合 / 遗忘闭环</div>
+  <div class="fig-cap">图 8.4 HelloAgents 记忆系统完整工作流程</div>
+</div>
+<div class="compare4">
+  <div class="compare-col a"><h3>工作记忆</h3><ul><li>当前对话</li><li>约 50 条</li><li>会话结束可清</li></ul></div>
+  <div class="compare-col b"><h3>情景记忆</h3><ul><li>具体事件</li><li>时间序列</li><li>复盘基础</li></ul></div>
+  <div class="compare-col c"><h3>语义记忆</h3><ul><li>抽象知识</li><li>高持久</li><li>关联推理</li></ul></div>
+  <div class="compare-col a"><h3>感知记忆</h3><ul><li>图/音</li><li>跨模态</li><li>按重要性管</li></ul></div>
+</div>
+
+</section>
+<section class="slide" data-id="four-mem-scenes" data-label="四种记忆场景" data-group="8.2 记忆系统">
+<h2 class="slide-title">四种记忆各举一例</h2>
+<p class="slide-sub">建立直觉</p>
+
+<ul>
+  <li><strong>Working</strong>：「用户刚问了 Transformer 定义」——当前任务便签</li>
+  <li><strong>Episodic</strong>：「14:02 加载了 Happy-LLM.pdf」——带时间的事件</li>
+  <li><strong>Semantic</strong>：「用户偏好简洁中文答复」——抽象偏好</li>
+  <li><strong>Perceptual</strong>：课件截图 / 讲解录音——多模态素材</li>
+</ul>
+
+</section>
+<section class="slide" data-id="mem-quick" data-label="30秒上手记忆" data-group="8.2 记忆系统">
+<h2 class="slide-title">快速体验：记忆功能</h2>
+<p class="slide-sub">8.2.2 · add / search / summary</p>
+
+<div class="code-block">memory_tool = MemoryTool(user_id="user123")
+memory_tool.execute("add", content="用户张三是Python开发者...", memory_type="semantic", importance=0.8)
+memory_tool.execute("add", content="李四是前端工程师...", memory_type="semantic", importance=0.7)
+memory_tool.execute("search", query="前端工程师", limit=3)
+memory_tool.execute("summary")</div>
+<div class="analogy">像通讯录写备注：先 add，再 search，偶尔 summary 看全貌。</div>
+
+</section>
+<section class="slide" data-id="memory-tool-overview" data-label="MemoryTool 总览" data-group="8.2 记忆系统">
+<h2 class="slide-title">MemoryTool：统一入口</h2>
+<p class="slide-sub">8.2.3 · execute(action)</p>
+
+<p>「统一入口，分发处理」——Agent 只记工具名 <code>memory</code>。</p>
+<div class="tag-row">
+  <span class="tag-pill">add</span><span class="tag-pill">search</span><span class="tag-pill">summary</span>
+  <span class="tag-pill">stats</span><span class="tag-pill">update</span><span class="tag-pill">remove</span>
+  <span class="tag-pill">forget</span><span class="tag-pill">consolidate</span><span class="tag-pill">clear_all</span>
+</div>
+<div class="code-block">def execute(self, action: str, **kwargs) -> str:
+    if action == "add": return self._add_memory(**kwargs)
+    elif action == "search": return self._search_memory(**kwargs)
+    # ...</div>
+
+</section>
+<section class="slide" data-id="mt-add" data-label="操作 · add" data-group="8.2 记忆系统">
+<h2 class="slide-title">add：编码一条记忆</h2>
+<p class="slide-sub">8.2.3 (1)</p>
+
+<p>关键参数：<code>content</code>、<code>memory_type</code>（默认 working）、<code>importance</code>（0–1，默认 0.5）、感知可用 <code>file_path</code>/<code>modality</code>。</p>
+<ul>
+  <li>自动 <code>session_id</code>（session_YYYYMMDD_HHMMSS）</li>
+  <li>perceptual + file_path → 推断 modality</li>
+  <li>写入 timestamp / importance</li>
+</ul>
+<div class="code-block">memory_tool.execute("add", content="...", memory_type="episodic",
+  importance=0.9, event_type="document_loaded")</div>
+
+</section>
+<section class="slide" data-id="mt-add-types" data-label="add 四类型示例" data-group="8.2 记忆系统">
+<h2 class="slide-title">四种类型怎么 add？</h2>
+<p class="slide-sub">元数据示例</p>
+
+<details class="expand-card" open><summary>working</summary><div class="expand-body">临时问答上下文，importance 可偏低（如 0.5–0.6）。</div></details>
+<details class="expand-card"><summary>episodic</summary><div class="expand-body"><code>event_type</code>、<code>location</code>、<code>session_id</code> —— 事件相册。</div></details>
+<details class="expand-card"><summary>semantic</summary><div class="expand-body"><code>knowledge_type="factual"</code> 或偏好规则。</div></details>
+<details class="expand-card"><summary>perceptual</summary><div class="expand-body"><code>modality="image"</code> + <code>file_path</code>。</div></details>
+
+</section>
+<section class="slide" data-id="mt-search" data-label="操作 · search" data-group="8.2 记忆系统">
+<h2 class="slide-title">search：按需提取</h2>
+<p class="slide-sub">8.2.3 (2)</p>
+
+<p>参数：<code>query</code>、<code>limit</code>、<code>memory_type(s)</code>、<code>min_importance</code>。底层 <code>retrieve_memories</code>。</p>
+<div class="note">展示常带类型中文标签 + 内容预览约 80 字 + importance，方便 Agent/人阅读。</div>
+
+</section>
+<section class="slide" data-id="mt-forget" data-label="操作 · forget" data-group="8.2 记忆系统">
+<h2 class="slide-title">forget：三种遗忘策略</h2>
+<p class="slide-sub">8.2.3 (3)</p>
+
+<table class="matrix">
+  <thead><tr><th>strategy</th><th>含义</th><th>关键参数</th></tr></thead>
+  <tbody>
+    <tr><td>importance_based</td><td>删低于阈值</td><td>threshold 如 0.2</td></tr>
+    <tr><td>time_based</td><td>删超过天数</td><td>max_age_days 如 30</td></tr>
+    <tr><td>capacity_based</td><td>超限删最不重要</td><td>threshold 如 0.3</td></tr>
+  </tbody>
+</table>
+<div class="analogy">遗忘不是缺陷，是资源管理——大脑也在持续清理。</div>
+
+</section>
+<section class="slide" data-id="mt-consolidate" data-label="操作 · consolidate" data-group="8.2 记忆系统">
+<h2 class="slide-title">consolidate：短期→长期</h2>
+<p class="slide-sub">8.2.3 (4)</p>
+
+<p>默认：working → episodic，importance ≥ 0.7；也可 episodic → semantic（阈值可更高，如 0.8）。</p>
+<div class="callout" data-label="神经科学灵感">模拟记忆固化：重要的短期痕迹在「睡眠/复盘」后进入长期库。</div>
+<div class="code-block">memory_tool.execute("consolidate", from_type="working",
+  to_type="episodic", importance_threshold=0.7)</div>
+
+</section>
+<section class="slide" data-id="mt-lifecycle" data-label="记忆生命周期" data-group="8.2 记忆系统">
+<h2 class="slide-title">完整生命周期</h2>
+<p class="slide-sub">创建→…→清理</p>
+
+<div class="path-hint">add → search → summary/stats → update/remove → forget → consolidate → clear_all</div>
+<p>另有 summary / stats / update / remove / clear_all，构成运维闭环。</p>
+
+</section>
+<section class="slide" data-id="memory-mgr" data-label="MemoryManager" data-group="8.2 记忆系统">
+<h2 class="slide-title">MemoryManager：核心协调者</h2>
+<p class="slide-sub">8.2.4 · 关注点分离</p>
+
+<div class="compare">
+  <div class="compare-col a"><h3>MemoryTool</h3><ul><li>用户接口与参数</li><li>action 分发</li><li>格式化返回字符串</li></ul></div>
+  <div class="compare-col b"><h3>MemoryManager</h3><ul><li>按配置启停模块</li><li>Store / Retriever</li><li>统一 add / retrieve / forget</li></ul></div>
+</div>
+<div class="code-block">MemoryManager(user_id=..., enable_working=True, enable_episodic=True,
+  enable_semantic=True, enable_perceptual=False)  # 感知默认关</div>
+
+</section>
+<section class="slide" data-id="mem-working" data-label="工作记忆" data-group="8.2 记忆系统">
+<h2 class="slide-title">WorkingMemory · 短期便签</h2>
+<p class="slide-sub">8.2.5 (1)</p>
+
+<ul>
+  <li>纯内存 · 容量默认 50 · TTL 默认约 60 分钟</li>
+  <li>重启即丢——符合「临时」</li>
+  <li>检索：TF-IDF + 关键词混合（向量 0.7 + 关键词 0.3）</li>
+</ul>
+<div class="callout" data-label="评分公式"><code>(相似度 × 时间衰减) × (0.8 + 重要性 × 0.4)</code></div>
+<div class="analogy">像浏览器标签：关了就没；重要页请收藏（consolidate）。</div>
+
+</section>
+<section class="slide" data-id="mem-working-code" data-label="工作记忆代码要点" data-group="8.2 记忆系统">
+<h2 class="slide-title">WorkingMemory.add / retrieve</h2>
+<p class="slide-sub">实现要点</p>
+
+<div class="code-block">add: 先 _expire_old_memories；满则 _remove_lowest_priority_memory
+retrieve: TF-IDF 向量分 + 关键词分 → 时间衰减 → 重要性权重</div>
+<p>无向量时退回纯关键词，保证极简环境也能用。</p>
+
+</section>
+<section class="slide" data-id="mem-episodic" data-label="情景记忆" data-group="8.2 记忆系统">
+<h2 class="slide-title">EpisodicMemory · 事件相册</h2>
+<p class="slide-sub">8.2.5 (2)</p>
+
+<ul>
+  <li>SQLite：结构化与复杂查询</li>
+  <li>Qdrant：语义向量</li>
+  <li>sessions 索引：按会话回顾</li>
+</ul>
+<div class="callout" data-label="评分公式"><code>(向量×0.8 + 近因性×0.2) × (0.8 + 重要性×0.4)</code></div>
+<p>流程：结构化预过滤 → 向量检索 → 综合评分。</p>
+
+</section>
+<section class="slide" data-id="mem-episodic-why" data-label="为何强调近因" data-group="8.2 记忆系统">
+<h2 class="slide-title">情景记忆为何要近因性？</h2>
+<p class="slide-sub">设计意图</p>
+
+<p>「昨天刚发生的事」往往比三年前更相关——情景像日记，越近越热。</p>
+<div class="note">对象 Episode：episode_id, session_id, timestamp, content, context。</div>
+
+</section>
+<section class="slide" data-id="mem-semantic" data-label="语义记忆" data-group="8.2 记忆系统">
+<h2 class="slide-title">SemanticMemory · 知识图谱</h2>
+<p class="slide-sub">8.2.5 (3)</p>
+
+<p>添加：嵌入 → 抽实体/关系（spaCy）→ Neo4j → Qdrant。</p>
+<p>检索：向量 + 图搜索 → 混合排序。</p>
+<div class="callout" data-label="评分公式"><code>(向量×0.7 + 图×0.3) × (0.8 + 重要性×0.4)</code><br/>重要性权重落在 [0.8, 1.2]，避免「重要」压过「相关」。</div>
+
+</section>
+<section class="slide" data-id="mem-semantic-weight" data-label="语义权重设计" data-group="8.2 记忆系统">
+<h2 class="slide-title">向量 0.7 · 图 0.3 的意图</h2>
+<p class="slide-sub">必理解</p>
+
+<div class="compare">
+  <div class="compare-col a"><h3>向量主通道</h3><p>先保证「说的是一回事」——语义相关</p></div>
+  <div class="compare-col b"><h3>图补关系</h3><p>挖隐含关联、多跳路径——纯向量难做</p></div>
+</div>
+<div class="analogy">向量像全文搜索；图像「张三→就职→某公司→位于→某城」的推理链。</div>
+
+</section>
+<section class="slide" data-id="mem-perceptual" data-label="感知记忆" data-group="8.2 记忆系统">
+<h2 class="slide-title">PerceptualMemory · 多模态</h2>
+<p class="slide-sub">8.2.5 (4)</p>
+
+<ul>
+  <li>文本 / 图像(CLIP) / 音频(CLAP) <strong>分集合</strong>，避免维度错配</li>
+  <li>同模态精确匹配；跨模态靠统一语义空间</li>
+  <li>评分形同情景：向量 0.8 + 近因 0.2，再乘重要性</li>
+</ul>
+<div class="code-block">recency = exp(-0.1 * age_hours / 24)  # 最低约 0.1，模拟遗忘曲线</div>
+
+</section>
+<section class="slide" data-id="mem-score-compare" data-label="四种评分对照" data-group="8.2 记忆系统">
+<h2 class="slide-title">四种记忆评分一张表</h2>
+<p class="slide-sub">对照 · 易混点</p>
+
+<table class="matrix">
+  <thead><tr><th>类型</th><th>公式核心差异</th></tr></thead>
+  <tbody>
+    <tr><td>Working</td><td>TF-IDF/关键词 + 时间衰减</td></tr>
+    <tr><td>Episodic</td><td>向量为主 + <strong>近因 0.2</strong></td></tr>
+    <tr><td>Semantic</td><td>向量 + <strong>图 0.3</strong>（无近因项）</td></tr>
+    <tr><td>Perceptual</td><td>同情景形 + 跨模态集合</td></tr>
+  </tbody>
+</table>
+<div class="callout" data-label="选型口诀">当下→工作；发生过什么→情景；是什么/偏好→语义；多媒体→感知。</div>
+
+</section>
+<section class="slide" data-id="mem-compare" data-label="四种记忆对比表" data-group="8.2 记忆系统">
+<h2 class="slide-title">四种记忆 · 后端对照</h2>
+<p class="slide-sub">8.2.5 总表</p>
+
+<table class="matrix">
+  <thead><tr><th>类型</th><th>存什么</th><th>后端</th><th>检索侧重</th></tr></thead>
+  <tbody>
+    <tr><td>Working</td><td>当前会话临时</td><td>纯内存+TTL</td><td>TF-IDF+关键词</td></tr>
+    <tr><td>Episodic</td><td>事件与经历</td><td>SQLite+Qdrant</td><td>向量+近因</td></tr>
+    <tr><td>Semantic</td><td>概念/偏好</td><td>Qdrant+Neo4j</td><td>向量+图</td></tr>
+    <tr><td>Perceptual</td><td>图/音</td><td>分模态 Qdrant</td><td>同/跨模态</td></tr>
+  </tbody>
+</table>
+
+</section>
+<section class="slide" data-id="flash82" data-label="闪卡 · 8.2" data-group="8.2 记忆系统">
+<h2 class="slide-title">闪卡 · 记忆系统</h2>
+
+<div class="flash-wrap" id="flash82" data-cards='[
+  {"q":"consolidate 默认做什么？","a":"重要性≥阈值的 working 提升为 episodic（也可 episodic→semantic）。"},
+  {"q":"情景 vs 语义评分差？","a":"情景强调近因(0.2)；语义用图(0.3)补关系推理。"},
+  {"q":"三种 forget？","a":"importance_based / time_based / capacity_based。"},
+  {"q":"Working 重启后？","a":"内容丢失——纯内存+TTL，不持久化。"}
+]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta"><span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash82',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash82',1)">下一张</button>
+    </div>
+  </div>
+</div>
+
+</section>
+<section class="slide" data-id="quiz82" data-label="检测 · 8.2" data-group="8.2 记忆系统">
+<h2 class="slide-title">自测 · 8.2</h2>
+
+<div class="quiz-score" id="score-q82"></div>
+<div class="quiz-item" data-quiz="q82" data-answer="0">
+  <h4>1. 工作记忆重启后？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">内容丢失（纯内存）</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">自动写入 Neo4j</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">永久在 Qdrant</button>
+  <div class="quiz-explain">WorkingMemory 纯内存+TTL。</div>
+</div>
+<div class="quiz-item" data-quiz="q82" data-answer="2">
+  <h4>2. 语义混合分中图权重？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">0.8</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">0.2</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">0.3</button>
+  <div class="quiz-explain">向量 0.7 + 图 0.3。</div>
+</div>
+<div class="quiz-item" data-quiz="q82" data-answer="1">
+  <h4>3. Tool 与 Manager 分工？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">Tool 管存储，Manager 只格式化</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">Tool 管接口，Manager 管核心逻辑</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">完全重复实现</button>
+  <div class="quiz-explain">接口层 vs 协调调度层。</div>
+</div>
+
+</section>
+<section class="slide" data-id="s83-intro" data-label="8.3 节导读" data-group="8.3 RAG系统">
+<h2 class="slide-title">RAG：知识检索增强</h2>
+<p class="slide-sub">§ 8.3</p>
+
+<p class="lead">从定义与三代演进，到五层七步流水线，再到 MQE / HyDE——让回答「有据可查」。</p>
+
+</section>
+<section class="slide" data-id="rag-basics" data-label="RAG基础知识" data-group="8.3 RAG系统">
+<h2 class="slide-title">RAG 是什么？</h2>
+<p class="slide-sub">8.3.1</p>
+
+<p class="lead">检索 → 增强 Prompt → 生成。</p>
+<div class="kw-grid">
+  <div class="kw"><h4>数据准备</h4><p>提取 → 分割 → 向量化 → 可检索库</p></div>
+  <div class="kw"><h4>应用阶段</h4><p>提问 → 检索 → 注入 Prompt → 生成</p></div>
+</div>
+
+</section>
+<section class="slide" data-id="rag-era" data-label="三代演进" data-group="8.3 RAG系统">
+<h2 class="slide-title">朴素 → 高级 → 模块化</h2>
+<p class="slide-sub">8.3.1 · 发展历程</p>
+
+<div class="loop-stepper" id="ragEra">
+  <div class="steps steps3">
+    <button type="button" class="step-btn on" onclick="showEra(0)">朴素 RAG</button>
+    <button type="button" class="step-btn" onclick="showEra(1)">高级 RAG</button>
+    <button type="button" class="step-btn" onclick="showEra(2)">模块化 RAG</button>
+  </div>
+  <div class="loop-panel" id="eraPanel"></div>
+</div>
+<table class="matrix">
+  <thead><tr><th>阶段</th><th>检索</th><th>生成侧</th></tr></thead>
+  <tbody>
+    <tr><td>Naive 2020–21</td><td>TF-IDF / BM25</td><td>文档直接拼 Prompt</td></tr>
+    <tr><td>Advanced 2022–23</td><td>稠密嵌入</td><td>重写、分块、重排</td></tr>
+    <tr><td>Modular 2023–</td><td>混合/MQE/HyDE</td><td>CoT、自我修正、可插拔</td></tr>
+  </tbody>
+</table>
+
+</section>
+<section class="slide" data-id="rag-principle" data-label="RAG工作原理" data-group="8.3 RAG系统">
+<h2 class="slide-title">两条主线</h2>
+<p class="slide-sub">8.3.2</p>
+
+<div class="compare">
+  <div class="compare-col a"><h3>数据处理</h3><p>外部知识 → MarkItDown → Markdown → 分块 → 嵌入 → 入库</p></div>
+  <div class="compare-col b"><h3>查询与生成</h3><p>问题 → 检索块 → 拼上下文 → LLM 带依据作答</p></div>
+</div>
+<div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-5.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-5.png" alt="图 8.5 RAG 系统核心工作原理" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">入库流水线 ∥ 问答流水线</div>
+  <div class="fig-cap">图 8.5 RAG 系统核心工作原理</div>
+</div>
+<div class="note">「入库」与「问答」是两条链路，不是一次调用做完所有事。</div>
+
+</section>
+<section class="slide" data-id="rag-quick" data-label="30秒上手RAG" data-group="8.3 RAG系统">
+<h2 class="slide-title">快速体验：RAG</h2>
+<p class="slide-sub">8.3.3</p>
+
+<div class="code-block">rag_tool = RAGTool(knowledge_base_path="./knowledge_base",
+  collection_name="test_collection", rag_namespace="test")
+rag_tool.execute("add_text", text="Python是一种...", document_id="python_intro")
+rag_tool.execute("search", query="Python编程语言的历史", limit=3, min_score=0.1)
+rag_tool.execute("stats")</div>
+
+</section>
+<section class="slide" data-id="rag-arch" data-label="五层七步架构" data-group="8.3 RAG系统">
+<h2 class="slide-title">RAG 架构：五层设计</h2>
+<p class="slide-sub">8.3.4</p>
+
+<div class="loop-stepper" id="ragLayers">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showRagL(0)">用户层</button>
+    <button type="button" class="step-btn" onclick="showRagL(1)">应用层</button>
+    <button type="button" class="step-btn" onclick="showRagL(2)">处理层</button>
+    <button type="button" class="step-btn" onclick="showRagL(3)">存储层</button>
+    <button type="button" class="step-btn" onclick="showRagL(4)">基础层</button>
+  </div>
+  <div class="loop-panel" id="ragLPanel"></div>
+</div>
+<div class="path-hint">任意格式 → MarkItDown → Markdown → 智能分块 → 向量化 → 存储检索</div>
+<div class="note">与 Memory「系统性多模块」不同：RAG 在设计上更像<strong>一条 Pipeline</strong>。</div>
+
+</section>
+<section class="slide" data-id="rag-tool-init" data-label="RAGTool 初始化" data-group="8.3 RAG系统">
+<h2 class="slide-title">RAGTool 统一入口</h2>
+<p class="slide-sub">create_rag_pipeline</p>
+
+<div class="code-block">class RAGTool(Tool):
+  def __init__(..., collection_name="rag_knowledge_base",
+               rag_namespace="default"):
+    self._pipelines = {}
+    self.llm = HelloAgentsLLM()
+    self._pipelines[namespace] = create_rag_pipeline(...)</div>
+<p>按 namespace 隔离多套管道；支持 add_document / add_text / search / ask / stats 等。</p>
+
+</section>
+<section class="slide" data-id="rag-markitdown" data-label="多模态文档载入" data-group="8.3 RAG系统">
+<h2 class="slide-title">MarkItDown：万物皆 Markdown</h2>
+<p class="slide-sub">8.3.4 (1)</p>
+
+<p>微软开源：PDF / Office / 图片 OCR / 音频转录 / 代码 / HTML… 一律进 Markdown，再走同一套分块嵌入。</p>
+<ul>
+  <li>PDF 走 <code>_enhanced_pdf_processing</code></li>
+  <li>失败时 <code>_fallback_text_reader</code></li>
+</ul>
+<div class="analogy">海关统一申报单：原装不同箱子，过关后换成标准箱进仓库。</div>
+
+</section>
+<section class="slide" data-id="rag-markitdown-formats" data-label="支持格式一览" data-group="8.3 RAG系统">
+<h2 class="slide-title">MarkItDown 支持哪些？</h2>
+<p class="slide-sub">清单</p>
+
+<div class="tag-row">
+  <span class="tag-pill">PDF</span><span class="tag-pill">Word/Excel/PPT</span>
+  <span class="tag-pill">JPG/PNG OCR</span><span class="tag-pill">MP3 转录</span>
+  <span class="tag-pill">TXT/CSV/JSON/HTML</span><span class="tag-pill">代码文件</span>
+</div>
+
+</section>
+<section class="slide" data-id="rag-chunk" data-label="智能分块策略" data-group="8.3 RAG系统">
+<h2 class="slide-title">Markdown 结构感知分块</h2>
+<p class="slide-sub">8.3.4 (2)</p>
+
+<div class="loop-stepper" id="chunkFlow">
+  <div class="steps steps6">
+    <button type="button" class="step-btn on" onclick="showChunk(0)">统一MD</button>
+    <button type="button" class="step-btn" onclick="showChunk(1)">标题解析</button>
+    <button type="button" class="step-btn" onclick="showChunk(2)">段落分割</button>
+    <button type="button" class="step-btn" onclick="showChunk(3)">Token分块</button>
+    <button type="button" class="step-btn" onclick="showChunk(4)">重叠优化</button>
+    <button type="button" class="step-btn" onclick="showChunk(5)">向量化</button>
+  </div>
+  <div class="loop-panel" id="chunkPanel"></div>
+</div>
+
+</section>
+<section class="slide" data-id="rag-chunk-funcs" data-label="分块关键函数" data-group="8.3 RAG系统">
+<h2 class="slide-title">_split_paragraphs · _chunk_paragraphs</h2>
+<p class="slide-sub">实现要点</p>
+
+<ul>
+  <li><code>_split_paragraphs_with_headings</code>：维护 heading_stack，产出 heading_path</li>
+  <li><code>_chunk_paragraphs</code>：chunk_tokens + overlap_tokens 滑动重叠</li>
+  <li>块过大难精；过小丢语境——overlap 防切断</li>
+</ul>
+<div class="callout" data-label="无标题文档">小说/法条缺 # 标题时，需语义边界等策略（见习题 2）。</div>
+
+</section>
+<section class="slide" data-id="rag-token" data-label="中英 Token 估算" data-group="8.3 RAG系统">
+<h2 class="slide-title">中英混合 Token 怎么估？</h2>
+<p class="slide-sub">8.3.4</p>
+
+<div class="code-block">CJK 字符 ≈ 1 token；非 CJK 按空白分词
+# 避免中文被粗暴按空格切碎</div>
+<div class="callout" data-label="为何重要">分块大小控制依赖 Token 估计；估错会导致块过大/过碎，检索质量直接掉。</div>
+
+</section>
+<section class="slide" data-id="rag-embed" data-label="嵌入与向量存储" data-group="8.3 RAG系统">
+<h2 class="slide-title">统一嵌入 · 三级兜底</h2>
+<p class="slide-sub">8.3.4 (3)</p>
+
+<div class="compare3">
+  <div class="compare-col b"><h3>① DashScope</h3><p>百炼 API</p></div>
+  <div class="compare-col c"><h3>② Local</h3><p>all-MiniLM-L6-v2</p></div>
+  <div class="compare-col a"><h3>③ TF-IDF</h3><p>无神经网络兜底</p></div>
+</div>
+<p><code>index_chunks</code>：get_text_embedder → 维度检查/填充 → 写入 Qdrant；可预处理 Markdown。</p>
+
+</section>
+<section class="slide" data-id="rag-index-chunks" data-label="index_chunks 细节" data-group="8.3 RAG系统">
+<h2 class="slide-title">批量编码与容错</h2>
+<p class="slide-sub">工程细节</p>
+
+<ul>
+  <li>batch_size 默认 64</li>
+  <li>维度异常：截断或补零</li>
+  <li>batch 失败可重试</li>
+  <li><code>_preprocess_markdown_for_embedding</code> 提升嵌入质量</li>
+</ul>
+
+</section>
+<section class="slide" data-id="rag-mqe" data-label="MQE 多查询扩展" data-group="8.3 RAG系统">
+<h2 class="slide-title">MQE：提高召回</h2>
+<p class="slide-sub">8.3.5 (1)</p>
+
+<p>LLM 生成多种等价问法，并行检索再合并。</p>
+<p>例：「如何学 Python」→「入门教程」「学习方法」「编程指南」…</p>
+<div class="analogy">像换几个关键词搜淘宝——提高<strong>召回</strong>。</div>
+<div class="code-block">_prompt_mqe(query, n)  # 系统提示：语义等价、简短、中文</div>
+
+</section>
+<section class="slide" data-id="rag-hyde" data-label="HyDE 假设文档" data-group="8.3 RAG系统">
+<h2 class="slide-title">HyDE：用答案找答案</h2>
+<p class="slide-sub">8.3.5 (2)</p>
+
+<p>先让 LLM 写「假想答案段落」，用答案向量去搜——缩小问句与陈述文档的鸿沟，提高<strong>精度</strong>。</p>
+<div class="analogy">先脑补商品说明书，再拿说明书匹配货架。</div>
+<div class="note">假设答案不必事实全对；关键术语与表述风格已能引导检索。</div>
+
+</section>
+<section class="slide" data-id="rag-expand" data-label="扩展检索框架" data-group="8.3 RAG系统">
+<h2 class="slide-title">扩展 → 检索 → 合并</h2>
+<p class="slide-sub">8.3.5 (3)</p>
+
+<div class="loop-stepper" id="expFlow">
+  <div class="steps steps3">
+    <button type="button" class="step-btn on" onclick="showExp(0)">扩展</button>
+    <button type="button" class="step-btn" onclick="showExp(1)">检索</button>
+    <button type="button" class="step-btn" onclick="showExp(2)">合并</button>
+  </div>
+  <div class="loop-panel" id="expPanel"></div>
+</div>
+<ul>
+  <li><code>enable_mqe</code> / <code>enable_hyde</code></li>
+  <li><code>candidate_pool_multiplier</code> 默认 4</li>
+  <li>按 memory_id 去重，保留最高分</li>
+</ul>
+
+</section>
+<section class="slide" data-id="rag-strategy-pick" data-label="检索策略选型" data-group="8.3 RAG系统">
+<h2 class="slide-title">何时开 MQE / HyDE？</h2>
+<p class="slide-sub">实战建议</p>
+
+<div class="callout" data-label="建议">一般查询开 MQE；专业领域 MQE+HyDE；性能敏感只用基础检索或仅 MQE。</div>
+<div class="compare">
+  <div class="compare-col a"><h3>MQE 擅长</h3><p>用词多样性、模糊问法</p></div>
+  <div class="compare-col b"><h3>HyDE 擅长</h3><p>问句↔陈述句语义鸿沟、领域术语</p></div>
+</div>
+
+</section>
+<section class="slide" data-id="flash83" data-label="闪卡 · 8.3" data-group="8.3 RAG系统">
+<h2 class="slide-title">闪卡 · RAG</h2>
+
+<div class="flash-wrap" id="flash83" data-cards='[
+  {"q":"为何统一转 Markdown？","a":"一种结构走通分块与嵌入；标题可作语义边界；多格式共用流水线。"},
+  {"q":"HyDE 核心直觉？","a":"用答案找答案——假设段落与真实文档在向量空间更近。"},
+  {"q":"嵌入三级顺序？","a":"DashScope → 本地 Transformer → TF-IDF。"},
+  {"q":"MQE 主要提升？","a":"召回率（多种表述覆盖文档）。"}
+]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta"><span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash83',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash83',1)">下一张</button>
+    </div>
+  </div>
+</div>
+
+</section>
+<section class="slide" data-id="quiz83" data-label="检测 · 8.3" data-group="8.3 RAG系统">
+<h2 class="slide-title">自测 · 8.3</h2>
+
+<div class="quiz-score" id="score-q83"></div>
+<div class="quiz-item" data-quiz="q83" data-answer="1">
+  <h4>1. 朴素 RAG 主要依赖？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">稠密向量+重排</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">TF-IDF / BM25</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">仅 HyDE</button>
+  <div class="quiz-explain">Naive：关键词为主。</div>
+</div>
+<div class="quiz-item" data-quiz="q83" data-answer="0">
+  <h4>2. MQE 主要提升？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">召回率</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">参数量</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">训练速度</button>
+  <div class="quiz-explain">书中称可提升召回约 30%–50%。</div>
+</div>
+<div class="quiz-item" data-quiz="q83" data-answer="2">
+  <h4>3. MarkItDown 角色？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">替代 LLM</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">只做关键词搜索</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">多格式统一转 Markdown</button>
+  <div class="quiz-explain">转换引擎，为分块向量化铺路。</div>
+</div>
+
+</section>
+<section class="slide" data-id="s84-intro" data-label="8.4 节导读" data-group="8.4 文档问答助手">
+<h2 class="slide-title">构建智能文档问答助手</h2>
+<p class="slide-sub">§ 8.4 · 综合实战</p>
+
+<p class="lead">把 RAGTool + MemoryTool 合成 Gradio Web 学习助手，文档示例为 Happy-LLM 公测 PDF。</p>
+
+</section>
+<section class="slide" data-id="case-bg" data-label="案例背景与目标" data-group="8.4 文档问答助手">
+<h2 class="slide-title">案例：PDF 学习助手</h2>
+<p class="slide-sub">8.4.1</p>
+
+<div class="goals">
+  <div class="goal"><div class="goal-n">1</div><p>智能文档处理：MarkItDown → 分块 → 索引</p></div>
+  <div class="goal"><div class="goal-n">2</div><p>高级检索问答：MQE + HyDE</p></div>
+  <div class="goal"><div class="goal-n">3</div><p>四层记忆管理</p></div>
+  <div class="goal"><div class="goal-n">4</div><p>个性化：整合、遗忘、学习报告</p></div>
+</div>
+<div class="path-hint">PDF: happy-llm releases · 代码: code/chapter8/11_Q&amp;A_Assistant.py · :7860</div>
+
+</section>
+<section class="slide" data-id="case-five" data-label="五步执行闭环" data-group="8.4 文档问答助手">
+<h2 class="slide-title">五步执行流程</h2>
+<p class="slide-sub">图 8.6</p>
+
+<div class="loop-stepper" id="fiveFlow">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showFive(0)">① 载入PDF</button>
+    <button type="button" class="step-btn" onclick="showFive(1)">② 检索问答</button>
+    <button type="button" class="step-btn" onclick="showFive(2)">③ 记忆运维</button>
+    <button type="button" class="step-btn" onclick="showFive(3)">④ 智能路由</button>
+    <button type="button" class="step-btn" onclick="showFive(4)">⑤ 学习报告</button>
+  </div>
+  <div class="loop-panel" id="fivePanel"></div>
+</div>
+<div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-6.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-6.png" alt="图 8.6 智能问答助手五步流程" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">文档→问答→记忆→路由→报告</div>
+  <div class="fig-cap">图 8.6 智能问答助手五步流程</div>
+</div>
+</section>
+<section class="slide" data-id="case-parts" data-label="应用三块结构" data-group="8.4 文档问答助手">
+<h2 class="slide-title">助手由哪三块组成？</h2>
+<p class="slide-sub">8.4.1</p>
+
+<ol>
+  <li><strong>PDFLearningAssistant</strong>：封装两工具调用</li>
+  <li><strong>Gradio UI</strong>：友好交互（见示例代码）</li>
+  <li><strong>笔记·回顾·统计·报告</strong></li>
+</ol>
+
+</section>
+<section class="slide" data-id="case-assistant" data-label="PDFLearningAssistant" data-group="8.4 文档问答助手">
+<h2 class="slide-title">核心助手类初始化</h2>
+<p class="slide-sub">8.4.2</p>
+
+<ul>
+  <li><code>user_id</code> → 记忆隔离</li>
+  <li><code>rag_namespace=f"pdf_{user_id}"</code> → 知识库隔离</li>
+  <li><code>session_id</code> → 单次学习会话</li>
+  <li><code>stats</code> → 文档/提问/笔记计数</li>
+</ul>
+<div class="note">多用户 Web 服务时，隔离靠这两个参数，而不是共用一个全局集合。</div>
+
+</section>
+<section class="slide" data-id="case-load" data-label="load_document" data-group="8.4 文档问答助手">
+<h2 class="slide-title">加载 PDF：RAG + 情景记忆</h2>
+<p class="slide-sub">8.4.2</p>
+
+<div class="code-block">rag_tool.execute("add_document", file_path=pdf_path,
+  chunk_size=1000, chunk_overlap=200)
+# 成功后：
+memory_tool.execute("add", content=f"加载了文档《...》",
+  memory_type="episodic", importance=0.9,
+  event_type="document_loaded", session_id=...)</div>
+<div class="callout" data-label="为何情景？">带时间戳的具体事件，便于日后问「我加载过哪些书」。</div>
+
+</section>
+<section class="slide" data-id="case-ask" data-label="智能问答 ask" data-group="8.4 文档问答助手">
+<h2 class="slide-title">ask：问答时的双写记忆</h2>
+<p class="slide-sub">8.4.3</p>
+
+<div class="loop-stepper" id="askFlow">
+  <div class="steps steps4">
+    <button type="button" class="step-btn on" onclick="showAsk(0)">记入工作记忆</button>
+    <button type="button" class="step-btn" onclick="showAsk(1)">RAG ask</button>
+    <button type="button" class="step-btn" onclick="showAsk(2)">MQE+HyDE</button>
+    <button type="button" class="step-btn" onclick="showAsk(3)">记入情景记忆</button>
+  </div>
+  <div class="loop-panel" id="askPanel"></div>
+</div>
+
+</section>
+<section class="slide" data-id="case-ask-code" data-label="ask 代码拆解" data-group="8.4 文档问答助手">
+<h2 class="slide-title">ask 里发生了什么？</h2>
+<p class="slide-sub">双写时机</p>
+
+<div class="code-block"># 1 working 记问题 importance≈0.6
+# 2 rag ask limit=5, enable_mqe/hyde
+# 3 episodic 记互动 event_type=qa_interaction ≈0.7
+# 4 questions_asked += 1</div>
+<p>MQE 示例：问「什么是大语言模型？」可扩成「LLM 定义」「请解释 LLM」等——书中称召回可升约 30%–50%。</p>
+
+</section>
+<section class="slide" data-id="case-other" data-label="笔记回顾与报告" data-group="8.4 文档问答助手">
+<h2 class="slide-title">其他核心功能</h2>
+<p class="slide-sub">8.4.4</p>
+
+<table class="matrix">
+  <thead><tr><th>方法</th><th>记忆类型</th><th>作用</th></tr></thead>
+  <tbody>
+    <tr><td>add_note</td><td>semantic ≈0.8</td><td>概念笔记</td></tr>
+    <tr><td>recall</td><td>search</td><td>学习历程</td></tr>
+    <tr><td>get_stats</td><td>—</td><td>会话计数</td></tr>
+    <tr><td>generate_report</td><td>summary+rag stats</td><td>JSON 报告</td></tr>
+  </tbody>
+</table>
+
+</section>
+<section class="slide" data-id="case-ui" data-label="运行效果展示" data-group="8.4 文档问答助手">
+<h2 class="slide-title">Gradio 界面四幕</h2>
+<p class="slide-sub">8.4.5 · 图 8.7–8.10</p>
+
+<details class="expand-card" open><summary>图 8.7 初始化与加载 PDF</summary><div class="expand-body">先初始化（库/模型/API），再上传 PDF 加载。</div></details>
+<details class="expand-card"><summary>图 8.8 智能问答</summary><div class="expand-body">答案 + 来源与相似度——RAG 外显。</div></details>
+<details class="expand-card"><summary>图 8.9 学习笔记</summary><div class="expand-body">勾选概念、写笔记 → Memory 入库。</div></details>
+<details class="expand-card"><summary>图 8.10 进度与报告</summary><div class="expand-body">文档/提问/笔记 → JSON 报告。</div></details>
+<div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-7.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-7.png" alt="图 8.7 问答助手：初始化与加载" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">主页：初始化助手 + 加载 PDF</div>
+  <div class="fig-cap">图 8.7 问答助手：初始化与加载</div>
+</div>
+</section>
+<section class="slide" data-id="case-ui-more" data-label="界面图续" data-group="8.4 文档问答助手">
+<h2 class="slide-title">图 8.8–8.10</h2>
+<p class="slide-sub">效果对照</p>
+<div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-8.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-8.png" alt="图 8.8 智能问答（RAG）" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">返回答案与相似度</div>
+  <div class="fig-cap">图 8.8 智能问答（RAG）</div>
+</div><div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-9.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-9.png" alt="图 8.9 学习笔记（Memory）" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">概念勾选与笔记</div>
+  <div class="fig-cap">图 8.9 学习笔记（Memory）</div>
+</div><div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-10.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-10.png" alt="图 8.10 进度与 JSON 报告" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">统计与导出</div>
+  <div class="fig-cap">图 8.10 进度与 JSON 报告</div>
+</div>
+</section>
+<section class="slide" data-id="case-route" data-label="RAG vs Memory 路由" data-group="8.4 文档问答助手">
+<h2 class="slide-title">何时查库？何时查记忆？</h2>
+<p class="slide-sub">为习题铺垫</p>
+
+<div class="compare">
+  <div class="compare-col a"><h3>优先 RAG</h3><p>问文档事实、定义、原文依据</p></div>
+  <div class="compare-col b"><h3>优先 Memory</h3><p>问「我学过什么」「我的笔记」「上次加载」</p></div>
+</div>
+<div class="note">智能路由（习题 4）可按意图自动选择或融合两者。</div>
+
+</section>
+<section class="slide" data-id="quiz84" data-label="检测 · 8.4" data-group="8.4 文档问答助手">
+<h2 class="slide-title">自测 · 8.4</h2>
+
+<div class="quiz-score" id="score-q84"></div>
+<div class="quiz-item" data-quiz="q84" data-answer="1">
+  <h4>1. 加载文档事件写入？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">仅 working</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">episodic</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只写 Neo4j</button>
+  <div class="quiz-explain">episodic + document_loaded。</div>
+</div>
+<div class="quiz-item" data-quiz="q84" data-answer="0">
+  <h4>2. 用户隔离靠？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">user_id + rag_namespace</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">共用全局集合</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只靠 session_id</button>
+  <div class="quiz-explain">记忆 user_id；知识库 pdf_{user_id} 命名空间。</div>
+</div>
+<div class="quiz-item" data-quiz="q84" data-answer="2">
+  <h4>3. 笔记默认进？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">working</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">perceptual</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">semantic</button>
+  <div class="quiz-explain">add_note → semantic。</div>
+</div>
+
+</section>
+<section class="slide" data-id="summary" data-label="本章小结" data-group="8.5 小结与习题">
+<h2 class="slide-title">本章小结与展望</h2>
+<p class="slide-sub">8.5</p>
+
+<p class="lead">本章为 HelloAgents 装上 Memory 与 RAG：记得住经历，查得到知识。</p>
+<ul>
+  <li>亲手迭代一个基础记忆模块</li>
+  <li>对比嵌入模型与检索策略</li>
+  <li>落到个人真实项目检验</li>
+</ul>
+<div class="fig" data-src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-11.png">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/8-figures/8-11.png" alt="图 8.11 第八章知识总结" onerror="this.parentElement.classList.add('offline')"/>
+  <div class="fig-fallback">思维导图总览</div>
+  <div class="fig-cap">图 8.11 第八章知识总结</div>
+</div>
+</section>
+<section class="slide" data-id="summary-advance" data-label="进阶方向" data-group="8.5 小结与习题">
+<h2 class="slide-title">进阶探索</h2>
+<p class="slide-sub">8.5</p>
+
+<div class="arch-stack">
+  <div class="arch-block enc">跟踪前沿 Memory / RAG 仓库</div>
+  <div class="arch-block dec">多模态 / 跨模态 RAG</div>
+  <div class="arch-block head">参与 HelloAgents 开源贡献</div>
+  <div class="arch-block base">应用延展：客服、技术支持、个人助理</div>
+</div>
+
+</section>
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="8.5 小结与习题">
+<h2 class="slide-title">自测清单</h2>
+<p class="slide-sub">诚实自评</p>
+
+<ul class="check-list" id="checklist">
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">白话解释短时/长时、Embedding、向量检索、RAG</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">说清无状态与知识静态，以及 Memory/RAG 分工</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">掌握 MemoryTool 的 add/search/forget/consolidate</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">对比四种记忆后端与评分侧重点</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">画出 RAG：MarkItDown→分块→嵌入→检索→生成</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">理解 MQE / HyDE 与扩展-检索-合并</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">知道案例 user_id / namespace 隔离与双写记忆</span></li>
+</ul>
+
+</section>
+<section class="slide" data-id="ex1" data-label="习题1 · 记忆评分" data-group="8.5 小结与习题">
+<h2 class="slide-title">习题 1：四种记忆与评分</h2>
+<p class="slide-sub">导读</p>
+
+<ul>
+  <li>对比情景「近因 0.2」vs 语义「图 0.3」的设计理由</li>
+  <li>「个人健康管理助手」四种记忆怎么组合</li>
+  <li>何时 TTL 工作记忆应 consolidate；自动触发条件</li>
+</ul>
+<div class="note">无健康助手当设计工作坊：饮食/运动事件→情景；规则建议→语义；当日计划→工作。</div>
+
+</section>
+<section class="slide" data-id="ex2" data-label="习题2 · RAG 实践" data-group="8.5 小结与习题">
+<h2 class="slide-title">习题 2：分块 / MQE / 嵌入</h2>
+<p class="slide-sub">动手</p>
+
+<ul>
+  <li>无标题文档如何做语义边界分块</li>
+  <li>基础 vs MQE vs HyDE 场景对比</li>
+  <li>百炼 / Local / TF-IDF：准确·速度·成本·离线</li>
+</ul>
+
+</section>
+<section class="slide" data-id="ex3" data-label="习题3 · 遗忘与隐私" data-group="8.5 小结与习题">
+<h2 class="slide-title">习题 3：智能遗忘与彻底清除</h2>
+<p class="slide-sub">动手</p>
+
+<ul>
+  <li>重要性×访问频率×时间衰减的加权遗忘</li>
+  <li>冷存储归档与四类型集成</li>
+  <li>敏感信息：向量库+图库如何确认删干净</li>
+</ul>
+
+</section>
+<section class="slide" data-id="ex4" data-label="习题4 · 路由与多用户" data-group="8.5 小结与习题">
+<h2 class="slide-title">习题 4：路由 · 报告 · 隔离</h2>
+<p class="slide-sub">分析设计</p>
+
+<ul>
+  <li>RAG vs Memory 优先条件 + 智能路由</li>
+  <li>更聪明的学习报告：轨迹/盲点/下一步</li>
+  <li>多用户：Qdrant/Neo4j 隔离 + 检索性能</li>
+</ul>
+
+</section>
+<section class="slide" data-id="ex5" data-label="习题5 · 知识图谱" data-group="8.5 小结与习题">
+<h2 class="slide-title">习题 5：图质量与多跳</h2>
+<p class="slide-sub">分析</p>
+
+<ul>
+  <li>自动抽实体关系的误差与质量评估</li>
+  <li>Neo4j 多跳/路径：向量做不到的任务</li>
+  <li>何时图检索显著优于纯向量（举例）</li>
+</ul>
+
+</section>
+<section class="slide" data-id="exercises" data-label="习题总览" data-group="8.5 小结与习题">
+<h2 class="slide-title">习题导读（5 大题）</h2>
+<p class="slide-sub">完整题面见源文档</p>
+
+<details class="expand-card" open><summary>1 · 记忆评分与健康助手</summary><div class="expand-body">近因 vs 图检索；四种记忆组合；自动 consolidate。</div></details>
+<details class="expand-card"><summary>2 · MarkItDown / MQE / HyDE / 嵌入</summary><div class="expand-body">无标题分块；三种检索对比；三种嵌入评估。</div></details>
+<details class="expand-card"><summary>3 · 遗忘 · 归档 · 隐私清除</summary><div class="expand-body">加权遗忘；冷存储；双库彻底删除。</div></details>
+<details class="expand-card"><summary>4 · 路由 · 报告 · 多用户</summary><div class="expand-body">智能路由；学习报告增强；隔离方案。</div></details>
+<details class="expand-card"><summary>5 · 图谱质量与多跳</summary><div class="expand-body">抽实体误差；图查询场景；图 vs 纯向量。</div></details>
+
+</section>
+<section class="slide" data-id="ref-atkinson" data-label="经典记忆模型" data-group="加厚 · 8.1">
+<h2 class="slide-title">Atkinson–Shiffrin 模型</h2>
+<p class="slide-sub">参考文献锚点</p>
+
+<p>认知心理学经典框架把记忆看成多仓库系统：感觉登记 → 短时/工作 → 长期。HelloAgents 的四种记忆是<strong>工程化映射</strong>，不是神经科学复刻。</p>
+<div class="note">读原书时看到<sup>[1]</sup>，指的就是这套「多级存储」思想对架构的启发。</div>
+
+</section>
+<section class="slide" data-id="two-limits-table" data-label="两大局限细表" data-group="加厚 · 8.1">
+<h2 class="slide-title">无状态 × 静态知识 · 症状表</h2>
+<p class="slide-sub">8.1.2 加深</p>
+
+<table class="matrix">
+  <thead><tr><th>症状</th><th>根因</th><th>本章解法</th></tr></thead>
+  <tbody>
+    <tr><td>多轮前后矛盾</td><td>无状态</td><td>Memory 检索回填</td></tr>
+    <tr><td>不知道你是谁</td><td>无个性化</td><td>semantic / episodic</td></tr>
+    <tr><td>答不出私有 PDF</td><td>知识截止/无外库</td><td>RAGTool</td></tr>
+    <tr><td>一本正经胡说</td><td>缺依据</td><td>检索片段作证据</td></tr>
+  </tbody>
+</table>
+
+</section>
+<section class="slide" data-id="env-llm" data-label=".env · LLM" data-group="加厚 · 8.1">
+<h2 class="slide-title">别忘了 LLM 与总开关</h2>
+<p class="slide-sub">8.1.4 补遗</p>
+
+<p>除了 Qdrant / Neo4j / Embedding，还需按第七章方式配置模型 API（如 DashScope / OpenAI 兼容）。Memory 与 RAG 的「生成」环节依赖 <code>HelloAgentsLLM</code>。</p>
+<div class="path-hint">建议：同一份 .env 管齐 LLM + Embed + 向量库 + 图库，先跑通 8.1.4 示例再拆组件。</div>
+
+</section>
+<section class="slide" data-id="mt-summary-stats" data-label="summary · stats" data-group="加厚 · 8.2">
+<h2 class="slide-title">summary 与 stats</h2>
+<p class="slide-sub">8.2.3 补全</p>
+
+<ul>
+  <li><strong>summary</strong>：记忆摘要，便于人/Agent 快速扫一眼「库里有什么」</li>
+  <li><strong>stats</strong>：计数与健康信息，运维向</li>
+</ul>
+<div class="code-block">memory_tool.execute("summary")
+memory_tool.execute("stats")</div>
+
+</section>
+<section class="slide" data-id="mt-update-remove" data-label="update · remove · clear" data-group="加厚 · 8.2">
+<h2 class="slide-title">update / remove / clear_all</h2>
+<p class="slide-sub">生命周期运维</p>
+
+<ul>
+  <li><strong>update</strong>：改内容或元数据（重要性、标签）</li>
+  <li><strong>remove</strong>：按 id 精确删除</li>
+  <li><strong>clear_all</strong>：清空——危险操作，多用户场景慎用</li>
+</ul>
+<div class="callout" data-label="与 forget 区别">remove 是点杀；forget 是策略批量清理；clear_all 是整库重置。</div>
+
+</section>
+<section class="slide" data-id="mt-importance" data-label="importance 怎么定" data-group="加厚 · 8.2">
+<h2 class="slide-title">重要性 0–1 怎么打分？</h2>
+<p class="slide-sub">实践建议</p>
+
+<div class="kw-grid">
+  <div class="kw"><h4>0.3–0.5</h4><p>临时闲聊、可丢弃上下文</p></div>
+  <div class="kw"><h4>0.6–0.7</h4><p>有价值的问答互动</p></div>
+  <div class="kw"><h4>0.8–0.9</h4><p>用户偏好、关键事件、笔记</p></div>
+  <div class="kw"><h4>≥0.7</h4><p>常作为 consolidate 默认阈值</p></div>
+</div>
+
+</section>
+<section class="slide" data-id="mgr-components" data-label="Store 与 Retriever" data-group="加厚 · 8.2">
+<h2 class="slide-title">Manager 内部组件</h2>
+<p class="slide-sub">8.2.4 加深</p>
+
+<p>MemoryManager 组合 <code>MemoryStore</code> 与 <code>MemoryRetriever</code>，再按开关实例化四种 Memory。</p>
+<div class="analogy">Tool 是前台接待；Manager 是值班经理；Store/Retriever 是仓库与检索员。</div>
+
+</section>
+<section class="slide" data-id="episodic-pipeline" data-label="情景检索三步" data-group="加厚 · 8.2">
+<h2 class="slide-title">情景检索流水线</h2>
+<p class="slide-sub">预过滤→向量→评分</p>
+
+<ol>
+  <li>结构化预过滤（时间范围、重要性、user）</li>
+  <li>向量语义检索（放大候选）</li>
+  <li><code>_calculate_episode_score</code> 综合排序</li>
+</ol>
+
+</section>
+<section class="slide" data-id="semantic-add-flow" data-label="语义添加四步" data-group="加厚 · 8.2">
+<h2 class="slide-title">语义记忆 add 四步</h2>
+<p class="slide-sub">图谱构建</p>
+
+<ol>
+  <li>encode 文本嵌入</li>
+  <li><code>_extract_entities</code> / <code>_extract_relations</code>（spaCy）</li>
+  <li>写入 Neo4j</li>
+  <li>写入 Qdrant（metadata 含 entities 计数）</li>
+</ol>
+<div class="note">抽实体可能出错——习题 5 要求你思考质量评估机制。</div>
+
+</section>
+<section class="slide" data-id="perceptual-collections" data-label="模态分离集合" data-group="加厚 · 8.2">
+<h2 class="slide-title">为何感知记忆要分集合？</h2>
+<p class="slide-sub">维度陷阱</p>
+
+<p>文本向量、CLIP 图像向量、CLAP 音频向量<strong>维度与空间不同</strong>。硬塞同一集合会导致检索错乱。</p>
+<div class="path-hint">perceptual_text / perceptual_image / perceptual_audio</div>
+
+</section>
+<section class="slide" data-id="rag-ask-action" data-label="RAGTool.ask" data-group="加厚 · 8.3">
+<h2 class="slide-title">ask：检索增强问答</h2>
+<p class="slide-sub">RAGTool action</p>
+
+<p>案例里最常用：内部走扩展检索 + 拼上下文 + LLM 生成。</p>
+<div class="code-block">rag_tool.execute("ask", question=..., limit=5,
+  enable_advanced_search=True, enable_mqe=True, enable_hyde=True)</div>
+
+</section>
+<section class="slide" data-id="rag-where-filter" data-label="RAG 数据过滤" data-group="加厚 · 8.3">
+<h2 class="slide-title">只搜 RAG 块：where 过滤</h2>
+<p class="slide-sub">search_vectors_expanded</p>
+
+<div class="code-block">where = {
+  "memory_type": "rag_chunk",
+  "is_rag_data": True,
+  "data_source": "rag_pipeline",
+  "rag_namespace": "..."
+}</div>
+<p>命名空间隔离 + 元数据过滤，避免记忆向量与文档块互相污染。</p>
+
+</section>
+<section class="slide" data-id="rag-overlap-why" data-label="为何要 overlap" data-group="加厚 · 8.3">
+<h2 class="slide-title">分块重叠防什么？</h2>
+<p class="slide-sub">工程直觉</p>
+
+<p>若在句子中间硬切，检索到的块会缺主语/结论。<code>overlap_tokens</code> 让相邻块共享边界上下文。</p>
+<div class="compare">
+  <div class="compare-col a"><h3>块太大</h3><p>噪声多、塞满上下文</p></div>
+  <div class="compare-col b"><h3>块太小</h3><p>语义破碎、难回答</p></div>
+</div>
+
+</section>
+<section class="slide" data-id="mqe-code" data-label="MQE 提示词" data-group="加厚 · 8.3">
+<h2 class="slide-title">_prompt_mqe 在干什么？</h2>
+<p class="slide-sub">8.3.5 代码</p>
+
+<div class="code-block">system: 你是检索查询扩展助手。生成语义等价或互补的多样化查询。
+user: 原始查询：{query} · 请给出 n 个不同表述，每行一个。</div>
+<p>失败则回退为原查询——保证检索链路不因 LLM 故障中断。</p>
+
+</section>
+<section class="slide" data-id="hyde-code" data-label="HyDE 提示词" data-group="加厚 · 8.3">
+<h2 class="slide-title">_prompt_hyde 在干什么？</h2>
+<p class="slide-sub">8.3.5 代码</p>
+
+<div class="code-block">system: 根据用户问题，先写一段可能的答案性段落，用于向量检索。
+user: 问题：{query} · 请直接写中等长度、客观、含关键术语的段落。</div>
+
+</section>
+<section class="slide" data-id="case-stats-dict" data-label="stats 字段" data-group="加厚 · 8.4">
+<h2 class="slide-title">学习统计字典</h2>
+<p class="slide-sub">PDFLearningAssistant</p>
+
+<div class="code-block">stats = {
+  "session_start": datetime.now(),
+  "documents_loaded": 0,
+  "questions_asked": 0,
+  "concepts_learned": 0,
+}</div>
+<p><code>generate_report</code> 会把它与 memory summary、rag stats 一并写入 JSON。</p>
+
+</section>
+<section class="slide" data-id="case-chunk-params" data-label="案例分块参数" data-group="加厚 · 8.4">
+<h2 class="slide-title">chunk_size=1000 · overlap=200</h2>
+<p class="slide-sub">案例默认</p>
+
+<p>加载 PDF 时用这对参数控制粒度。可按文档密度调整：技术手册可略小块；叙事文可略大块。</p>
+
+</section>
+<section class="slide" data-id="misconceptions" data-label="常见误解" data-group="加厚 · 8.5">
+<h2 class="slide-title">学完易混的五点</h2>
+<p class="slide-sub">纠偏</p>
+
+<ol>
+  <li>把整段聊天历史塞 Prompt ≠ 完整记忆系统</li>
+  <li>Memory 不能替代 RAG 读你的私有文档</li>
+  <li>向量相似 ≠ 事实正确（仍可能检错）</li>
+  <li>HyDE 的假设答案不必为真，也能帮检索</li>
+  <li>遗忘是能力，不是系统 bug</li>
+</ol>
+
+</section>
+<section class="slide" data-id="method-cognition" data-label="方法论收口" data-group="加厚 · 8.5">
+<h2 class="slide-title">认知科学 → 工程方案</h2>
+<p class="slide-sub">本章方法</p>
+
+<p class="lead">先找人类认知对应物，再映射到可替换的模块、存储与评分公式——这是本章反复演示的跨学科套路。</p>
+<div class="analogy">不是「抄大脑」，而是「借隐喻做可落地架构」。</div>
+
+</section>
+<section class="slide" data-id="code-chapter8-map" data-label="code/chapter8 地图" data-group="加厚 · 8.5">
+<h2 class="slide-title">仓库练习文件怎么走？</h2>
+<p class="slide-sub">实操导航</p>
+
+<p>课程 <code>code/chapter8/</code> 通常按 01→11 递增；最终综合案例如 <code>11_Q&amp;A_Assistant.py</code>。建议：先跑通记忆/RAG 小脚本，再开 Gradio。</p>
+<div class="path-hint">学习版附录亦有练习顺序表 · 详见 第八章 记忆与检索-学习版.md</div>
+
+</section>
+<section class="slide" data-id="coverage-final" data-label="覆盖自检页" data-group="加厚 · 8.5">
+<h2 class="slide-title">原书覆盖自检</h2>
+<p class="slide-sub">交付核对</p>
+
+<ul class="check-list">
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">8.1 认知分层 · 两大局限 · 架构 · 安装/.env/体验</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">8.2 五阶段 · MemoryTool 全 action · Manager · 四类型评分</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">8.3 三代 RAG · 五层七步 · MarkItDown · 分块 · MQE/HyDE</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">8.4 五步闭环 · Assistant · ask 双写 · 图 8.7–8.10</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">8.5 总结 · 习题 1–5 导读 · 图 8.11</span></li>
+</ul>
+
+</section>
+<section class="slide" data-id="end" data-label="下一章预告" data-group="8.5 小结与习题">
+<h2 class="slide-title">下一站：上下文工程</h2>
+<p class="slide-sub">记忆与检索已就位</p>
+
+<p class="lead">第九章将继续探索如何通过上下文工程进一步提升智能体的对话质量与用户体验。</p>
+<div class="callout" data-label="代码实操">完整工程见 <code>code/chapter8/</code>。建议边看本教程边跑 Gradio 助手。</div>
+<p class="kbd-hint">恭喜完成本章互动教程。可用侧栏回看任意小节。</p>
+
+</section>
+</div>
+  </main>
+</div>
+<script>
+
+const slides = [...document.querySelectorAll(".slide")];
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+["flash81","flash82","flash83"].forEach(initFlash);
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+const memArchTexts = [
+  { t: "① 基础设施层", p: "MemoryManager 统一调度 · MemoryItem 标准结构 · MemoryConfig · BaseMemory 接口。" },
+  { t: "② 记忆类型层", p: "Working（TTL）· Episodic（事件）· Semantic（图谱）· Perceptual（多模态）。" },
+  { t: "③ 存储后端层", p: "Qdrant 向量 · Neo4j 图 · SQLite 文档持久化。" },
+  { t: "④ 嵌入服务层", p: "DashScope · LocalTransformer · TFIDF 三级兜底。" }
+];
+function showMemArch(n) {
+  document.querySelectorAll("#memArch .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("memArchPanel").innerHTML = `<h4>${memArchTexts[n].t}</h4><p>${memArchTexts[n].p}</p>`;
+}
+showMemArch(0);
+
+const cogTexts = [
+  { t: "编码 Encoding", p: "把感知信息变成可存储形式——对应 add 时的嵌入、元数据、会话标注。" },
+  { t: "存储 Storage", p: "按类型写入内存 / SQLite / Qdrant / Neo4j。" },
+  { t: "检索 Retrieval", p: "search：语义相似度 + 时间/重要性/图关系等综合评分。" },
+  { t: "整合 Consolidation", p: "重要短期记忆提升为长期（working→episodic→semantic）。" },
+  { t: "遗忘 Forgetting", p: "按重要性、时间或容量策略清理——不是缺陷，是资源管理。" }
+];
+function showCog(n) {
+  document.querySelectorAll("#cogFlow .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("cogPanel").innerHTML = `<h4>${cogTexts[n].t}</h4><p>${cogTexts[n].p}</p>`;
+}
+showCog(0);
+
+const eraTexts = [
+  { t: "朴素 RAG（2020–2021）", p: "Retrieve-Read。关键词 TF-IDF/BM25；文档直接拼进 Prompt，难懂语义。" },
+  { t: "高级 RAG（2022–2023）", p: "稠密嵌入语义检索；查询重写、分块、重排序等优化。" },
+  { t: "模块化 RAG（2023–）", p: "可插拔模块：混合检索、MQE、HyDE；生成侧可加思维链与自我修正。" }
+];
+function showEra(n) {
+  document.querySelectorAll("#ragEra .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("eraPanel").innerHTML = `<h4>${eraTexts[n].t}</h4><p>${eraTexts[n].p}</p>`;
+}
+showEra(0);
+
+const ragLTexts = [
+  { t: "用户层", p: "RAGTool 统一接口——Agent 只看到一个工具。" },
+  { t: "应用层", p: "智能问答、搜索、知识库管理。" },
+  { t: "处理层", p: "文档解析、分块、向量化。" },
+  { t: "存储层", p: "向量数据库 + 文档存储。" },
+  { t: "基础层", p: "嵌入模型、LLM、数据库——可独立替换。" }
+];
+function showRagL(n) {
+  document.querySelectorAll("#ragLayers .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("ragLPanel").innerHTML = `<h4>${ragLTexts[n].t}</h4><p>${ragLTexts[n].p}</p>`;
+}
+showRagL(0);
+
+const chunkTexts = [
+  { t: "统一 Markdown", p: "任何格式先转标准 MD，结构清晰。" },
+  { t: "标题层次解析", p: "识别 # / ## / ###，维护 heading_stack。" },
+  { t: "段落语义分割", p: "按标题与空行切段，保留 heading_path。" },
+  { t: "Token 计算分块", p: "按 chunk_tokens 组装，控制检索粒度。" },
+  { t: "重叠策略", p: "overlap_tokens 保留边界上下文，避免切断语义。" },
+  { t: "向量化准备", p: "块就绪后进入统一嵌入与入库。" }
+];
+function showChunk(n) {
+  document.querySelectorAll("#chunkFlow .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("chunkPanel").innerHTML = `<h4>${chunkTexts[n].t}</h4><p>${chunkTexts[n].p}</p>`;
+}
+showChunk(0);
+
+const expTexts = [
+  { t: "扩展", p: "原查询 + MQE 扩展句 + 可选 HyDE 假设段落；去重修剪。" },
+  { t: "检索", p: "每个扩展查询并行向量检索；池大小 ≈ top_k × multiplier。" },
+  { t: "合并", p: "按 memory_id 聚合取最高分，排序返回 top-k。" }
+];
+function showExp(n) {
+  document.querySelectorAll("#expFlow .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("expPanel").innerHTML = `<h4>${expTexts[n].t}</h4><p>${expTexts[n].p}</p>`;
+}
+showExp(0);
+
+const fiveTexts = [
+  { t: "① 载入 PDF", p: "RAG 处理文档；事件写入情景记忆。" },
+  { t: "② 检索问答", p: "高级检索得答案；互动写入记忆。" },
+  { t: "③ 记忆运维", p: "添加、检索、整合、遗忘全套操作。" },
+  { t: "④ 智能路由", p: "综合 RAG + Memory，按场景选用。" },
+  { t: "⑤ 学习报告", p: "汇总统计与记忆摘要，导出 JSON。" }
+];
+function showFive(n) {
+  document.querySelectorAll("#fiveFlow .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("fivePanel").innerHTML = `<h4>${fiveTexts[n].t}</h4><p>${fiveTexts[n].p}</p>`;
+}
+showFive(0);
+
+const askTexts = [
+  { t: "工作记忆记问题", p: "importance≈0.6，当前会话上下文。" },
+  { t: "RAGTool.ask", p: "limit=5，从知识库生成带依据的答案。" },
+  { t: "MQE + HyDE", p: "多表述召回 + 假设文档提升精度。" },
+  { t: "情景记忆记互动", p: "event_type=qa_interaction，importance≈0.7。" }
+];
+function showAsk(n) {
+  document.querySelectorAll("#askFlow .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("askPanel").innerHTML = `<h4>${askTexts[n].t}</h4><p>${askTexts[n].p}</p>`;
+}
+showAsk(0);
+
+goTo(0);
+
+</script>
+</body>
+</html>

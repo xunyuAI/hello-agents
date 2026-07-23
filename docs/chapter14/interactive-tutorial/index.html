@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第十四章 · 自动化深度研究智能体 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 14 Signal
+   Same product line as Ch1–Ch13; emerald / teal primary signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(32, 201, 151, 0.14);
+  --line-strong: rgba(32, 201, 151, 0.36);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #20c997;
+  --signal-bright: #5eead4;
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(32, 201, 151, 0.18), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(61, 168, 184, 0.12), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--cyan), var(--amber));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(32, 201, 151, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(32, 201, 151, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(94, 234, 212, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(32,201,151,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(32, 201, 151, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.cover-hero {
+  margin: 1rem 0 1.4rem; border: 1px solid var(--line-strong);
+  background: var(--panel); overflow: hidden;
+}
+.cover-hero img { width: 100%; height: auto; display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps7 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: rgba(32,201,151,0.12);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.arch-block.base { border-left: 3px solid var(--mint); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  transition: border-color 0.2s;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.05rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; margin-top: 1rem; color: var(--paper);
+  border-top: 1px solid var(--line); padding-top: 1rem; font-size: 0.95rem;
+}
+.flash-card.revealed .a { display: block; }
+.flash-idx {
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-mute); margin-bottom: 0.75rem; letter-spacing: 0.06em;
+}
+.flash-nav { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  margin-bottom: 0.75rem; color: var(--text);
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.4rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224,107,90,0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.75rem; padding: 0.75rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(32,201,151,0.08); color: var(--text-dim);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.78rem;
+  color: var(--cyan-bright); margin-top: 0.5rem;
+}
+.check-list { list-style: none; margin: 1rem 0; }
+.check-list li {
+  display: flex; align-items: flex-start; gap: 0.65rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--line);
+  color: var(--text-dim); font-size: 0.92rem;
+}
+.check-list input {
+  margin-top: 0.25rem; accent-color: var(--signal);
+  width: 18px; height: 18px; flex-shrink: 0;
+}
+.goal-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.goal-card {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; position: relative;
+}
+.goal-card .tag {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.goal-card h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+.goal-card p { font-size: 0.85rem; margin: 0; }
+.budget-lab {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1.15rem; margin: 1.2rem 0;
+}
+.budget-lab label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.08em; color: var(--text-mute);
+  display: block; margin-bottom: 0.35rem; text-transform: uppercase;
+}
+.budget-lab input[type="range"] {
+  width: 100%; accent-color: var(--signal); margin-bottom: 0.85rem;
+}
+.budget-bar {
+  display: flex; height: 36px; border: 1px solid var(--line-strong);
+  overflow: hidden; margin: 0.75rem 0;
+  font-family: var(--font-display); font-size: 0.65rem;
+}
+.budget-seg {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink); font-weight: 600; transition: width 0.3s ease;
+  overflow: hidden; white-space: nowrap;
+}
+.budget-seg.sys { background: var(--signal); }
+.budget-seg.ev { background: var(--cyan); }
+.budget-seg.ctx { background: var(--amber); }
+.budget-seg.free { background: var(--panel-2); color: var(--text-mute); }
+.budget-meta {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  color: var(--text-dim); line-height: 1.6;
+}
+.budget-warn {
+  margin-top: 0.65rem; padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--amber); background: var(--amber-dim);
+  font-size: 0.88rem; color: var(--paper); display: none;
+}
+.budget-warn.show { display: block; }
+.template-map {
+  display: grid; gap: 0.35rem; margin: 1rem 0;
+  font-family: var(--font-mono); font-size: 0.8rem;
+}
+.template-map div {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 0.55rem 0.85rem; color: var(--text-dim);
+}
+.template-map div strong { color: var(--signal-bright); font-weight: 500; }
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 40;
+}
+.overlay.show { display: block; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: min(86vw, 300px);
+    z-index: 50; transform: translateX(-105%); transition: transform 0.3s;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3 { grid-template-columns: 1fr; }
+  .loop-stepper .steps,
+  .loop-stepper .steps.steps5,
+  .loop-stepper .steps.steps3,
+  .loop-stepper .steps.steps4,
+  .loop-stepper .steps.steps7 { grid-template-columns: repeat(2, 1fr); }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+}
+</style>
+</head>
+
+<body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 14</div>
+      <h1>第十四章 · 深度研究智能体</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>进度</span>
+        <span id="progressText">1 / 1</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">EMERALD SIGNAL · ← → 翻页</div>
+  </aside>
+
+  <main class="stage">
+    <div class="topbar">
+      <button class="menu-btn" type="button" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button class="btn" id="btnPrev" type="button">← 上一页</button>
+        <button class="btn btn-primary" id="btnNext" type="button">下一页 →</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+
+<!--
+  COVERAGE CHECKLIST (源文档 · 第十四章 自动化深度研究智能体.md)
+  [x] 开篇三能力 · 14.1 痛点/四层架构/流转/目录/快启/UI
+  [x] 14.2 TODO 范式 · 对比 · 三要素 · 三阶段 · 执行细节
+  [x] 14.3 三 Agent · Prompt · ToolAware · 顺序协作
+  [x] 14.4 Search 扩展 · 清洗 · Note · Registry
+  [x] 14.5 四服务 · JSON · 缓存调度
+  [x] 14.6 模态 · SSE · Markdown
+  [x] 14.7 总结 · 清单 · 习题
+-->
+<section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
+
+<p class="slide-sub">Lab 14 · Industrial Blueprint</p>
+<h2 class="slide-title">第十四章 · 自动化深度研究智能体</h2>
+<p class="lead">从旅行助手走向知识密集型应用：构建能自主规划、多轮检索、反思总结并产出可追溯报告的深度研究助手。</p>
+<div class="cover-hero"><img src="assets/ch14_cover.svg" alt="Lab 14 Plan-Execute-Report"/></div>
+<div class="note"><strong>本章交付物：</strong>TODO 驱动范式 · 三 Agent 协作 · ToolAwareSimpleAgent · SearchTool/NoteTool · FastAPI+SSE · Vue3 全屏研究 UI。</div>
+
+</section>
+<section class="slide" data-id="goals" data-label="学习目标" data-group="开篇">
+
+<p class="slide-sub">读完本章你能做什么</p>
+<h2 class="slide-title">本章目标与前置</h2>
+<div class="goal-grid">
+  <div class="goal-card"><div class="tag">范式</div><h3>TODO 驱动研究</h3><p>把开放主题拆成可检索子任务，走完规划→执行→报告。</p></div>
+  <div class="goal-card"><div class="tag">多智能体</div><h3>三角色协作</h3><p>Planner / Summarizer / Report Writer 各司其职、顺序协作。</p></div>
+  <div class="goal-card"><div class="tag">工程</div><h3>服务层 + 工具</h3><p>SearchService、NoteTool、JSON 解析、缓存与错误降级。</p></div>
+  <div class="goal-card"><div class="tag">产品</div><h3>SSE 实时研究</h3><p>Vue3 全屏模态 + 流式进度 + Markdown 报告可视化。</p></div>
+</div>
+<div class="callout" data-label="前置">建议已完成第 7 章（SimpleAgent/工具）、第 9 章（NoteTool/上下文）、第 13 章（多智能体产品体验）。</div>
+
+</section>
+<section class="slide" data-id="three-caps" data-label="三大核心能力" data-group="开篇">
+
+<p class="slide-sub">深度研究 vs 普通搜索</p>
+<h2 class="slide-title">三个必须具备的能力</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')">
+    <div class="flip-inner">
+      <div class="flip-face"><h3>① 问题剖析</h3><div class="en">Decompose</div><p class="flip-hint">点击翻转</p></div>
+      <div class="flip-face back"><p>把用户开放主题拆成可检索的查询语句（title / intent / query），而不是一次搜完所有事。</p></div>
+    </div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')">
+    <div class="flip-inner">
+      <div class="flip-face"><h3>② 多轮信息采集</h3><div class="en">Multi-round Gather</div><p class="flip-hint">点击翻转</p></div>
+      <div class="flip-face back"><p>结合多种搜索 API 持续挖掘，去重整合，避免碎片信息堆砌。</p></div>
+    </div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')">
+    <div class="flip-inner">
+      <div class="flip-face"><h3>③ 反思与总结</h3><div class="en">Reflect &amp; Report</div><p class="flip-hint">点击翻转</p></div>
+      <div class="flip-face back"><p>依阶段结果识别知识空白，决定是否继续检索，并生成带引用的结构化总结。</p></div>
+    </div>
+  </div>
+</div>
+<div class="analogy">旅行规划关心「路线可行」；深度研究关心「事实可核验」。引用与来源是硬需求，不是锦上添花。</div>
+
+</section>
+<section class="slide" data-id="pain" data-label="为何需要助手" data-group="14.1 概述架构">
+
+<p class="slide-sub">14.1.1</p>
+<h2 class="slide-title">传统研究的三个痛点</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>信息过载</h3><ul><li>搜索返回海量链接</li><li>逐个点开阅读成本高</li><li>信号被噪声淹没</li></ul></div>
+  <div class="compare-col b"><h3>缺少结构</h3><ul><li>信息碎片化</li><li>难以形成系统视图</li><li>不好写进报告</li></ul></div>
+  <div class="compare-col c"><h3>重复劳动</h3><ul><li>每次都搜→读→总结</li><li>流程无法沉淀</li><li>难复用与审计</li></ul></div>
+</div>
+<div class="note"><strong>核心价值：</strong>1–2 小时压缩到 5–10 分钟；系统化避免遗漏；全程可追溯；可扩展搜索源与分析工具。</div>
+
+</section>
+<section class="slide" data-id="arch4" data-label="四层架构" data-group="14.1 概述架构">
+
+<p class="slide-sub">14.1.2 · 图 14.1</p>
+<h2 class="slide-title">技术架构概览</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-1.png" alt="图 14.1 深度研究助手技术架构" loading="lazy" />
+  <div class="fig-cap">图 14.1 深度研究助手技术架构</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>前端 Vue3+TS → 后端 FastAPI(/research/stream) → 智能体层三 Agent+两工具 → 外部搜索与 LLM</div>
+</div>
+<div class="arch-stack">
+  <div class="arch-block enc">前端层<span class="sub">Vue3 + TypeScript · 全屏模态 · Markdown 可视化</span></div>
+  <div class="arch-block dec">后端层<span class="sub">FastAPI · SSE 路由 /research/stream</span></div>
+  <div class="arch-block head">智能体层<span class="sub">TODO Planner · Task Summarizer · Report Writer · SearchTool · NoteTool</span></div>
+  <div class="arch-block base">外部服务层<span class="sub">搜索引擎（Tavily/DDG/…）+ LLM Provider</span></div>
+</div>
+
+</section>
+<section class="slide" data-id="dataflow" data-label="数据流转" data-group="14.1 概述架构">
+
+<p class="slide-sub">14.1.2 · 图 14.2 · 点击步进</p>
+<h2 class="slide-title">一次研究请求如何流转</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-2.png" alt="图 14.2 深度研究助手数据流转过程" loading="lazy" />
+  <div class="fig-cap">图 14.2 深度研究助手数据流转过程</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>输入→SSE→规划→逐任务搜索/总结/笔记→报告→流式回前端</div>
+</div>
+<div class="loop-stepper" id="archFlow">
+  <div class="steps steps5">
+    <button class="step-btn" type="button">输入</button>
+    <button class="step-btn" type="button">SSE</button>
+    <button class="step-btn" type="button">规划</button>
+    <button class="step-btn" type="button">执行</button>
+    <button class="step-btn" type="button">报告</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+
+</section>
+<section class="slide" data-id="tree" data-label="项目目录" data-group="14.1 概述架构">
+
+<p class="slide-sub">helloagents-deepresearch/</p>
+<h2 class="slide-title">目录结构一眼看懂</h2>
+<pre class="code-block">helloagents-deepresearch/
+├── backend/
+│   ├── src/
+│   │   ├── agent.py          # 核心协调器 DeepResearchAgent
+│   │   ├── main.py           # FastAPI 入口
+│   │   ├── models.py / prompts.py / config.py
+│   │   └── services/         # planner / summarizer / reporter / search
+│   ├── .env · pyproject.toml · workspace/
+└── frontend/
+    ├── src/App.vue · components/ResearchModal.vue
+    └── composables/useResearch.ts</pre>
+<div class="callout" data-label="读图建议">后端 services 对应三阶段业务；frontend composables 专管 SSE 状态；workspace 存笔记与报告。</div>
+
+</section>
+<section class="slide" data-id="quickstart" data-label="5 分钟跑通" data-group="14.1 概述架构">
+
+<p class="slide-sub">14.1.3 · 环境要求 Python≥3.10 · Node≥16</p>
+<h2 class="slide-title">快速体验：先跑起来再深挖</h2>
+<details class="expand-card"><summary>① 启动后端</summary>
+<div class="expand-body"><pre class="code-block">cd helloagents-deepresearch/backend
+uv sync   # 或 pip install -e .
+cp .env.example .env
+# 配置 LLM_PROVIDER / LLM_API_KEY / SEARCH_API
+python src/main.py
+# → Uvicorn http://0.0.0.0:8000</pre></div></details>
+<details class="expand-card"><summary>② 启动前端</summary>
+<div class="expand-body"><pre class="code-block">cd helloagents-deepresearch/frontend
+npm install
+npm run dev
+# → http://localhost:5174/</pre></div></details>
+<details class="expand-card"><summary>③ 开始一次研究</summary>
+<div class="expand-body"><p>输入示例：<code>Datawhale是一个什么样的组织？</code>，选搜索引擎，点「开始研究」。约 1–3 分钟看到任务列表、进度日志与最终报告。</p></div></details>
+
+</section>
+<section class="slide" data-id="ux" data-label="界面体验" data-group="14.1 概述架构">
+
+<p class="slide-sub">图 14.3 / 14.4</p>
+<h2 class="slide-title">从输入卡片到全屏研究</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-3.png" alt="图 14.3 深度研究助手搜索页面" loading="lazy" />
+  <div class="fig-cap">图 14.3 深度研究助手搜索页面</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>居中输入卡片：主题 + 搜索引擎 + 开始研究</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-4.png" alt="图 14.4 深度研究助手展开研究" loading="lazy" />
+  <div class="fig-cap">图 14.4 深度研究助手展开研究</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>全屏：左侧研究信息，右侧实时进度与结果</div>
+</div>
+<ul>
+  <li><strong>任务列表</strong>：子任务及状态</li>
+  <li><strong>进度日志</strong>：搜索/总结等操作轨迹</li>
+  <li><strong>最终报告</strong>：结构化 Markdown + 来源引用</li>
+</ul>
+
+</section>
+<section class="slide" data-id="todo-idea" data-label="TODO 驱动是什么" data-group="14.2 TODO 范式">
+
+<p class="slide-sub">14.2.1 · 图 14.5</p>
+<h2 class="slide-title">把「研究」变成「规划→执行→整合」</h2>
+<p>传统搜索引擎一次答一个点；深度研究要答一系列相关问题。TODO 驱动：把复杂主题拆成多个子任务，逐个执行再整合。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-5.png" alt="图 14.5 TODO 驱动的研究流程" loading="lazy" />
+  <div class="fig-cap">图 14.5 TODO 驱动的研究流程</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>线性三阶段：规划 → 执行（循环） → 报告，每阶段 I/O 清晰</div>
+</div>
+<div class="analogy">像写论文：先列提纲（TODO），再逐节查资料写笔记，最后统稿加参考文献——而不是打开浏览器漫无目地刷。</div>
+
+</section>
+<section class="slide" data-id="todo-vs" data-label="传统 vs TODO" data-group="14.2 TODO 范式">
+
+<p class="slide-sub">同一主题两种路径</p>
+<h2 class="slide-title">「Datawhale 是什么组织？」</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>传统方式</h3>
+    <ul><li>搜出 10–20 个链接</li><li>人工点开、记笔记</li><li>结果碎片、缺系统结构</li></ul>
+  </div>
+  <div class="compare-col b"><h3>TODO 驱动</h3>
+    <ul>
+      <li>TODO1 基本信息 · TODO2 主要项目</li>
+      <li>TODO3 社区文化 · TODO4 影响力</li>
+      <li>每 TODO：搜→总结→引用来源</li>
+      <li>最后结构化报告 + 参考文献</li>
+    </ul>
+  </div>
+</div>
+<div class="compare-vs">优势：可分解 · 可追溯 · 少遗漏 · 可增减子任务</div>
+
+</section>
+<section class="slide" data-id="todo-3elem" data-label="三大核心要素" data-group="14.2 TODO 范式">
+
+<p class="slide-sub">Planner · Executor · Writer</p>
+<h2 class="slide-title">完整系统的三个齿轮</h2>
+<div class="goal-grid">
+  <div class="goal-card"><div class="tag">规划器</div><h3>TODO Planner</h3><p>理解主题关键面，拆出 3–5 个子任务，并为每个设计搜索 query（太少不全，太多冗余）。</p></div>
+  <div class="goal-card"><div class="tag">执行器</div><h3>Task Executor</h3><p>搜索取资料、去冗余、保存引用；工程上由 Search + Summarizer + Note 协作完成。</p></div>
+  <div class="goal-card"><div class="tag">生成器</div><h3>Report Writer</h3><p>按逻辑组织、合并重复、为观点挂来源，输出可读报告。</p></div>
+</div>
+
+</section>
+<section class="slide" data-id="phase123" data-label="三阶段流程" data-group="14.2 TODO 范式">
+
+<p class="slide-sub">14.2.2 · 点击步进</p>
+<h2 class="slide-title">规划 · 执行 · 报告</h2>
+<div class="loop-stepper" id="todoPhases">
+  <div class="steps steps3">
+    <button class="step-btn" type="button">规划</button>
+    <button class="step-btn" type="button">执行</button>
+    <button class="step-btn" type="button">报告</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<pre class="code-block">[ {"title":"Datawhale的基本信息","intent":"组织定位/历程","query":"Datawhale organization introduction history 2024"}, ... ]</pre>
+<div class="note">子任务三字段：<strong>title</strong>（标题）· <strong>intent</strong>（为何研究）· <strong>query</strong>（可英文查询以提升召回）。</div>
+
+</section>
+<section class="slide" data-id="exec-detail" data-label="执行细节" data-group="14.2 TODO 范式">
+
+<p class="slide-sub">搜索 → 总结 → 笔记 → SSE</p>
+<h2 class="slide-title">执行阶段四步循环</h2>
+<ol>
+  <li><code>search_tool.run({input, backend, mode:"structured", max_results:5})</code></li>
+  <li>提取 title / url / snippet</li>
+  <li><code>summarizer_agent.run(task, search_results)</code> → Markdown 核心观点 + [n] 引用</li>
+  <li><code>note_tool.run({action:"create", ...})</code> 持久化</li>
+</ol>
+<pre class="code-block">{"type":"status","message":"正在搜索：Datawhale的基本信息"}
+{"type":"task","task":{"id":1,"title":"...","status":"completed"}}</pre>
+<div class="callout" data-label="报告骨架">标题 → 概述 → 各子任务分析 → 总结 → 参考文献</div>
+
+</section>
+<section class="slide" data-id="quiz142" data-label="自测 · 范式" data-group="14.2 TODO 范式">
+<div class="quiz-item" data-quiz="q142" data-answer="1">
+  <h4>好的研究规划通常拆成多少个子任务更合适？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">1 个万能查询</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">3–5 个逻辑相关子任务</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">越多越好（>10）</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">固定永远 2 个</button>
+  <div class="quiz-explain">太少覆盖不全，太多冗余且费时费钱；教材推荐 3–5，并要求逻辑递进与精准 query。</div>
+</div><div class="quiz-item" data-quiz="q142" data-answer="1">
+  <h4>执行阶段「记录」主要靠什么？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">只打印到控制台</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">NoteTool 落盘笔记</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">浏览器 localStorage</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">仅靠 LLM 记忆</button>
+  <div class="quiz-explain">NoteTool 把总结与来源持久化，支持中断恢复与审计。</div>
+</div><p class="quiz-score" id="score-q142"></p><div class="flash-wrap" id="flash142" data-cards='[{"q": "TODO 驱动的一句话？", "a": "把复杂研究变成规划→执行→整合的可调试流水线。"}, {"q": "子任务三个字段？", "a": "title、intent、query。"}, {"q": "报告为何要参考文献？", "a": "深度研究要求可核验；引用是可信度的基础设施。"}]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)">
+    <div class="q"></div>
+    <div class="a"></div>
+  </div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash142',-1)">← 上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash142',1)">下一张 →</button>
+  </div>
+</div>
+</section>
+<section class="slide" data-id="agents-overview" data-label="三 Agent 总览" data-group="14.3 智能体设计">
+
+<p class="slide-sub">14.3.1 · 表 14.1</p>
+<h2 class="slide-title">职责划分：专而简单</h2>
+<p>单 Agent 硬扛复杂研究难维护；本章用三个专门 Agent，各管一环。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-table-1.png" alt="表 14.1 三个 Agent 的职责划分" loading="lazy" />
+  <div class="fig-cap">表 14.1 三个 Agent 的职责划分</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>Planner 拆任务 · Summarizer 总结检索 · Writer 统稿报告</div>
+</div>
+<div class="compare3">
+  <div class="compare-col a"><h3>TODO Planner</h3><ul><li>头脑风暴式拆题</li><li>输出 JSON 列表</li><li>带当前日期</li></ul></div>
+  <div class="compare-col b"><h3>Task Summarizer</h3><ul><li>读搜索结果</li><li>核心观点+数据</li><li>强制来源引用</li></ul></div>
+  <div class="compare-col c"><h3>Report Writer</h3><ul><li>整合多总结</li><li>消冗统一结构</li><li>参考文献分组</li></ul></div>
+</div>
+
+</section>
+<section class="slide" data-id="planner-agent" data-label="规划专家 Prompt" data-group="14.3 智能体设计">
+
+<p class="slide-sub">Agent 1 · TODO Planner</p>
+<h2 class="slide-title">Prompt 设计要点</h2>
+<ul>
+  <li>角色：研究规划专家；任务：拆成 3–5 个子任务</li>
+  <li>注入 <code>{current_date}</code> 与 <code>{research_topic}</code></li>
+  <li>约束：可搜索、有目标、彼此有逻辑（基础→现状→应用→趋势）</li>
+  <li><strong>只返回 JSON</strong>，便于下游解析</li>
+</ul>
+<pre class="code-block">todo_items = []
+for idx, item in enumerate(tasks_payload, start=1):
+    todo_items.append(TodoItem(id=idx, title=..., intent=..., query=...))
+# _extract_tasks: re.search(r'\[.*\]', response, DOTALL) → json.loads</pre>
+<div class="note">Agent 常在 JSON 前后加说明文字——正则抽数组是工程标配。</div>
+
+</section>
+<section class="slide" data-id="summarizer-agent" data-label="总结专家" data-group="14.3 智能体设计">
+
+<p class="slide-sub">Agent 2 · Task Summarizer</p>
+<h2 class="slide-title">像人做文献笔记</h2>
+<ul>
+  <li>输入：task_title / intent / query + 格式化搜索结果</li>
+  <li>输出 Markdown：核心观点 · 关键数据 · 来源 [1][2]</li>
+  <li><code>_format_sources</code> 把每条结果编号为 [idx] title/URL/摘要</li>
+</ul>
+<div class="callout" data-label="质量">合并相似信息，保留数字/日期/名称；每个观点挂引用，方便报告阶段汇总参考文献。</div>
+
+</section>
+<section class="slide" data-id="writer-agent" data-label="报告专家" data-group="14.3 智能体设计">
+
+<p class="slide-sub">Agent 3 · Report Writer</p>
+<h2 class="slide-title">从多份笔记到一篇报告</h2>
+<ol>
+  <li>标题 = 研究主题</li>
+  <li>概述 2–3 段</li>
+  <li>各子任务二级标题详细分析</li>
+  <li>总结 1–2 段</li>
+  <li>参考文献（可按任务分组）</li>
+</ol>
+<pre class="code-block">formatted.append(f"## 任务{idx}：{task.title}\n意图：{task.intent}\n\n{summary}\n")</pre>
+
+</section>
+<section class="slide" data-id="tool-aware" data-label="ToolAwareSimpleAgent" data-group="14.3 智能体设计">
+
+<p class="slide-sub">14.3.2 · 监听工具调用</p>
+<h2 class="slide-title">为何要扩展 SimpleAgent？</h2>
+<p>深度研究需要：调试参数、全程日志、行为分析、前端实时进度。原 SimpleAgent 无监听钩子。</p>
+<pre class="code-block">class ToolAwareSimpleAgent(SimpleAgent):
+    def _execute_tool_call(self, tool_name, parameters):
+        parsed = self._parse_parameters(parameters)
+        result = super()._execute_tool_call(tool_name, parameters)
+        if self._tool_call_listener:
+            self._tool_call_listener({
+                "agent_name": self.name, "tool_name": tool_name,
+                "parsed_parameters": parsed, "result": result,
+            })
+        return result</pre>
+<div class="analogy">像给每个扳手装上传感器：谁、何时、用了什么参数、结果如何——全部可观测。</div>
+
+</section>
+<section class="slide" data-id="collab" data-label="顺序协作" data-group="14.3 智能体设计">
+
+<p class="slide-sub">14.3.3 · 图 14.6</p>
+<h2 class="slide-title">DeepResearchAgent 协调器</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-6.png" alt="图 14.6 Agent 协作流程" loading="lazy" />
+  <div class="fig-cap">图 14.6 Agent 协作流程</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>线性：Planner →（Search+Summarizer 循环）→ Reporter；无并发</div>
+</div>
+<div class="loop-stepper" id="collabFlow">
+  <div class="steps steps3">
+    <button class="step-btn" type="button">Planner</button>
+    <button class="step-btn" type="button">循环执行</button>
+    <button class="step-btn" type="button">Reporter</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<ul>
+  <li><strong>线性</strong>：固定顺序</li>
+  <li><strong>明确 I/O</strong>：上一环输出 = 下一环输入</li>
+  <li><strong>无并发</strong>：同时只跑一个 Agent（易调试）</li>
+</ul>
+
+</section>
+<section class="slide" data-id="quiz143" data-label="自测 · Agent" data-group="14.3 智能体设计">
+<div class="quiz-item" data-quiz="q143" data-answer="1">
+  <h4>ToolAwareSimpleAgent 相对 SimpleAgent 的关键增量是？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">更强的推理能力</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">tool_call_listener 回调</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">必须用多模态模型</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">取消工具系统</button>
+  <div class="quiz-explain">核心是监听钩子，便于日志、调试与 SSE 进度。</div>
+</div><div class="quiz-item" data-quiz="q143" data-answer="1">
+  <h4>三 Agent 协作模式是？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">全并行投票</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">顺序协作流水线</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">互相辩论对抗</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">随机路由</button>
+  <div class="quiz-explain">规划→逐任务执行→报告，线性清晰。</div>
+</div><p class="quiz-score" id="score-q143"></p>
+</section>
+<section class="slide" data-id="search-ext" data-label="SearchTool 扩展" data-group="14.4 工具集成">
+
+<p class="slide-sub">14.4.1 · 表 14.2</p>
+<h2 class="slide-title">多搜索引擎与配置化</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-table-2.png" alt="表 14.2 多搜索引擎对比" loading="lazy" />
+  <div class="fig-cap">表 14.2 多搜索引擎对比</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>Tavily / DuckDuckGo / Perplexity / SearXNG / Advanced 组合</div>
+</div>
+<pre class="code-block">class SearchAPI(str, Enum):
+    TAVILY = "tavily"; DUCKDUCKGO = "duckduckgo"
+    PERPLEXITY = "perplexity"; SEARXNG = "searxng"; ADVANCED = "advanced"
+# .env → SEARCH_API=tavily</pre>
+<p>统一返回：<code>results</code>（title/url/snippet）· <code>backend</code> · 可选 <code>answer</code>（Perplexity）· <code>notices</code>。</p>
+
+</section>
+<section class="slide" data-id="dedup" data-label="去重与 Token 限制" data-group="14.4 工具集成">
+
+<p class="slide-sub">结果清洗</p>
+<h2 class="slide-title">别把噪声塞进总结 Agent</h2>
+<pre class="code-block">def deduplicate_sources(sources):
+    seen, out = set(), []
+    for s in sources:
+        if s["url"] not in seen:
+            seen.add(s["url"]); out.append(s)
+    return out
+
+def limit_source_tokens(source, max_tokens=2000):
+    # 粗估：1 token ≈ 4 chars
+    max_chars = max_tokens * 4
+    snip = source["snippet"]
+    if len(snip) > max_chars: snip = snip[:max_chars] + "..."
+    return {**source, "snippet": snip}</pre>
+<div class="note">去重保质量；截断保上下文预算——否则 Summarizer Prompt 会被长摘要撑爆。</div>
+
+</section>
+<section class="slide" data-id="note-tool" data-label="NoteTool 落盘" data-group="14.4 工具集成">
+
+<p class="slide-sub">14.4.2 · 第九章工具复用</p>
+<h2 class="slide-title">研究进度为什么要持久化？</h2>
+<ul>
+  <li>中断后续跑</li>
+  <li>审计过程与质量</li>
+  <li>分析效率（搜了几次、引用了哪些）</li>
+</ul>
+<pre class="code-block">workspace/
+├── notes/ 1.md 2.md 3.md ...
+└── reports/ final_report.md</pre>
+<p>笔记内容通常含：任务信息（意图/查询）· 搜索结果列表 · 总结正文。</p>
+
+</section>
+<section class="slide" data-id="registry" data-label="ToolRegistry" data-group="14.4 工具集成">
+
+<p class="slide-sub">14.4.3 · 图 14.7</p>
+<h2 class="slide-title">统一注册 Search + Note</h2>
+<pre class="code-block">registry = ToolRegistry()
+registry.register_tool(SearchTool(backend="hybrid"))
+registry.register_tool(NoteTool(workspace="./workspace/notes"))
+agent = ToolAwareSimpleAgent(..., tool_registry=registry)</pre>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-7.png" alt="图 14.7 工具调用流程" loading="lazy" />
+  <div class="fig-cap">图 14.7 工具调用流程</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>生成指令→解析→查找→run→回传</div>
+</div>
+<div class="loop-stepper" id="toolCallFlow">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">生成</button>
+    <button class="step-btn" type="button">解析</button>
+    <button class="step-btn" type="button">调用</button>
+    <button class="step-btn" type="button">回传</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+
+</section>
+<section class="slide" data-id="quiz144" data-label="自测 · 工具" data-group="14.4 工具集成">
+<div class="quiz-item" data-quiz="q144" data-answer="1">
+  <h4>切换搜索引擎通常改哪里？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">重写 SearchTool 源码</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">改 .env 的 SEARCH_API</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">改前端 CSS</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">改 LLM 温度</button>
+  <div class="quiz-explain">配置化选择引擎，无需改业务代码。</div>
+</div><div class="quiz-item" data-quiz="q144" data-answer="1">
+  <h4>NoteTool 主要解决什么？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">提高模型参数量</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">研究进度持久化与可审计</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">替代搜索引擎</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">加密通信</button>
+  <div class="quiz-explain">落盘笔记与报告，支撑恢复和审计。</div>
+</div><p class="quiz-score" id="score-q144"></p>
+</section>
+<section class="slide" data-id="svc-plan" data-label="PlanningService" data-group="14.5 服务层">
+
+<p class="slide-sub">14.5.1 · Agent 与工具的桥梁</p>
+<h2 class="slide-title">任务规划服务四职责</h2>
+<ol>
+  <li>构建规划 Prompt（主题 + 日期）</li>
+  <li>调用 TODO Planner Agent</li>
+  <li>从响应提取 JSON</li>
+  <li>验证 title/intent/query 并生成 TodoItem</li>
+</ol>
+<pre class="code-block">response = self._agent.run(prompt)
+tasks_payload = self._extract_tasks(response)
+# 缺字段 → ValueError；日期格式如「2026年07月23日」</pre>
+
+</section>
+<section class="slide" data-id="json-robust" data-label="JSON 健壮解析" data-group="14.5 服务层">
+
+<p class="slide-sub">真实 LLM 不会永远只吐纯 JSON</p>
+<h2 class="slide-title">常见坑与对策</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>额外文本</h3><p>前后有「好的，我将…」→ 正则抽 <code>[...]</code></p></div>
+  <div class="compare-col b"><h3>格式错误</h3><p>缺引号/逗号 → JSONDecodeError 明确报错</p></div>
+  <div class="compare-col c"><h3>字段缺失</h3><p>校验必需键，拒绝脏任务</p></div>
+</div>
+<div class="callout" data-label="评估">覆盖全面 · 逻辑清晰 · 查询精准 · 数量 3–5。可写 <code>evaluate_plan</code> 打分给建议。</div>
+
+</section>
+<section class="slide" data-id="svc-sum" data-label="SummarizationService" data-group="14.5 服务层">
+
+<p class="slide-sub">14.5.2</p>
+<h2 class="slide-title">总结服务：把网页摘要变成证据笔记</h2>
+<ul>
+  <li>格式化 sources → 填入 Prompt</li>
+  <li>调用 Task Summarizer</li>
+  <li>返回带引用的 Markdown（供 Note 与报告复用）</li>
+</ul>
+<div class="analogy">Planner 定「问什么」；Summarizer 定「这段材料说了什么、出处在哪」。</div>
+
+</section>
+<section class="slide" data-id="svc-report" data-label="ReportingService" data-group="14.5 服务层">
+
+<p class="slide-sub">14.5.3</p>
+<h2 class="slide-title">报告服务：统稿官</h2>
+<p>输入 <code>List[Tuple[TodoItem, str]]</code>，格式化后交给 Report Writer，输出完整 Markdown 报告。</p>
+<pre class="code-block">report = self._agent.run(report_writer_instructions.format(
+    research_topic=research_topic,
+    task_summaries=formatted_summaries,
+))</pre>
+<div class="note">报告结构在 Prompt 里钉死，比事后用正则「修报告」更稳。</div>
+
+</section>
+<section class="slide" data-id="svc-search" data-label="SearchService" data-group="14.5 服务层">
+
+<p class="slide-sub">14.5.4 · 图 14.8</p>
+<h2 class="slide-title">搜索调度：不让 Agent 直接摸引擎</h2>
+<p>本章刻意用中间层调度 SearchTool：Agent 更专注「理解材料」，搜索侧可独立做降级、缓存、清洗。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-8.png" alt="图 14.8 搜索引擎调度流程" loading="lazy" />
+  <div class="fig-cap">图 14.8 搜索引擎调度流程</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>读 SEARCH_API → 选引擎 → 执行 → 去重截断 → 返回</div>
+</div>
+<ul>
+  <li>失败返回空列表并打日志（不拖垮整条流水线）</li>
+  <li>可选 MD5 缓存 <code>query+max_results+engine</code></li>
+</ul>
+
+</section>
+<section class="slide" data-id="quiz145" data-label="自测 · 服务" data-group="14.5 服务层">
+<div class="quiz-item" data-quiz="q145" data-answer="1">
+  <h4>SearchService 放在中间层的主要动机？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">让前端直接调搜索</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">让 Agent 专注处理信息，搜索可独立降级/缓存</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">减少 JSON 字段</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">去掉 NoteTool</button>
+  <div class="quiz-explain">解耦检索与推理，便于工程治理。</div>
+</div><div class="quiz-item" data-quiz="q145" data-answer="1">
+  <h4>规划 JSON 解析第一道防线通常是？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">整段当纯 JSON 硬解析</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">正则提取数组再 loads</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">忽略错误继续</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">让前端解析</button>
+  <div class="quiz-explain">LLM 常夹带自然语言，先抽 JSON 再解析。</div>
+</div><p class="quiz-score" id="score-q145"></p>
+</section>
+<section class="slide" data-id="modal-ui" data-label="全屏模态 UI" data-group="14.6 前端交互">
+
+<p class="slide-sub">14.6.1 · 图 14.9</p>
+<h2 class="slide-title">沉浸式研究界面</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-9.png" alt="图 14.9 全屏模态对话框 UI" loading="lazy" />
+  <div class="fig-cap">图 14.9 全屏模态对话框 UI</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>顶栏主题+关闭 · 进度条 · Markdown 内容 · 底栏状态</div>
+</div>
+<ul>
+  <li>沉浸：减少干扰</li>
+  <li>层次：主页 / 研究页分离</li>
+  <li>易关：按钮或 ESC</li>
+  <li>响应式：平板 95vw、手机全屏圆角归零</li>
+</ul>
+<pre class="code-block">&lt;!-- ResearchModal.vue：progress + marked 渲染 + Esc 监听 --&gt;</pre>
+
+</section>
+<section class="slide" data-id="sse" data-label="SSE 实时进度" data-group="14.6 前端交互">
+
+<p class="slide-sub">14.6.2 · 图 14.10</p>
+<h2 class="slide-title">服务器推送研究过程</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/14-figures/14-10.png" alt="图 14.10 SSE 流程" loading="lazy" />
+  <div class="fig-cap">图 14.10 SSE 流程</div>
+  <div class="fig-fallback"><strong>离线要点：</strong>请求→event-stream→progress/plan/task_summary/report→关闭</div>
+</div>
+<div class="loop-stepper" id="sseFlow">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">请求</button>
+    <button class="step-btn" type="button">建连</button>
+    <button class="step-btn" type="button">推送</button>
+    <button class="step-btn" type="button">完成</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<pre class="code-block">yield f"data: {json.dumps({'type':'progress','stage':'planning',...})}\n\n"
+# 前端 useResearch.ts：EventSource.onmessage → 更新进度与 Markdown</pre>
+
+</section>
+<section class="slide" data-id="md-viz" data-label="Markdown 可视化" data-group="14.6 前端交互">
+
+<p class="slide-sub">14.6.3</p>
+<h2 class="slide-title">用 marked 渲染研究报告</h2>
+<pre class="code-block">marked.setOptions({ breaks: true, gfm: true })
+const renderedHtml = marked(markdownContent.value)</pre>
+<p>参考文献常按任务分组展示链接列表，用户可点回源站核验。</p>
+<div class="callout" data-label="产品闭环">全屏 UI + SSE 进度 + Markdown 报告 = 可演示、可教学、可二次开发的研究助手。</div>
+
+</section>
+<section class="slide" data-id="quiz146" data-label="自测 · 前端" data-group="14.6 前端交互">
+<div class="quiz-item" data-quiz="q146" data-answer="1">
+  <h4>实时进度主要用什么机制？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">每秒轮询整页刷新</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">SSE（Server-Sent Events）</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">只用 WebSocket 二进制帧</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">本地假进度条</button>
+  <div class="quiz-explain">教材用 SSE 单向推送研究阶段事件。</div>
+</div><p class="quiz-score" id="score-q146"></p><div class="flash-wrap" id="flash146" data-cards='[{"q": "ResearchModal 四块区域？", "a": "顶栏、进度区、内容区、底栏状态。"}, {"q": "SSE data 行格式？", "a": "data: {json}\\n\\n"}, {"q": "为何用 GFM？", "a": "报告含列表/链接/标题，GFM 渲染更贴近 GitHub 风格文档。"}]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)">
+    <div class="q"></div>
+    <div class="a"></div>
+  </div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash146',-1)">← 上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash146',1)">下一张 →</button>
+  </div>
+</div>
+</section>
+<section class="slide" data-id="summary" data-label="本章总结" data-group="14.7 总结自测">
+
+<p class="slide-sub">14.7</p>
+<h2 class="slide-title">六条主线收束</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>范式</h3><ul><li>TODO 驱动</li><li>规划/执行/报告</li><li>可控可调试</li></ul></div>
+  <div class="compare-col b"><h3>智能体</h3><ul><li>三角色专家</li><li>ToolAware 监听</li><li>顺序协作</li></ul></div>
+  <div class="compare-col c"><h3>工程+产品</h3><ul><li>四服务层</li><li>Search/Note 工具</li><li>SSE+Vue 全屏</li></ul></div>
+</div>
+<div class="note">下一章预告：赛博小镇——与游戏引擎结合的多 Agent 社会模拟。</div>
+
+</section>
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="14.7 总结自测">
+
+<p class="slide-sub">勾选过关</p>
+<h2 class="slide-title">本章小结自测</h2>
+<ul class="check-list">
+  <li><input type="checkbox" /> 能说出深度研究相对普通搜索的三大能力</li>
+  <li><input type="checkbox" /> 能画出四层架构与一次请求的数据流</li>
+  <li><input type="checkbox" /> 能解释 TODO 三字段与 3–5 子任务原则</li>
+  <li><input type="checkbox" /> 能对比三个 Agent 的 Prompt 输出形态</li>
+  <li><input type="checkbox" /> 知道 ToolAwareSimpleAgent 监听钩子用途</li>
+  <li><input type="checkbox" /> 能说明 Search 去重/截断与 Note 落盘</li>
+  <li><input type="checkbox" /> 能叙述 Planning JSON 解析与 SearchService 中间层</li>
+  <li><input type="checkbox" /> 能描述 SSE 事件类型与全屏模态结构</li>
+</ul>
+
+</section>
+<section class="slide" data-id="exercises" data-label="习题导读" data-group="14.7 总结自测">
+
+<p class="slide-sub">继续深入</p>
+<h2 class="slide-title">建议练习</h2>
+<ol>
+  <li>给规划服务加 <code>evaluate_plan</code>，分数过低自动重规划一次。</li>
+  <li>为 SearchService 实现磁盘缓存与 TTL 过期。</li>
+  <li>扩展 Advanced 模式：多引擎结果融合再去重。</li>
+  <li>前端增加「暂停/取消研究」并安全关闭 SSE。</li>
+  <li>把最终报告导出为 PDF，并保留可点击引用链接。</li>
+</ol>
+<div class="callout" data-label="完成">恭喜走完 Lab 14。用 ← → 复习薄弱页，或回到目录跳转。</div>
+
+</section>
+    </div>
+  </main>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll(".slide"));
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+document.querySelectorAll(".flash-wrap").forEach((el) => initFlash(el.id));
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+function bindStepper(rootId, texts) {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  function show(n) {
+    root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+    const panel = root.querySelector(".loop-panel");
+    panel.innerHTML = `<h4>${texts[n].t}</h4><p>${texts[n].p}</p>`;
+  }
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.addEventListener("click", () => show(i)));
+  show(0);
+}
+
+bindStepper("archFlow", [
+  { t: "① 用户输入", p: "在前端输入研究主题（如「Datawhale是一个什么样的组织？」），可选搜索引擎，点击开始研究。" },
+  { t: "② SSE 连接", p: "前端通过 SSE 连接 /research/stream；FastAPI 接收请求并创建研究状态。" },
+  { t: "③ 规划阶段", p: "调用 TODO Planner，把主题拆成 3–5 个子任务（title / intent / query）。" },
+  { t: "④ 执行阶段", p: "逐个执行：SearchTool 搜索 → Summarizer 总结 → NoteTool 落盘，并推送进度。" },
+  { t: "⑤ 报告阶段", p: "Report Writer 整合全部总结，生成带参考文献的 Markdown 报告，经 SSE 推到前端。" }
+]);
+
+bindStepper("todoPhases", [
+  { t: "规划 Planning", p: "输入：主题 + 当前日期。输出：JSON 子任务列表。好规划要覆盖全面、逻辑清晰、查询精准、条目 3–5 个。" },
+  { t: "执行 Execution", p: "对每个 TODO：搜索 → 提取标题/URL/摘要 → 总结 Agent → NoteTool 记录。期间推送 status / task 事件。" },
+  { t: "报告 Reporting", p: "整合全部总结：标题、概述、分节分析、总结、参考文献。消除重复、统一格式、保留引用。" }
+]);
+
+bindStepper("toolCallFlow", [
+  { t: "① Agent 生成指令", p: "如 [TOOL_CALL:search_tool:{\"input\":\"Datawhale组织\",\"backend\":\"tavily\"}]" },
+  { t: "② 解析指令", p: "ToolRegistry 解析工具名与参数 JSON。" },
+  { t: "③ 查找并调用", p: "按名称找到工具，调用 run(params)。" },
+  { t: "④ 返回结果", p: "工具结果格式化为字符串回给 Agent；监听器可同步推 SSE。" }
+]);
+
+bindStepper("sseFlow", [
+  { t: "① 客户端请求", p: "POST/连接研究端点，带上研究主题。" },
+  { t: "② 建立 SSE", p: "服务器返回 text/event-stream，保持长连接。" },
+  { t: "③ 推送进度", p: "规划 / 执行 / 报告各阶段推送 progress、plan、task_summary 等事件。" },
+  { t: "④ 完成关闭", p: "推送最终 report 与 completed，客户端关闭 EventSource。" }
+]);
+
+bindStepper("collabFlow", [
+  { t: "Planner", p: "DeepResearchAgent 先调度规划服务，得到 todo_list，并向前端推送 tasks。" },
+  { t: "逐任务循环", p: "对每个 task：SearchService.search → Summarizer.summarize → 记入 task_summaries，推送 task_completed。" },
+  { t: "Reporter", p: "调用报告服务整合全部总结，推送 report 事件并返回最终 Markdown。" }
+]);
+
+document.querySelectorAll(".fig img").forEach((img) => {
+  img.addEventListener("error", () => {
+    const fig = img.closest(".fig");
+    if (fig) fig.classList.add("offline");
+  });
+});
+
+goTo(0);
+</script>
+
+</body>
+</html>

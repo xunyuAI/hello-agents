@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="960" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0a1520"/>
+      <stop offset="1" stop-color="#0c2420"/>
+    </linearGradient>
+    <linearGradient id="neon" x1="80" y1="60" x2="880" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#34d399"/>
+      <stop offset="0.55" stop-color="#10b981"/>
+      <stop offset="1" stop-color="#6ee7b7"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="rgba(52,211,153,0.12)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="960" height="420" fill="url(#bg)"/>
+  <rect width="960" height="420" fill="url(#grid)"/>
+  <circle cx="820" cy="70" r="130" fill="rgba(52,211,153,0.10)"/>
+  <circle cx="100" cy="340" r="100" fill="rgba(16,185,129,0.08)"/>
+
+  <!-- Pipeline: SFT -> GRPO -> Deploy -->
+  <rect x="70" y="155" width="170" height="88" rx="2" stroke="url(#neon)" stroke-width="1.5" fill="rgba(15,30,44,0.92)"/>
+  <text x="155" y="192" text-anchor="middle" fill="#6ee7b7" font-family="Oxanium, sans-serif" font-size="14" letter-spacing="2">SFT</text>
+  <text x="155" y="218" text-anchor="middle" fill="#9aafb8" font-family="Source Serif 4, serif" font-size="12"><ú¿</text>
+
+  <path d="M250 199 H310" stroke="#34d399" stroke-width="2"/>
+  <polygon points="318,199 308,194 308,204" fill="#34d399"/>
+
+  <rect x="320" y="155" width="170" height="88" rx="2" stroke="#34d399" stroke-width="1.5" fill="rgba(15,30,44,0.92)"/>
+  <text x="405" y="192" text-anchor="middle" fill="#34d399" font-family="Oxanium, sans-serif" font-size="14" letter-spacing="2">GRPO</text>
+  <text x="405" y="218" text-anchor="middle" fill="#9aafb8" font-family="Source Serif 4, serif" font-size="12">Ä…øùV±</text>
+
+  <path d="M500 199 H560" stroke="#10b981" stroke-width="2"/>
+  <polygon points="568,199 558,194 558,204" fill="#10b981"/>
+
+  <rect x="570" y="155" width="170" height="88" rx="2" stroke="#6ee7b7" stroke-width="1.5" fill="rgba(15,30,44,0.92)"/>
+  <text x="655" y="192" text-anchor="middle" fill="#6ee7b7" font-family="Oxanium, sans-serif" font-size="14" letter-spacing="2">EVAL</text>
+  <text x="655" y="218" text-anchor="middle" fill="#9aafb8" font-family="Source Serif 4, serif" font-size="12">Æn‡í¯</text>
+
+  <!-- Reward pulse -->
+  <rect x="780" y="130" width="120" height="50" rx="2" stroke="#e8a84a" stroke-width="1.2" fill="rgba(15,30,44,0.88)"/>
+  <text x="840" y="160" text-anchor="middle" fill="#e8a84a" font-family="Oxanium, sans-serif" font-size="12">REWARD</text>
+  <rect x="780" y="195" width="120" height="50" rx="2" stroke="#3da8b8" stroke-width="1.2" fill="rgba(15,30,44,0.88)"/>
+  <text x="840" y="225" text-anchor="middle" fill="#5ed4e0" font-family="Oxanium, sans-serif" font-size="12">LoRA</text>
+  <rect x="780" y="260" width="120" height="50" rx="2" stroke="#6bc89a" stroke-width="1.2" fill="rgba(15,30,44,0.88)"/>
+  <text x="840" y="290" text-anchor="middle" fill="#6bc89a" font-family="Oxanium, sans-serif" font-size="12">DEPLOY</text>
+
+  <path d="M740 199 H780" stroke="#34d399" stroke-width="1.5" opacity="0.7"/>
+  <path d="M740 220 H780" stroke="#3da8b8" stroke-width="1.5" opacity="0.7"/>
+  <path d="M740 285 H780" stroke="#6bc89a" stroke-width="1.5" opacity="0.7"/>
+
+  <text x="70" y="68" fill="#34d399" font-family="Oxanium, sans-serif" font-size="14" letter-spacing="4">LAB 11 · AGENTIC RL</text>
+  <text x="70" y="105" fill="#e6ede9" font-family="Oxanium, sans-serif" font-size="28" font-weight="600">Î!ÿ0Õ</text>
+  <text x="70" y="360" fill="#9aafb8" font-family="Source Serif 4, serif" font-size="15">„­Ã · SFT · GRPO · V±¾¡ · ï0ïèr</text>
+</svg>

@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第七章 · 构建你的 Agent 框架 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 07 Signal
+   Same product line as Ch1–Ch6; magenta / fuchsia primary signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(232, 90, 154, 0.14);
+  --line-strong: rgba(232, 90, 154, 0.36);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #e85a9a;
+  --signal-bright: #f078b0;
+  --violet: #a78bfa;
+  --violet-dim: rgba(167, 139, 250, 0.14);
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(232, 90, 154, 0.16), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(61, 168, 184, 0.10), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--cyan), var(--amber));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(232, 90, 154, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(232, 90, 154, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(240, 120, 176, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(232,90,154,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(232, 90, 154, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.compare4 {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare4 .compare-col h3 { font-size: 0.85rem; }
+.compare5 {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.55rem; margin: 1.2rem 0;
+}
+.compare5 .compare-col { padding: 0.85rem; }
+.compare5 .compare-col h3 { font-size: 0.8rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps6 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps2 { grid-template-columns: repeat(2, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: rgba(232,90,154,0.12);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.arch-block.base { border-left: 3px solid var(--violet); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: center; text-align: center;
+  transition: border-color 0.25s; user-select: none;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.15rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; font-size: 0.98rem; color: var(--paper); line-height: 1.55;
+}
+.flash-card.revealed .q { display: none; }
+.flash-card.revealed .a { display: block; }
+.flash-card.revealed { border-color: var(--cyan); background: rgba(61,168,184,0.1); }
+.flash-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 0.75rem; font-family: var(--font-display);
+  font-size: 0.72rem; color: var(--text-mute);
+}
+.flash-controls { display: flex; gap: 0.4rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); margin-bottom: 0.75rem; line-height: 1.4;
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.35rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224, 107, 90, 0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.65rem; padding: 0.7rem 0.85rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(232, 90, 154, 0.08); color: var(--paper);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.85rem;
+  color: var(--cyan-bright); margin: 0.5rem 0 1rem;
+}
+.check-list { list-style: none; margin: 1rem 0; padding: 0; }
+.check-list li {
+  display: flex; gap: 0.65rem; align-items: flex-start;
+  padding: 0.55rem 0.7rem; border: 1px solid var(--line);
+  margin-bottom: 0.4rem; background: var(--panel);
+  cursor: pointer; transition: all 0.2s;
+}
+.check-list li:hover { border-color: var(--line-strong); }
+.check-list li.done {
+  border-color: var(--mint); background: var(--mint-dim);
+}
+.check-list li.done .ck-text { color: var(--mint); text-decoration: line-through; opacity: 0.85; }
+.ck-box {
+  width: 18px; height: 18px; border: 1px solid var(--signal);
+  flex-shrink: 0; margin-top: 0.15rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: transparent;
+}
+.check-list li.done .ck-box {
+  background: var(--mint); border-color: var(--mint); color: var(--ink);
+}
+.ck-text { font-size: 0.9rem; color: var(--text-dim); }
+.cover { text-align: left; padding: 1rem 0 2rem; }
+.cover-badge {
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--signal); border: 1px solid var(--line-strong);
+  display: inline-block; padding: 0.3rem 0.7rem; margin-bottom: 1.25rem;
+}
+.cover h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1.1; margin-bottom: 0.75rem; max-width: 18ch;
+}
+.cover .tagline {
+  font-size: 1.1rem; color: var(--paper);
+  max-width: 36em; margin-bottom: 1.5rem;
+}
+.goals { display: grid; gap: 0.55rem; margin: 1.25rem 0 1.75rem; }
+.goal {
+  display: grid; grid-template-columns: auto 1fr; gap: 0.85rem;
+  align-items: start; padding: 0.85rem 1rem;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.goal-n {
+  font-family: var(--font-display); font-size: 1.2rem;
+  color: var(--cyan-bright); line-height: 1;
+}
+.goal p { margin: 0; font-size: 0.92rem; }
+.cover-img {
+  margin-top: 1.5rem; border: 1px solid var(--line-strong);
+  max-width: 100%; width: 100%; background: var(--panel);
+}
+.kbd-hint {
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.04em;
+}
+.kbd {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  border: 1px solid var(--line-strong); padding: 0.1rem 0.35rem;
+  color: var(--signal); background: var(--panel);
+}
+.kw-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem; margin: 1rem 0;
+}
+.kw {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.9rem 1rem;
+}
+.kw h4 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.kw p { margin: 0; font-size: 0.85rem; }
+.path-hint {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--cyan-bright); background: rgba(61, 168, 184, 0.08);
+  border: 1px dashed rgba(61, 168, 184, 0.35);
+  padding: 0.65rem 0.85rem; margin: 0.85rem 0;
+}
+.step-card {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.9rem 1rem; margin: 0.6rem 0;
+}
+.step-card h4 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.tag-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0; }
+.tag-pill {
+  font-family: var(--font-display); font-size: 0.68rem;
+  letter-spacing: 0.06em; padding: 0.25rem 0.55rem;
+  border: 1px solid var(--line-strong); color: var(--signal);
+  background: rgba(232,90,154,0.1);
+}
+.fw-tag {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); margin-bottom: 0.35rem;
+}
+.matrix {
+  width: 100%; border-collapse: collapse; margin: 1rem 0;
+  font-size: 0.82rem;
+}
+.matrix th, .matrix td {
+  border: 1px solid var(--line-strong); padding: 0.55rem 0.65rem;
+  text-align: left; vertical-align: top;
+}
+.matrix th {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.06em; color: var(--signal-bright);
+  background: var(--panel-2);
+}
+.matrix td { color: var(--text-dim); background: var(--panel); }
+.prio-list { counter-reset: prio; list-style: none; margin: 1rem 0; padding: 0; }
+.prio-list li {
+  counter-increment: prio;
+  display: grid; grid-template-columns: 36px 1fr; gap: 0.75rem;
+  padding: 0.75rem 0.85rem; border: 1px solid var(--line);
+  background: var(--panel); margin-bottom: 0.45rem;
+}
+.prio-list li::before {
+  content: counter(prio);
+  font-family: var(--font-display); font-size: 1.1rem;
+  color: var(--signal); line-height: 1.2;
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0;
+    width: min(86vw, 300px); z-index: 40;
+    transform: translateX(-105%); transition: transform 0.3s ease;
+    box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3, .kw-grid, .compare4 { grid-template-columns: 1fr; }
+  .loop-stepper .steps, .loop-stepper .steps.steps5, .loop-stepper .steps.steps4,
+  .loop-stepper .steps.steps3, .loop-stepper .steps.steps6, .loop-stepper .steps.steps2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 35;
+  }
+  .overlay.show { display: block; }
+}
+@media (max-width: 520px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 07</div>
+      <h1>构建你的 Agent 框架</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta"><span>进度</span><span id="progressText">1 / 1</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">← → 翻页 · 工业蓝图实验室</div>
+  </aside>
+  <main class="stage">
+    <div class="topbar">
+      <button type="button" class="menu-btn" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button type="button" class="btn" id="btnPrev">上一页</button>
+        <button type="button" class="btn btn-primary" id="btnNext">下一页</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+
+<!--
+  COVERAGE CHECKLIST (源文档小节对照 · 第七章 构建你的Agent框架.md) · 扩写版
+  [x] 封面 / 怎么学 / 地图 / 关键词
+  [x] 7.1.1 痛点 / 跃迁 / 定制 / 小结
+  [x] 7.1.2 四理念分页 + 总览翻转卡
+  [x] 7.1.3 目录树、文件对照、安装、.env、30秒体验
+  [x] 7.2.1 provider / 继承三步 / 代码 / 业务使用 / think
+  [x] 7.2.2 VLLM / Ollama / 零修改切换
+  [x] 7.2.3 自动检测 + 凭证解析 + 代码片段 + 表7.1
+  [x] 7.3.1 Message + to_dict + Pydantic
+  [x] 7.3.2 Config + from_env + 单例直觉（注明正文非强制单例）
+  [x] 7.3.3 Agent ABC + 历史 API + 模板方法（run 契约；习题 _execute 对照）
+  [x] exceptions.py 补缺口（轻量异常分层建议）
+  [x] 7.4.1 Simple 初始化 / 循环 / TOOL_CALL / 增强提示 / 测试
+  [x] 7.4.2 ReAct 提示词 + 循环 + vs Simple
+  [x] 7.4.3 Reflection
+  [x] 7.4.4 PlanSolve + math prompts + vs Reflection
+  [x] 7.4.5 FunctionCall + 辅助方法
+  [x] 表7.2 范式对比
+  [x] 7.5.1 Tool / Parameter / Registry / schema / 发现
+  [x] 7.5.2 计算器 + 安全 + 图7.1
+  [x] 7.5.3 hybrid 搜索 + 类注册
+  [x] 7.5.4 ToolChain + 示例 + Async + 并行边界
+  [x] 综合检测 / 终章闪卡 / 小结 / 清单 / 习题 / 预告
+  互动：翻转卡 / 展开卡 / 闪卡 / 问答 / 对比卡 / 架构步进 / 循环步进
+-->
+<section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
+
+<div class="cover">
+  <div class="cover-badge">Hello-Agents · Lab 07 · Magenta Signal</div>
+  <h2>构建你的<br/>Agent 框架</h2>
+  <p class="tagline">从「会用框架」跃迁到「能造底座」——分层解耦、标准 API、万物皆工具。本章你亲手搭起 HelloAgents。</p>
+  <div class="goals">
+    <div class="goal"><div class="goal-n">01</div><p>理解<strong>为何自建</strong>：市面框架痛点 + 教学透明性</p></div>
+    <div class="goal"><div class="goal-n">02</div><p>掌握<strong>核心层</strong>：LLM 枢纽、Message、Config、Agent 基类</p></div>
+    <div class="goal"><div class="goal-n">03</div><p>框架化五种范式 + 完整<strong>工具系统</strong>（注册 / 链 / 异步）</p></div>
+  </div>
+  <p class="kbd-hint">操作：侧栏跳转 · <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · 手机点「目录」</p>
+  <img class="cover-img" src="assets/ch7_cover.svg" alt="Lab 07 框架分层封面" />
+</div>
+
+</section>
+
+<section class="slide" data-id="howto" data-label="怎么学本章" data-group="开篇">
+
+<h2 class="slide-title">怎么学本章</h2>
+<p class="slide-sub">先体验 · 后实现 · 测校验</p>
+<p class="lead">第七章是整本书从「用框架」转向「造底座」的分水岭。内容偏工程，建议按节奏推进。</p>
+<ol class="prio-list">
+  <li><strong>30 秒跑通</strong>：<code>pip install "hello-agents==0.1.1"</code> + <code>.env</code>，跑 SimpleAgent</li>
+  <li><strong>对照目录树</strong>：先搞清 core / agents / tools 各自管什么</li>
+  <li><strong>跟写 My* 类</strong>：继承扩展，不改 site-packages</li>
+  <li><strong>跑测试文件</strong>：仓库 <code>code/chapter7/</code> 与 GitHub examples</li>
+</ol>
+<div class="callout" data-label="配套">互动页讲原理；学习版 Markdown 讲细；完整代码在 <code>code/chapter7/</code>。</div>
+
+</section>
+
+<section class="slide" data-id="goals" data-label="本章地图" data-group="开篇">
+
+<h2 class="slide-title">本章地图</h2>
+<p class="slide-sub">7.1 → 7.6 · 版本迭代式推进</p>
+<p class="lead">前六章学完原理与主流框架；从本章起进入<strong>自建 HelloAgents</strong>。每一章加模块，最终支撑后续高级案例。</p>
+<div class="arch-stack">
+  <div class="arch-block enc">7.1 架构蓝图<span class="sub">为何自建 · 四理念 · 目录树 · 快速安装</span></div>
+  <div class="arch-block dec">7.2 HelloAgentsLLM 扩展<span class="sub">多提供商 · VLLM/Ollama · 自动检测</span></div>
+  <div class="arch-block head">7.3 框架接口<span class="sub">Message · Config · Agent ABC</span></div>
+  <div class="arch-block enc">7.4 范式框架化<span class="sub">Simple / ReAct / Reflection / PlanSolve / FunctionCall</span></div>
+  <div class="arch-block dec">7.5 工具系统<span class="sub">基类 · 注册表 · 计算器 · 多源搜索 · 链与异步</span></div>
+  <div class="arch-block base">7.6 小结 · 习题 · 指向第八章 Memory/RAG</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="keywords" data-label="关键词速览" data-group="开篇">
+
+<h2 class="slide-title">先抓牢这些词</h2>
+<p class="slide-sub">后面反复出现</p>
+<div class="kw-grid">
+  <div class="kw"><h4>provider</h4><p>告诉框架「用哪家模型服务」：openai / modelscope / ollama / vllm / auto</p></div>
+  <div class="kw"><h4>ToolRegistry</h4><p>工具柜：注册、发现、按名执行工具</p></div>
+  <div class="kw"><h4>Agent.run</h4><p>所有范式统一入口；子类必须实现</p></div>
+  <div class="kw"><h4>万物皆工具</h4><p>Memory / RAG / MCP 等统一抽象成 Tool</p></div>
+  <div class="kw"><h4>约定优于配置</h4><p>自动检测环境变量，少写样板代码</p></div>
+  <div class="kw"><h4>继承扩展</h4><p>用 MyLLM / MySimpleAgent 定制，不改库源码</p></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="s71-intro" data-label="7.1 节导读" data-group="7.1 架构设计">
+
+<h2 class="slide-title">7.1 框架整体架构设计</h2>
+<p class="slide-sub">为何自建 · 设计理念 · 学习目标</p>
+<p class="lead">市面上 Agent 框架很多，为什么还要自己造？本节先回答「为什么」，再给出 HelloAgents 的蓝图。</p>
+<div class="compare3">
+  <div class="compare-col b"><h3>7.1.1 为何自建</h3><ul><li>市面局限</li><li>能力跃迁</li><li>定制需求</li></ul></div>
+  <div class="compare-col c"><h3>7.1.2 四理念</h3><ul><li>轻量教学</li><li>标准 API</li><li>渐进 / 万物皆工具</li></ul></div>
+  <div class="compare-col a"><h3>7.1.3 目标</h3><ul><li>目录树</li><li>分层原则</li><li>安装与体验</li></ul></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="why-pain" data-label="为何自建 · 痛点" data-group="7.1 架构设计">
+
+<h2 class="slide-title">市面框架的四类局限</h2>
+<p class="slide-sub">7.1.1 ·（1）快速迭代与局限性</p>
+<p class="lead">成熟框架很多，但学习与定制时常撞墙。点击翻转看白话版。</p>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>过度抽象</h3><div class="en">Complexity</div><p>Chain / Agent / Tool / Memory… 概念爆炸</p><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>白话</h3><p>像开飞机驾驶舱：按钮极多，做「点灯」却要先学全套仪表。——LangChain 等灵活但陡峭。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>API 不稳</h3><div class="en">Churn</div><p>版本一升，旧代码易挂</p><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>白话</h3><p>商业框架抢市场 → 接口变来变去，维护成本居高不下。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>黑盒逻辑</h3><div class="en">Opaque</div><p>核心被包死，难深度定制</p><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>白话</h3><p>出问题只能等社区；社区不活跃时反馈可能石沉大海。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>依赖臃肿</h3><div class="en">Deps</div><p>安装包大，易冲突</p><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>白话</h3><p>带一卡车零件进小项目；和别的库抢版本时最头疼。</p></div>
+  </div></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="why-builder" data-label="为何自建 · 跃迁" data-group="7.1 架构设计">
+
+<h2 class="slide-title">从使用者到构建者</h2>
+<p class="slide-sub">7.1.1 ·（2）能力跃迁</p>
+<div class="compare3">
+  <div class="compare-col b"><h3>深度理解</h3><ul><li>亲手实现每个组件</li><li>看清思考 / 工具 / 范式好坏</li></ul></div>
+  <div class="compare-col c"><h3>完全控制</h3><ul><li>每一行可调优</li><li>不受第三方理念绑架</li></ul></div>
+  <div class="compare-col a"><h3>系统设计力</h3><ul><li>模块化 · 接口抽象</li><li>错误处理等工程肌肉</li></ul></div>
+</div>
+<div class="analogy">自建框架像自己搭乐高说明书：别人的成品屋漂亮，但你拆不开墙；自建后你知道每块砖为什么在那儿。</div>
+
+</section>
+
+<section class="slide" data-id="why-custom" data-label="为何自建 · 定制" data-group="7.1 架构设计">
+
+<h2 class="slide-title">定制化与教学透明性</h2>
+<p class="slide-sub">7.1.1 ·（3）必要性</p>
+<details class="expand-card" open><summary>垂直领域为何「通用框」不够？</summary>
+<div class="expand-body">
+<p>金融 / 医疗 / 教育需要专用提示词、特殊工具、定制安全策略。</p>
+</div></details>
+<details class="expand-card"><summary>生产环境的硬指标</summary>
+<div class="expand-body">
+<p>响应时间、内存占用、并发处理——「一刀切」方案常无法精细化。</p>
+</div></details>
+<details class="expand-card"><summary>教学场景的特殊要求</summary>
+<div class="expand-body">
+<p>学习者要<strong>看见</strong>每一步如何构建，理解不同范式机制 → 高度可观测、可解释。</p>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="why-summary" data-label="为何自建 · 小结" data-group="7.1 架构设计">
+
+<h2 class="slide-title">7.1.1 一句话收束</h2>
+<p class="slide-sub">痛点 → 跃迁 → 定制</p>
+<p>市面框架快但不透明、重依赖；自建换来理解与控制；垂直场景与教学都需要透明可改的底座。</p>
+<div class="note">下一页进入设计理念——HelloAgents 如何对症下药。</div>
+
+</section>
+
+<section class="slide" data-id="philosophy-q" data-label="设计理念 · 核心问题" data-group="7.1 架构设计">
+
+<h2 class="slide-title">HelloAgents 要解决什么？</h2>
+<p class="slide-sub">7.1.2 · 功能完整性 × 学习友好性</p>
+<p class="lead">核心问题：如何让新手快速上手，又能深入理解工作原理？</p>
+<p>成熟框架概念多（Chain、Agent、Tool、Memory、Retriever…），学习曲线陡峭。HelloAgents 用四条理念找平衡。</p>
+<div class="tag-row">
+  <span class="tag-pill">① 轻量教学</span>
+  <span class="tag-pill">② 标准 API</span>
+  <span class="tag-pill">③ 渐进路径</span>
+  <span class="tag-pill">④ 万物皆工具</span>
+</div>
+
+</section>
+
+<section class="slide" data-id="phil-1" data-label="理念① 轻量教学" data-group="7.1 架构设计">
+
+<h2 class="slide-title">① 轻量级与教学友好</h2>
+<p class="slide-sub">7.1.2 ·（1）</p>
+<ul>
+  <li>核心代码<strong>按章节拆分</strong>，有编程基础者应能在合理时间内读懂原理</li>
+  <li>依赖极简：除 OpenAI SDK 与少量基础库外，不引重型依赖</li>
+  <li>出问题直接定位框架代码，不钻依赖迷宫</li>
+</ul>
+<div class="note"><strong>原则</strong>：可读性优先于「功能堆叠」。</div>
+
+</section>
+
+<section class="slide" data-id="phil-2" data-label="理念② 标准 API" data-group="7.1 架构设计">
+
+<h2 class="slide-title">② 基于标准 API 的务实选择</h2>
+<p class="slide-sub">7.1.2 ·（2）</p>
+<p>OpenAI 兼容接口几乎是行业标准。HelloAgents <strong>站在之上构建</strong>，不重发明抽象。</p>
+<div class="compare">
+  <div class="compare-col b"><h3>兼容性</h3><ul><li>迁移到其他框架时底层调用逻辑一致</li></ul></div>
+  <div class="compare-col c"><h3>学习成本</h3><ul><li>不学新概念模型；操作基于熟悉接口</li></ul></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="phil-3" data-label="理念③ 渐进路径" data-group="7.1 架构设计">
+
+<h2 class="slide-title">③ 渐进式学习路径</h2>
+<p class="slide-sub">7.1.2 ·（3）</p>
+<ul>
+  <li>每章学习代码可保存为 <code>pip</code> 可装的历史版本</li>
+  <li>核心功能都是<strong>你自己写出来的</strong></li>
+  <li>升级自然衔接，无概念断层</li>
+  <li>本章基于前六章，并为后续高级篇打底</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="phil-4" data-label="理念④ 万物皆工具" data-group="7.1 架构设计">
+
+<h2 class="slide-title">④ 万物皆为工具</h2>
+<p class="slide-sub">7.1.2 ·（4）· 关键简化</p>
+<p class="lead">除核心 Agent 类外，一切皆 Tools。</p>
+<p>Memory / RAG / RL / MCP 等在 HelloAgents 中统一抽象为「工具」——消除多余抽象层，回归「智能体调用工具」这一直观核心。</p>
+<div class="analogy">别的框架像分很多科室；HelloAgents 说：Agent 是医生，其余能力都是器械——统一挂在工具架上。</div>
+<div class="callout" data-label="习题预告">习题 1 会问：这种设计的优势与局限是什么？先自己想想。</div>
+
+</section>
+
+<section class="slide" data-id="philosophy-all" data-label="四理念总览卡" data-group="7.1 架构设计">
+
+<h2 class="slide-title">四条理念 · 翻转复习</h2>
+<p class="slide-sub">7.1.2</p>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>① 轻量教学</h3><p>按章节拆核心代码</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>极简依赖；出问题直接定位框架代码。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>② 标准 API</h3><p>OpenAI 兼容</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>迁移容易，不重造抽象。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>③ 渐进路径</h3><p>每章可 pip</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>功能是你自己写出来的。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>④ 万物皆工具</h3><p>除 Agent 外统一</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>Memory/RAG/MCP → Tool。</p></div>
+  </div></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="arch-tree" data-label="架构分层蓝图" data-group="7.1 架构设计">
+
+<h2 class="slide-title">架构分层蓝图</h2>
+<p class="slide-sub">7.1.3 · 分层解耦 · 职责单一 · 接口统一</p>
+<div class="loop-stepper" id="archLayers">
+  <div class="steps steps4">
+    <button type="button" class="step-btn on" onclick="showArch(0)">① Agents</button>
+    <button type="button" class="step-btn" onclick="showArch(1)">② Tools</button>
+    <button type="button" class="step-btn" onclick="showArch(2)">③ Core</button>
+    <button type="button" class="step-btn" onclick="showArch(3)">④ 原则</button>
+  </div>
+  <div class="loop-panel" id="archPanel"></div>
+</div>
+<div class="code-block">hello_agents/
+├── core/        # agent.py · llm.py · message.py · config.py · exceptions.py
+├── agents/      # simple · react · reflection · plan_solve
+└── tools/       # base · registry · chain · async_executor · builtin/</div>
+
+</section>
+
+<section class="slide" data-id="arch-files" data-label="目录文件对照" data-group="7.1 架构设计">
+
+<h2 class="slide-title">关键文件各自干什么</h2>
+<p class="slide-sub">7.1.3 · 对照记忆</p>
+<table class="matrix">
+  <tr><th>路径</th><th>职责</th></tr>
+  <tr><td><code>core/llm.py</code></td><td>HelloAgentsLLM 统一调用枢纽</td></tr>
+  <tr><td><code>core/message.py</code></td><td>对话消息标准信封</td></tr>
+  <tr><td><code>core/config.py</code></td><td>集中配置 + from_env</td></tr>
+  <tr><td><code>core/agent.py</code></td><td>Agent 抽象基类（强制 run）</td></tr>
+  <tr><td><code>core/exceptions.py</code></td><td>异常体系（目录有；正文少展开，见后文补缺口页）</td></tr>
+  <tr><td><code>agents/*.py</code></td><td>五种范式具体实现</td></tr>
+  <tr><td><code>tools/base.py</code></td><td>Tool / ToolParameter</td></tr>
+  <tr><td><code>tools/registry.py</code></td><td>注册、发现、执行</td></tr>
+</table>
+
+</section>
+
+<section class="slide" data-id="install" data-label="安装与两种学法" data-group="7.1 架构设计">
+
+<h2 class="slide-title">安装与两种学习路径</h2>
+<p class="slide-sub">7.1.3 · Python ≥ 3.10</p>
+<div class="path-hint">pip install "hello-agents==0.1.1" · 源码 https://github.com/jjyaoao/HelloAgents</div>
+<div class="compare">
+  <div class="compare-col a"><h3>体验式</h3><ul><li>pip 安装直接跑</li><li>快速感知能力边界</li></ul></div>
+  <div class="compare-col b"><h3>深度学习</h3><ul><li>从零实现每个组件</li><li>重写核心函数 + 跑测试</li></ul></div>
+</div>
+<div class="note"><strong>建议</strong>：先体验，后实现。</div>
+
+</section>
+
+<section class="slide" data-id="env-setup" data-label=".env 配置提示" data-group="7.1 架构设计">
+
+<h2 class="slide-title">环境变量怎么配</h2>
+<p class="slide-sub">贯穿全章</p>
+<div class="code-block"># 通用（兼容多数 OpenAI 兼容服务）
+LLM_API_KEY=...
+LLM_MODEL_ID=...
+LLM_BASE_URL=...
+
+# 或专用（自动检测优先读这些）
+OPENAI_API_KEY=...
+MODELSCOPE_API_KEY=...
+ZHIPU_API_KEY=...</div>
+<p>可参考 <code>code/</code> 下 <code>.env.example</code> 或前几章案例复用。</p>
+
+</section>
+
+<section class="slide" data-id="quickstart" data-label="30 秒体验" data-group="7.1 架构设计">
+
+<h2 class="slide-title">30 秒体验 SimpleAgent</h2>
+<p class="slide-sub">7.1.3 · 先跑通再深挖</p>
+<div class="code-block">from hello_agents import SimpleAgent, HelloAgentsLLM
+from dotenv import load_dotenv
+load_dotenv()
+
+llm = HelloAgentsLLM()  # 自动检测 provider
+agent = SimpleAgent(name="AI助手", llm=llm, system_prompt="你是一个有用的AI助手")
+print(agent.run("你好！请介绍一下自己"))
+print(f"历史消息数: {len(agent.get_history())}")</div>
+<div class="note"><strong>提示</strong>：工具调用需实现 7.4.1 的 MySimpleAgent；后续章节会统一支持 <code>add_tool</code>。</div>
+
+</section>
+
+<section class="slide" data-id="flash71" data-label="闪卡 · 7.1" data-group="7.1 架构设计">
+
+<h2 class="slide-title">闪卡 · 架构理念</h2>
+<p class="slide-sub">点击卡片看答案</p>
+<div class="flash-wrap" id="flash71" data-cards='[{"q": "「万物皆为工具」是什么意思？", "a": "除核心 Agent 外，Memory、RAG、MCP 等统一抽象为 Tool，回归「智能体调用工具」。"}, {"q": "HelloAgents 为何基于 OpenAI 兼容 API？", "a": "兼容性好、学习成本低、迁移容易——不重造一套抽象接口。"}, {"q": "自建框架相对市面框架的三大收益？", "a": "深度理解原理、完全控制权、培养系统设计能力。"}, {"q": "架构三条核心原则？", "a": "分层解耦、职责单一、接口统一。"}]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta"><span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash71',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash71',1)">下一张</button>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz71" data-label="检测 · 7.1" data-group="7.1 架构设计">
+
+<h2 class="slide-title">自测 · 7.1 架构设计</h2>
+<p class="slide-sub">选完看解析</p>
+<div class="quiz-score" id="score-q71"></div>
+<div class="quiz-item" data-quiz="q71" data-answer="2">
+  <h4>1. HelloAgents「万物皆工具」主要想消除什么？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">所有第三方依赖</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">LLM 本身</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">不必要的抽象层，让核心回到「Agent 调工具」</button>
+  <div class="quiz-explain">Memory/RAG/MCP 等统一成工具，降低概念负担。</div>
+</div>
+<div class="quiz-item" data-quiz="q71" data-answer="1">
+  <h4>2. 架构核心原则不包括？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">分层解耦</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">尽可能多的全局单例</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">职责单一、接口统一</button>
+  <div class="quiz-explain">正文明确：分层解耦、职责单一、接口统一。</div>
+</div>
+<div class="quiz-item" data-quiz="q71" data-answer="0">
+  <h4>3. 为何不直接改已安装库源码来加提供商？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">升级困难、定制易丢失——应继承扩展</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">Python 禁止修改 site-packages</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">OpenAI 不允许</button>
+  <div class="quiz-explain">7.2.1 强调用继承扩展，保证可维护与可升级。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="s72-intro" data-label="7.2 节导读" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">7.2 HelloAgentsLLM 扩展</h2>
+<p class="slide-sub">在 4.1.3 基础上迭代</p>
+<div class="compare3">
+  <div class="compare-col b"><h3>多提供商</h3><ul><li>OpenAI · ModelScope · 智谱…</li><li>避免绑定单一供应商</li></ul></div>
+  <div class="compare-col c"><h3>本地模型</h3><ul><li>VLLM · Ollama</li><li>隐私与成本可控</li></ul></div>
+  <div class="compare-col a"><h3>自动检测</h3><ul><li>读环境智能推断</li><li>约定优于配置</li></ul></div>
+</div>
+<div class="analogy">HelloAgentsLLM 像万能插座转接头：墙上不管是哪种孔（云端/本地），插头形状统一成 OpenAI 兼容口。</div>
+
+</section>
+
+<section class="slide" data-id="multi-why" data-label="为何要引入 provider" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">为何要引入 provider？</h2>
+<p class="slide-sub">7.2.1 · 问题背景</p>
+<p>基类已能用 <code>api_key</code> + <code>base_url</code> 接任何兼容服务；但各家环境变量名、默认 URL、推荐模型不同。每次切换都让用户查文档改代码 → 效率低。</p>
+<p><strong>改进</strong>：让 <code>HelloAgentsLLM</code> 内部消化差异，对外统一简洁。</p>
+<div class="note"><strong>学习目标</strong>：不仅「使用」框架，更要掌握「扩展」框架。</div>
+
+</section>
+
+<section class="slide" data-id="multi-inherit" data-label="继承扩展三步" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">用继承扩展提供商</h2>
+<p class="slide-sub">7.2.1 · MyLLM 拦截 modelscope</p>
+<div class="loop-stepper" id="myLlmSteps">
+  <div class="steps steps3">
+    <button type="button" class="step-btn on" onclick="showMyLlm(0)">① 继承</button>
+    <button type="button" class="step-btn" onclick="showMyLlm(1)">② 重写 init</button>
+    <button type="button" class="step-btn" onclick="showMyLlm(2)">③ 业务使用</button>
+  </div>
+  <div class="loop-panel" id="myLlmPanel"></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="multi-code" data-label="MyLLM 关键代码" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">拦截 modelscope 的写法</h2>
+<p class="slide-sub">7.2.1 · 重写思想</p>
+<div class="code-block">if provider == "modelscope":
+    self.api_key = api_key or os.getenv("MODELSCOPE_API_KEY")
+    self.base_url = base_url or "https://api-inference.modelscope.cn/v1/"
+    self._client = OpenAI(api_key=..., base_url=..., timeout=...)
+else:
+    super().__init__(...)  # 保留父类全部能力</div>
+<p>拦截目标 provider，其余交还父类——定制不丢、升级不碎。</p>
+
+</section>
+
+<section class="slide" data-id="multi-use" data-label="业务侧使用 MyLLM" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">像原生一样使用 MyLLM</h2>
+<p class="slide-sub">7.2.1 ·（3）</p>
+<div class="code-block"># .env
+MODELSCOPE_API_KEY="your-key"
+
+# my_main.py
+from my_llm import MyLLM
+llm = MyLLM(provider="modelscope")
+for chunk in llm.think(messages):
+    pass  # think 等方法已从父类继承</div>
+
+</section>
+
+<section class="slide" data-id="llm-think" data-label="think / invoke" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">从父类继承的调用能力</h2>
+<p class="slide-sub">扩展时通常不必重写</p>
+<ul>
+  <li><code>think(messages)</code>：流式思考/输出</li>
+  <li>业务侧只关心「消息列表进、文本出」</li>
+  <li>切换 provider 后调用方式不变</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="local-intro" data-label="本地模型为何需要" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">本地高性能推理</h2>
+<p class="slide-sub">7.2.2 · 相对 Transformers 的生产级补充</p>
+<p>3.2.3 的 Hugging Face Transformers 适合入门，但高并发吞吐有限。VLLM / Ollama 用连续批处理、PagedAttention 等提升吞吐，并暴露 <strong>OpenAI 兼容 API</strong>。</p>
+<div class="compare">
+  <div class="compare-col b"><h3>隐私</h3><ul><li>数据不出本机</li></ul></div>
+  <div class="compare-col c"><h3>成本</h3><ul><li>无按 token 云端计费</li></ul></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="local-vllm" data-label="VLLM 接入" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">VLLM：高吞吐本地服务</h2>
+<p class="slide-sub">7.2.2 · 默认 :8000</p>
+<div class="code-block">pip install vllm
+python -m vllm.entrypoints.openai.api_server \
+    --model Qwen/Qwen1.5-0.5B-Chat --host 0.0.0.0 --port 8000
+# → http://localhost:8000/v1
+
+HelloAgentsLLM(provider="vllm", model="Qwen/Qwen1.5-0.5B-Chat",
+               base_url="http://localhost:8000/v1", api_key="vllm")</div>
+<div class="note">本地服务通常不需要真实 Key，填任意非空字符串即可。</div>
+
+</section>
+
+<section class="slide" data-id="local-ollama" data-label="Ollama 接入" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">Ollama：一条命令跑起来</h2>
+<p class="slide-sub">7.2.2 · 默认 :11434</p>
+<div class="code-block">ollama run llama3
+# → http://localhost:11434/v1
+
+HelloAgentsLLM(provider="ollama", model="llama3",
+               base_url="http://localhost:11434/v1", api_key="ollama")</div>
+<p>也可只设 <code>LLM_BASE_URL</code>，让客户端自动检测，<strong>Agent 核心代码零修改</strong>。</p>
+
+</section>
+
+<section class="slide" data-id="local-zero" data-label="零修改切换云端/本地" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">统一设计的收益</h2>
+<p class="slide-sub">7.2.2 收束</p>
+<p>Agent 核心代码无需修改，即可在云端 API 与本地模型间切换——利于开发、部署、成本与隐私。</p>
+<div class="compare3">
+  <div class="compare-col b"><h3>开发</h3><ul><li>本地先调试</li></ul></div>
+  <div class="compare-col c"><h3>上线</h3><ul><li>切云端高可用</li></ul></div>
+  <div class="compare-col a"><h3>敏感数据</h3><ul><li>强制本地推理</li></ul></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="auto-detect" data-label="自动检测优先级" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">自动检测怎么判？</h2>
+<p class="slide-sub">7.2.3 · _auto_detect_provider</p>
+<ol class="prio-list">
+  <li><strong>特定环境变量</strong>：MODELSCOPE_API_KEY → OPENAI_API_KEY → ZHIPU_API_KEY…（最高优先）</li>
+  <li><strong>base_url 特征</strong>：域名匹配云厂商；端口 <code>:11434</code>=Ollama、<code>:8000</code>=VLLM</li>
+  <li><strong>密钥格式辅助</strong>：如 <code>ms-</code> 前缀 → ModelScope（模糊，优先级低）</li>
+  <li>仍不明 → 返回 <code>auto</code>，走通用配置</li>
+</ol>
+<div class="callout" data-label="习题预告">若同时有 OPENAI_API_KEY 与 LLM_BASE_URL=localhost:11434——按优先级会先命中 OpenAI。设计是否合理，是习题 2 的思考点。</div>
+
+</section>
+
+<section class="slide" data-id="detect-code" data-label="检测代码片段" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">_auto_detect_provider 片段</h2>
+<p class="slide-sub">7.2.3</p>
+<div class="code-block">if os.getenv("MODELSCOPE_API_KEY"): return "modelscope"
+if os.getenv("OPENAI_API_KEY"): return "openai"
+# ... base_url 含 :11434 → ollama；:8000 → vllm
+if actual_api_key and actual_api_key.startswith("ms-"):
+    return "modelscope"
+return "auto"</div>
+
+</section>
+
+<section class="slide" data-id="resolve-cred" data-label="凭证解析" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">_resolve_credentials 做什么？</h2>
+<p class="slide-sub">7.2.3 · 差异化配置</p>
+<p>provider 确定后，按家查找环境变量并设默认 <code>base_url</code>：</p>
+<ul>
+  <li><strong>openai</strong>：OPENAI_API_KEY / LLM_API_KEY → api.openai.com/v1</li>
+  <li><strong>modelscope</strong>：MODELSCOPE_API_KEY → api-inference.modelscope.cn/v1/</li>
+  <li>其他服务商同理</li>
+</ul>
+<div class="code-block"># 仅配置本地 Ollama，无需 provider / API Key
+LLM_BASE_URL="http://localhost:11434/v1"
+LLM_MODEL_ID="llama3"
+llm = HelloAgentsLLM()  # 自动 → ollama</div>
+
+</section>
+
+<section class="slide" data-id="table71" data-label="表7.1 LLM 演进" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">从简单到完善</h2>
+<p class="slide-sub">表 7.1 · HelloAgentsLLM 版本特性对比</p>
+<div class="fig" id="fig-t71">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/7-figures/table-01.png" alt="表7.1" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线要点</strong>：相较 4.1.3 基础版，现版增加多提供商、本地部署、自动检测；接口保持简洁——「从简单开始，逐步完善」。</div>
+  <div class="fig-cap">表 7.1 HelloAgentsLLM 不同版本特性对比</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="flash72" data-label="闪卡 · 7.2" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">闪卡 · LLM 枢纽</h2>
+<div class="flash-wrap" id="flash72" data-cards='[{"q": "Ollama 与 VLLM 默认端口？", "a": "Ollama → :11434；VLLM 常见 → :8000。"}, {"q": "扩展新提供商的推荐做法？", "a": "继承 HelloAgentsLLM，拦截目标 provider，其余 super().__init__。"}, {"q": "自动检测最高优先级？", "a": "特定服务商环境变量是否存在（如 OPENAI_API_KEY）。"}]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta"><span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash72',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash72',1)">下一张</button>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz72" data-label="检测 · 7.2" data-group="7.2 LLM 扩展">
+
+<h2 class="slide-title">自测 · 7.2 LLM</h2>
+<div class="quiz-score" id="score-q72"></div>
+<div class="quiz-item" data-quiz="q72" data-answer="1">
+  <h4>1. Ollama 默认 OpenAI 兼容地址端口？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">8000</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">11434</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">443</button>
+  <div class="quiz-explain">Ollama → :11434；VLLM 常见 → :8000。</div>
+</div>
+<div class="quiz-item" data-quiz="q72" data-answer="0">
+  <h4>2. 自动检测最高优先级依据是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">特定服务商环境变量是否存在</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">API 密钥字符串长度</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">模型名称是否含 qwen</button>
+  <div class="quiz-explain">先查 MODELSCOPE_/OPENAI_/ZHIPU_ 等专用 key。</div>
+</div>
+<div class="quiz-item" data-quiz="q72" data-answer="2">
+  <h4>3. 扩展新提供商的推荐做法？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">直接改 site-packages 源码</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">fork 整个仓库只改一处</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">继承 HelloAgentsLLM，拦截目标 provider</button>
+  <div class="quiz-explain">不改库源码，升级不丢定制。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="s73-intro" data-label="7.3 节导读" data-group="7.3 框架接口">
+
+<h2 class="slide-title">7.3 框架接口实现</h2>
+<p class="slide-sub">LLM 之外的配套组件</p>
+<div class="arch-stack">
+  <div class="arch-block enc">message.py<span class="sub">统一消息格式</span></div>
+  <div class="arch-block dec">config.py<span class="sub">中心化配置</span></div>
+  <div class="arch-block head">agent.py<span class="sub">Agent 抽象基类</span></div>
+</div>
+<p>解决数据流、配置、统一结构——为上层范式提供清晰接口。</p>
+
+</section>
+
+<section class="slide" data-id="message" data-label="Message 类" data-group="7.3 框架接口">
+
+<h2 class="slide-title">Message：对话的标准信封</h2>
+<p class="slide-sub">7.3.1 · 对内丰富，对外兼容</p>
+<div class="kw-grid">
+  <div class="kw"><h4>role</h4><p><code>Literal["user","assistant","system","tool"]</code> —— 对齐 OpenAI</p></div>
+  <div class="kw"><h4>content</h4><p>正文内容</p></div>
+  <div class="kw"><h4>timestamp</h4><p>日志与时序</p></div>
+  <div class="kw"><h4>metadata</h4><p>扩展位（后续上下文工程会用）</p></div>
+</div>
+<div class="analogy">Message 像快递面单：内部可贴备注，寄出时只留角色 + 内容。</div>
+
+</section>
+
+<section class="slide" data-id="message-todict" data-label="Message.to_dict" data-group="7.3 框架接口">
+
+<h2 class="slide-title">to_dict：对外只留必要字段</h2>
+<p class="slide-sub">7.3.1 · OpenAI API 格式</p>
+<div class="code-block">def to_dict(self):
+    return {"role": self.role, "content": self.content}</div>
+<ul>
+  <li>用 Pydantic BaseModel 做数据验证</li>
+  <li>内部可有 timestamp / metadata</li>
+  <li>发给模型时剥离扩展字段，保证兼容</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="pydantic-msg" data-label="为何用 Pydantic" data-group="7.3 框架接口">
+
+<h2 class="slide-title">Message 用 Pydantic 的好处</h2>
+<p class="slide-sub">习题 3 预热</p>
+<ul>
+  <li>字段类型自动校验</li>
+  <li>非法 role 早失败</li>
+  <li>与生态工具互操作方便</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="config" data-label="Config 类" data-group="7.3 框架接口">
+
+<h2 class="slide-title">Config：集中旋钮</h2>
+<p class="slide-sub">7.3.2 · 零配置也能跑</p>
+<ul>
+  <li><strong>LLM</strong>：default_model / provider / temperature / max_tokens</li>
+  <li><strong>系统</strong>：debug / log_level</li>
+  <li><strong>其他</strong>：max_history_length 等</li>
+</ul>
+<details class="expand-card" open><summary>from_env() 为什么重要？</summary>
+<div class="expand-body">
+<p>用环境变量覆盖默认值，部署换环境不必改代码。例如 <code>DEBUG=true</code>、<code>TEMPERATURE=0.3</code>。</p>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="config-singleton" data-label="配置与单例" data-group="7.3 框架接口">
+
+<h2 class="slide-title">配置一致性思考题</h2>
+<p class="slide-sub">习题 3 相关 · 先建立直觉</p>
+<p>若多处各自 <code>Config()</code> 且互不知晓，可能出现：温度一处 0.7、另一处 0.2；debug 标志不一致。</p>
+<div class="callout" data-label="单例模式直觉">「全局一份配置」避免多处不一致。习题会要求你解释单例与配置管理的关系。</div>
+<div class="note"><strong>与正文对照</strong>：7.3.2 给出的是普通 Pydantic <code>Config</code> + <code>from_env()</code>，<strong>并未强制单例实现</strong>。答题写清「意图=一致性；实现可选单例 / 依赖注入同一实例」。</div>
+
+</section>
+
+<section class="slide" data-id="agent-abc" data-label="Agent 抽象基类" data-group="7.3 框架接口">
+
+<h2 class="slide-title">Agent ABC：统一入口</h2>
+<p class="slide-sub">7.3.3 · 强制子类实现 run</p>
+<p>依赖注入：<code>name</code> · <code>llm</code> · <code>system_prompt</code> · <code>config</code>；内部维护 <code>_history: list[Message]</code>。</p>
+<div class="arch-stack">
+  <div class="arch-block enc">@abstractmethod run(input_text) → str<span class="sub">所有范式的统一执行入口</span></div>
+  <div class="arch-block dec">add_message / clear_history / get_history<span class="sub">与 Message 协同的通用能力</span></div>
+</div>
+<div class="callout" data-label="为何用 ABC？">不能直接实例化；子类必须实现 run——模板方法思想：公共骨架在基类，变化点在子类。</div>
+
+</section>
+
+<section class="slide" data-id="template-method" data-label="模板方法直觉" data-group="7.3 框架接口">
+
+<h2 class="slide-title">公共骨架 + 变化点</h2>
+<p class="slide-sub">Agent 设计模式</p>
+<p>基类固定：依赖注入、历史管理；子类变化：<code>run</code> 内部如何思考与调用工具。</p>
+<div class="analogy">像试卷固定封面信息栏，题目内容由各科卷不同——接口统一，内容各异。</div>
+<div class="note"><strong>习题措辞</strong>：原书习题写 <code>run</code> + <code>_execute</code>。正文最小实现是<strong>直接抽象 <code>run</code></strong>；若扩展为「<code>run</code> 做日志/异常包装，业务在 <code>_execute</code>」才是完整模板方法——答题按此说明即可。</div>
+
+</section>
+
+<section class="slide" data-id="exceptions-gap" data-label="补缺口 · exceptions" data-group="7.3 框架接口">
+
+<h2 class="slide-title">补缺口：exceptions.py</h2>
+<p class="slide-sub">目录有 · 正文几乎未展开</p>
+<p class="lead">架构树列出异常体系，但 7.3 未给实现。建议自建轻量分层，便于区分配置错 / 模型错 / 工具错。</p>
+<div class="code-block">class HelloAgentsError(Exception): ...
+class LLMConfigError(HelloAgentsError): ...   # 缺 Key / provider 解析失败
+class ToolExecutionError(HelloAgentsError): ...  # 携带 tool_name + 原因</div>
+<div class="callout" data-label="为何要分层">上层 <code>Agent.run</code> 才能对症重试或提示用户；第八章工具变多后更有用。详见学习版 MD「7.3 补缺口」。</div>
+
+</section>
+
+<section class="slide" data-id="agent-history" data-label="历史管理方法" data-group="7.3 框架接口">
+
+<h2 class="slide-title">基类提供的历史 API</h2>
+<p class="slide-sub">7.3.3 · 与 Message 协同</p>
+<table class="matrix">
+  <tr><th>方法</th><th>作用</th></tr>
+  <tr><td><code>add_message</code></td><td>追加一条 Message</td></tr>
+  <tr><td><code>clear_history</code></td><td>清空对话历史</td></tr>
+  <tr><td><code>get_history</code></td><td>返回副本，避免外部直接改内部列表</td></tr>
+</table>
+<p>至此，核心基础组件齐备，可进入范式框架化。</p>
+
+</section>
+
+<section class="slide" data-id="quiz73" data-label="检测 · 7.3" data-group="7.3 框架接口">
+
+<h2 class="slide-title">自测 · 7.3 接口</h2>
+<div class="quiz-score" id="score-q73"></div>
+<div class="quiz-item" data-quiz="q73" data-answer="2">
+  <h4>1. Message.to_dict 对外通常保留？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">全部字段含 metadata</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">仅 timestamp</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">role + content（API 兼容）</button>
+  <div class="quiz-explain">对内可丰富，对外对齐 OpenAI 消息字典。</div>
+</div>
+<div class="quiz-item" data-quiz="q73" data-answer="0">
+  <h4>2. Agent 基类强制子类实现的是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">run</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">think</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">stream_tokens</button>
+  <div class="quiz-explain">@abstractmethod def run(...)</div>
+</div>
+<div class="quiz-item" data-quiz="q73" data-answer="1">
+  <h4>3. Config.from_env 的主要价值？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">加快模型推理</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">换环境改配置不必改代码</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">自动写单元测试</button>
+  <div class="quiz-explain">环境变量覆盖默认值，利于部署。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="s74-intro" data-label="7.4 节导读" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">把第四章范式「装进框架」</h2>
+<p class="slide-sub">7.4 · 三个重构目标</p>
+<div class="compare3">
+  <div class="compare-col b"><h3>提示词升级</h3><ul><li>任务特化 → 通用化</li><li>加强格式与角色</li></ul></div>
+  <div class="compare-col c"><h3>接口统一</h3><ul><li>同一基类 / 签名</li><li>统一历史管理</li></ul></div>
+  <div class="compare-col a"><h3>可配置</h3><ul><li>自定义模板</li><li>参数与策略可换</li></ul></div>
+</div>
+<div class="tag-row">
+  <span class="tag-pill">SimpleAgent</span>
+  <span class="tag-pill">ReActAgent</span>
+  <span class="tag-pill">ReflectionAgent</span>
+  <span class="tag-pill">PlanAndSolve</span>
+  <span class="tag-pill">FunctionCall</span>
+</div>
+
+</section>
+
+<section class="slide" data-id="simple-init" data-label="SimpleAgent 初始化" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">SimpleAgent：最基础对话</h2>
+<p class="slide-sub">7.4.1 · MySimpleAgent</p>
+<p>继承框架基类，可选挂载 <code>tool_registry</code> 与 <code>enable_tool_calling</code>。</p>
+<div class="code-block">class MySimpleAgent(SimpleAgent):
+    def __init__(..., tool_registry=None, enable_tool_calling=True):
+        super().__init__(name, llm, system_prompt, config)
+        self.tool_registry = tool_registry
+        self.enable_tool_calling = enable_tool_calling and tool_registry is not None</div>
+
+</section>
+
+<section class="slide" data-id="simple-loop" data-label="SimpleAgent 主循环" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">SimpleAgent 核心循环</h2>
+<p class="slide-sub">7.4.1 · run</p>
+<div class="loop-stepper" id="simpleLoop">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showSimple(0)">组消息</button>
+    <button type="button" class="step-btn" onclick="showSimple(1)">调 LLM</button>
+    <button type="button" class="step-btn" onclick="showSimple(2)">解析 TOOL_CALL</button>
+    <button type="button" class="step-btn" onclick="showSimple(3)">执行工具</button>
+    <button type="button" class="step-btn" onclick="showSimple(4)">写回历史</button>
+  </div>
+  <div class="loop-panel" id="simplePanel"></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="simple-toolcall" data-label="TOOL_CALL 格式" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">文本约定的工具调用</h2>
+<p class="slide-sub">7.4.1 · Prompt 约束</p>
+<div class="code-block">[TOOL_CALL:{tool_name}:{parameters}]
+# 例: [TOOL_CALL:search:Python编程]
+# max_tool_iterations 防止死循环</div>
+<details class="expand-card" open><summary>还提供了哪些便利能力？</summary>
+<div class="expand-body">
+<p><code>stream_run</code> 流式输出；<code>add_tool</code> / <code>remove_tool</code> / <code>list_tools</code> / <code>has_tools</code> 动态管理工具注册表。</p>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="simple-enhance" data-label="增强系统提示" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">启用工具时如何改 system</h2>
+<p class="slide-sub">7.4.1 细节</p>
+<p>有 ToolRegistry 时，SimpleAgent 会把工具说明注入系统提示，并约定 <code>[TOOL_CALL:...]</code> 格式，让模型知道「能调什么、怎么写」。</p>
+
+</section>
+
+<section class="slide" data-id="simple-test" data-label="SimpleAgent 测试要点" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">建议覆盖的测试场景</h2>
+<p class="slide-sub">7.4.1 · test_simple_agent.py</p>
+<ol>
+  <li>基础对话（无工具）</li>
+  <li>带工具的 Agent</li>
+  <li>流式响应</li>
+  <li>动态添加工具</li>
+  <li>查看对话历史条数</li>
+</ol>
+<div class="path-hint">仓库：code/chapter7/test_simple_agent.py · my_simple_agent.py</div>
+
+</section>
+
+<section class="slide" data-id="react-prompt" data-label="ReAct 提示词要点" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">ReActAgent：Thought → Action</h2>
+<p class="slide-sub">7.4.2 · 提示词结构</p>
+<ul>
+  <li>注入<strong>可用工具</strong>描述</li>
+  <li>工作流程：Thought → Action → Observation 循环</li>
+  <li>每次只一步；Action 为 <code>tool[input]</code> 或 <code>Finish[答案]</code></li>
+  <li>必须含 Thought + Action</li>
+</ul>
+<div class="note">接 ToolRegistry · 可配 max_steps · 支持 custom_prompt</div>
+
+</section>
+
+<section class="slide" data-id="react-loop" data-label="ReAct 执行循环" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">ReAct 步进循环</h2>
+<p class="slide-sub">7.4.2</p>
+<div class="loop-stepper" id="reactLoop">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showReact(0)">填模板</button>
+    <button type="button" class="step-btn" onclick="showReact(1)">LLM</button>
+    <button type="button" class="step-btn" onclick="showReact(2)">解析</button>
+    <button type="button" class="step-btn" onclick="showReact(3)">Finish?</button>
+    <button type="button" class="step-btn" onclick="showReact(4)">Observation</button>
+  </div>
+  <div class="loop-panel" id="reactPanel"></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="react-vs-simple" data-label="ReAct vs Simple" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">何时用 ReAct？</h2>
+<p class="slide-sub">选型直觉</p>
+<div class="compare">
+  <div class="compare-col a"><h3>Simple</h3><ul><li>对话为主</li><li>偶尔算一下 / 搜一下</li></ul></div>
+  <div class="compare-col b"><h3>ReAct</h3><ul><li>路径不确定</li><li>需要边观察边决策</li><li>多步工具交错</li></ul></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="reflection" data-label="ReflectionAgent" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">Reflection：写稿 → 改稿</h2>
+<p class="slide-sub">7.4.3</p>
+<div class="arch-stack">
+  <div class="arch-block enc">initial<span class="sub">针对任务生成初稿</span></div>
+  <div class="arch-block dec">reflect<span class="sub">批判初稿，给改进意见</span></div>
+  <div class="arch-block head">refine<span class="sub">按反馈改写；可提前停</span></div>
+</div>
+<ul>
+  <li>提示词通用化（非仅代码生成）</li>
+  <li><code>custom_prompts</code> 可深度定制</li>
+  <li>反思答「无需改进」可提前终止</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="reflect-vs-plan" data-label="Reflection vs PlanSolve" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">反思流 vs 规划流</h2>
+<p class="slide-sub">7.4.3 · 7.4.4</p>
+<div class="compare">
+  <div class="compare-col b"><h3>Reflection</h3><ul><li>先产出再批判</li><li>质量敏感任务</li></ul></div>
+  <div class="compare-col c"><h3>Plan-and-Solve</h3><ul><li>先拆步骤再执行</li><li>步骤清晰的长任务</li></ul></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="plansolve" data-label="PlanAndSolveAgent" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">Plan-and-Solve：先列待办再打勾</h2>
+<p class="slide-sub">7.4.4</p>
+<div class="compare">
+  <div class="compare-col b"><h3>Planner</h3><ul>
+    <li>强制输出 <code>["步骤1",…]</code> 列表</li>
+    <li>可解析，不再是自由文本</li>
+  </ul></div>
+  <div class="compare-col c"><h3>Executor</h3><ul>
+    <li>只答「当前步骤」</li>
+    <li>带完整计划与历史上下文</li>
+  </ul></div>
+</div>
+<p>可换 <code>math_prompts</code> 等专用模板；完整异常处理保稳定。</p>
+
+</section>
+
+<section class="slide" data-id="plansolve-math" data-label="数学专用提示词" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">custom_prompts 示例</h2>
+<p class="slide-sub">7.4.4 · 数学问题</p>
+<div class="code-block">math_prompts = {
+  "planner": "将数学问题分解为计算步骤…输出 Python 列表",
+  "executor": "只输出当前步骤的数值结果…"
+}
+math_agent = MyPlanAndSolveAgent(name="数学助手", llm=llm,
+                                 custom_prompts=math_prompts)</div>
+
+</section>
+
+<section class="slide" data-id="function-call" data-label="FunctionCallAgent" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">FunctionCallAgent：原生函数调用</h2>
+<p class="slide-sub">7.4.5 · hello-agents ≥ 0.2.8</p>
+<div class="compare">
+  <div class="compare-col a"><h3>Prompt 约束工具</h3><ul><li>靠文本 [TOOL_CALL:…]</li><li>解析脆弱，易跑偏</li></ul></div>
+  <div class="compare-col b"><h3>OpenAI Function Calling</h3><ul><li>schema 进 API</li><li>鲁棒性更强</li></ul></div>
+</div>
+<ul>
+  <li><code>_build_tool_schemas</code> / <code>_parse_function_call_arguments</code> / <code>_convert_parameter_types</code></li>
+  <li>底层 <code>client.chat.completions.create(..., tools=..., tool_choice=...)</code></li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="fc-methods" data-label="FunctionCall 辅助方法" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">封装层做了哪些脏活</h2>
+<p class="slide-sub">7.4.5</p>
+<ul>
+  <li>_build_tool_schemas：description → schema</li>
+  <li>_extract_message_content：从响应抽文本</li>
+  <li>_parse_function_call_arguments：解析 JSON 参数</li>
+  <li>_convert_parameter_types：类型转换</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="table72" data-label="表7.2 范式对比" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">第四章 vs 本章框架化</h2>
+<p class="slide-sub">表 7.2 · 共享底座，保留特色</p>
+<div class="fig" id="fig-t72">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/7-figures/table-02.png" alt="表7.2" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线要点</strong>：框架化后组织性、可维护性、扩展性上升；统一初始化 / 历史 / ToolRegistry；提示词更通用、格式更严。</div>
+  <div class="fig-cap">表 7.2 Agent 不同章节实现对比</div>
+</div>
+<div class="compare5">
+  <div class="compare-col"><h3>Simple</h3><ul><li>对话底座</li><li>可选工具</li></ul></div>
+  <div class="compare-col"><h3>ReAct</h3><ul><li>边想边做</li><li>步数上限</li></ul></div>
+  <div class="compare-col"><h3>Reflect</h3><ul><li>自评改进</li></ul></div>
+  <div class="compare-col"><h3>PlanSolve</h3><ul><li>先拆后做</li></ul></div>
+  <div class="compare-col"><h3>FuncCall</h3><ul><li>原生 schema</li></ul></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="flash74" data-label="闪卡 · 范式" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">闪卡 · Agent 范式</h2>
+<div class="flash-wrap" id="flash74" data-cards='[{"q": "SimpleAgent 工具调用用什么文本格式？", "a": "[TOOL_CALL:工具名:参数]，多轮迭代受 max_tool_iterations 限制。"}, {"q": "框架化 Plan-and-Solve 相对第四章的关键格式变化？", "a": "Planner 必须输出可解析的 Python 列表字符串。"}, {"q": "FunctionCall 比 Prompt 工具约束好在哪？", "a": "走模型原生 tools/schema，参数解析更稳。"}, {"q": "Reflection 默认三段提示？", "a": "initial / reflect / refine。"}]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta"><span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash74',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash74',1)">下一张</button>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz74" data-label="检测 · 7.4" data-group="7.4 Agent 范式">
+
+<h2 class="slide-title">自测 · 7.4 范式</h2>
+<div class="quiz-score" id="score-q74"></div>
+<div class="quiz-item" data-quiz="q74" data-answer="1">
+  <h4>1. ReAct 中表示结束的 Action？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">Stop[]</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">Finish[最终答案]</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">Done()</button>
+  <div class="quiz-explain">模板要求 Finish[最终答案]。</div>
+</div>
+<div class="quiz-item" data-quiz="q74" data-answer="0">
+  <h4>2. Reflection 默认三段提示不含？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">retrieve（检索）</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">initial</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">reflect / refine</button>
+  <div class="quiz-explain">DEFAULT_PROMPTS: initial / reflect / refine。</div>
+</div>
+<div class="quiz-item" data-quiz="q74" data-answer="2">
+  <h4>3. FunctionCallAgent 主要依赖？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">仅正则抠 TOOL_CALL</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">仅本地规则引擎</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">OpenAI 原生 tools + schema</button>
+  <div class="quiz-explain">对底层 client.chat.completions.create 再封装。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="s75-intro" data-label="7.5 节导读" data-group="7.5 工具系统">
+
+<h2 class="slide-title">7.5 工具系统</h2>
+<p class="slide-sub">三个核心目标</p>
+<ol class="prio-list">
+  <li><strong>统一抽象</strong>：Tool 基类 + ToolRegistry</li>
+  <li><strong>实战开发</strong>：计算器案例走完流程</li>
+  <li><strong>高级整合</strong>：多源搜索、工具链、异步</li>
+</ol>
+
+</section>
+
+<section class="slide" data-id="tool-base" data-label="Tool 基类" data-group="7.5 工具系统">
+
+<h2 class="slide-title">Tool(ABC) 统一接口</h2>
+<p class="slide-sub">7.5.1 ·（1）</p>
+<div class="arch-stack">
+  <div class="arch-block enc">name · description<span class="sub">元数据：可发现、可理解</span></div>
+  <div class="arch-block head">run(parameters) → str<span class="sub">统一执行；字典进、字符串出</span></div>
+  <div class="arch-block dec">get_parameters() → List[ToolParameter]<span class="sub">自描述 / 校验 / 文档</span></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="tool-param" data-label="ToolParameter" data-group="7.5 工具系统">
+
+<h2 class="slide-title">参数定义系统</h2>
+<p class="slide-sub">7.5.1 ·（2）</p>
+<div class="code-block">class ToolParameter(BaseModel):
+    name: str
+    type: str
+    description: str
+    required: bool = True
+    default: Any = None</div>
+<p>支持类型检查、默认值、文档自动生成。</p>
+
+</section>
+
+<section class="slide" data-id="tool-registry" data-label="ToolRegistry" data-group="7.5 工具系统">
+
+<h2 class="slide-title">注册表：两种挂载方式</h2>
+<p class="slide-sub">7.5.1 ·（3）</p>
+<div class="compare">
+  <div class="compare-col b"><h3>register_tool</h3><ul><li>Tool 对象</li><li>适合复杂工具</li><li>完整参数定义</li></ul></div>
+  <div class="compare-col c"><h3>register_function</h3><ul><li>直接挂函数</li><li>适合简单工具</li><li>快速集成</li></ul></div>
+</div>
+<div class="analogy">Registry 像工具柜：挂牌给人看，取用时按名执行。</div>
+
+</section>
+
+<section class="slide" data-id="tool-discover" data-label="工具发现描述" data-group="7.5 工具系统">
+
+<h2 class="slide-title">get_tools_description</h2>
+<p class="slide-sub">7.5.1</p>
+<p>把已注册工具格式化成字符串，直接塞进 Agent 提示词，让模型「看见」可用工具列表。</p>
+<div class="code-block">- search: 一个智能网页搜索引擎…
+- my_calculator: 简单的数学计算工具…</div>
+
+</section>
+
+<section class="slide" data-id="tool-schema" data-label="to_openai_schema" data-group="7.5 工具系统">
+
+<h2 class="slide-title">转成 Function Calling schema</h2>
+<p class="slide-sub">7.5.1 ·（4）</p>
+<ul>
+  <li>供 FunctionCallAgent 使用</li>
+  <li>数组类型默认 items 为 string</li>
+  <li>默认值写入 description（OpenAI schema 无 default 字段）</li>
+</ul>
+<div class="code-block">{"type":"function","function":{"name":...,"description":...,
+ "parameters":{"type":"object","properties":{...},"required":[...]}}}</div>
+
+</section>
+
+<section class="slide" data-id="calculator" data-label="自定义计算器" data-group="7.5 工具系统">
+
+<h2 class="slide-title">自定义工具：安全计算器</h2>
+<p class="slide-sub">7.5.2 · AST 求值</p>
+<ul>
+  <li>用 <code>ast.parse</code> 解析表达式，白名单运算符 / <code>sqrt</code> / <code>pi</code></li>
+  <li><strong>不要</strong>用裸 <code>eval</code>——安全优先</li>
+  <li><code>create_calculator_registry()</code> → <code>register_function</code></li>
+</ul>
+<div class="path-hint">code/chapter7/my_calculator_tool.py · test_my_calculator.py</div>
+
+</section>
+
+<section class="slide" data-id="calc-security" data-label="安全优先再谈功能" data-group="7.5 工具系统">
+
+<h2 class="slide-title">工具安全底线</h2>
+<p class="slide-sub">7.5.2 · 7.5.4</p>
+<ul>
+  <li>输入校验（空表达式拒绝）</li>
+  <li>白名单求值，禁用任意代码执行</li>
+  <li>异常捕获返回可读错误字符串</li>
+  <li>外部连接（搜索客户端）妥善管理生命周期</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="fig71" data-label="图7.1 工作流" data-group="7.5 工具系统">
+
+<h2 class="slide-title">SimpleAgent + 工具运行流</h2>
+<p class="slide-sub">图 7.1</p>
+<div class="fig" id="fig-71">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/7-figures/01.png" alt="图7.1" onerror="this.parentElement.classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 7.1 离线要点</strong>：用户提问 → SimpleAgent →（可选）工具注册表执行计算 → 结果回填 → LLM 组织自然语言回答。</div>
+  <div class="fig-cap">图 7.1 基于 HelloAgents 的 SimpleAgent 运行工作流</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="search-hybrid" data-label="多源搜索 hybrid" data-group="7.5 工具系统">
+
+<h2 class="slide-title">多源搜索：hybrid 降级</h2>
+<p class="slide-sub">7.5.3 · Tavily + SerpApi</p>
+<div class="loop-stepper" id="searchLoop">
+  <div class="steps steps4">
+    <button type="button" class="step-btn on" onclick="showSearch(0)">探测后端</button>
+    <button type="button" class="step-btn" onclick="showSearch(1)">优先 Tavily</button>
+    <button type="button" class="step-btn" onclick="showSearch(2)">失败降级</button>
+    <button type="button" class="step-btn" onclick="showSearch(3)">统一格式化</button>
+  </div>
+  <div class="loop-panel" id="searchPanel"></div>
+</div>
+<div class="path-hint">pip install "hello-agents[search]==0.1.1"</div>
+
+</section>
+
+<section class="slide" data-id="search-class" data-label="类 vs 函数注册" data-group="7.5 工具系统">
+
+<h2 class="slide-title">为何多源搜索用类？</h2>
+<p class="slide-sub">7.5.3 · MyAdvancedSearchTool</p>
+<p>需要持有客户端状态、配置、可用后端列表 → <strong>类更合适</strong>；简单计算可用函数注册。</p>
+<ul>
+  <li>_setup_search_sources 探测密钥与依赖</li>
+  <li>逐源尝试，失败 continue</li>
+  <li>都不可用则明确提示配置 API Key</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="toolchain" data-label="ToolChain 工具链" data-group="7.5 工具系统">
+
+<h2 class="slide-title">工具链：顺序组合</h2>
+<p class="slide-sub">7.5.4 · 借鉴第六章「图」</p>
+<ul>
+  <li>多步骤顺序执行</li>
+  <li><code>input_template</code> 变量替换（如 <code>{input}</code> / <code>{search_result}</code>）</li>
+  <li><code>output_key</code> 写入 context 供下一步</li>
+  <li>例：search → calculator</li>
+</ul>
+<div class="note">有依赖的步骤用链；独立 I/O 才考虑并行。</div>
+
+</section>
+
+<section class="slide" data-id="chain-example" data-label="研究工具链示例" data-group="7.5 工具系统">
+
+<h2 class="slide-title">search → calculator</h2>
+<p class="slide-sub">7.5.4 · create_research_chain</p>
+<div class="code-block">chain.add_step("search", "{input}", "search_result")
+chain.add_step("my_calculator",
+  "根据以下信息计算:{search_result}", "calculation_result")</div>
+<p>习题 5 要求你设计 ≥3 步真实场景并画流程图——可在此基础上扩展「总结」步。</p>
+
+</section>
+
+<section class="slide" data-id="parallel-when" data-label="何时并行划算" data-group="7.5 工具系统">
+
+<h2 class="slide-title">并行的适用边界</h2>
+<p class="slide-sub">习题 5 预热</p>
+<ul>
+  <li><strong>划算</strong>：多个独立网络请求，等待时间可重叠</li>
+  <li><strong>不划算</strong>：步骤有数据依赖；或强 CPU + GIL 争用</li>
+  <li><strong>注意</strong>：线程池大小、超时、失败隔离</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="async-exec" data-label="异步并行执行" data-group="7.5 工具系统">
+
+<h2 class="slide-title">AsyncToolExecutor</h2>
+<p class="slide-sub">7.5.4 · ThreadPoolExecutor</p>
+<ul>
+  <li><code>execute_tool_async</code>：单工具异步</li>
+  <li><code>execute_tools_parallel</code>：多任务 gather</li>
+  <li>适合网络搜索等 <strong>I/O 等待</strong>型工具</li>
+</ul>
+<div class="callout" data-label="设计理念">单一职责 · 接口统一 · 异常处理 · 安全校验输入 · 异步提吞吐 · 管好外部连接。</div>
+
+</section>
+
+<section class="slide" data-id="flash75" data-label="闪卡 · 工具" data-group="7.5 工具系统">
+
+<h2 class="slide-title">闪卡 · 工具系统</h2>
+<div class="flash-wrap" id="flash75" data-cards='[{"q": "ToolRegistry 两种注册方式？", "a": "register_tool(Tool对象)；register_function(名/描述/函数)。"}, {"q": "hybrid 搜索失败时怎么办？", "a": "Tavily 失败切 SerpApi；都不可用则提示配置 API Key。"}, {"q": "工具链 context 里的 input 从哪来？", "a": "execute 时 initial_input 写入 context['input']，模板用占位符替换。"}]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta"><span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash75',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash75',1)">下一张</button>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz75" data-label="检测 · 7.5" data-group="7.5 工具系统">
+
+<h2 class="slide-title">自测 · 7.5 工具</h2>
+<div class="quiz-score" id="score-q75"></div>
+<div class="quiz-item" data-quiz="q75" data-answer="1">
+  <h4>1. Tool.run 约定返回？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">任意 Python 对象</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">字符串 str</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">必须是 JSON bytes</button>
+  <div class="quiz-explain">统一 run(parameters)→str，保证框架一致性。</div>
+</div>
+<div class="quiz-item" data-quiz="q75" data-answer="0">
+  <h4>2. 计算器为何用 AST 而非 eval？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">白名单求值，降低任意代码执行风险</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">AST 更快</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">eval 在 Python 已删除</button>
+  <div class="quiz-explain">安全优先的输入验证是工具系统基本要求。</div>
+</div>
+<div class="quiz-item" data-quiz="q75" data-answer="2">
+  <h4>3. 并行执行最可能提速的场景？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">强 CPU 密集且共享全局锁</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">必须严格串行依赖的步骤</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">多个独立网络搜索/API 等待</button>
+  <div class="quiz-explain">I/O 等待可重叠；有依赖的链仍应顺序。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz-mixed" data-label="综合检测" data-group="综合巩固">
+
+<h2 class="slide-title">综合自测</h2>
+<p class="slide-sub">跨节串一串</p>
+<div class="quiz-score" id="score-qmix"></div>
+<div class="quiz-item" data-quiz="qmix" data-answer="1">
+  <h4>1. HelloAgents 把 Memory/RAG 抽象成什么？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">独立微服务</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">工具 Tool</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">数据库触发器</button>
+  <div class="quiz-explain">万物皆工具。</div>
+</div>
+<div class="quiz-item" data-quiz="qmix" data-answer="1">
+  <h4>2. 框架化 Plan-and-Solve 的 Planner 输出？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">自由散文</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">可解析的步骤列表字符串</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">仅 JSON Schema 文件</button>
+  <div class="quiz-explain">强制列表格式便于 Executor。</div>
+</div>
+<div class="quiz-item" data-quiz="qmix" data-answer="0">
+  <h4>3. ToolChain 与 AsyncToolExecutor 的核心区别？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">一个顺序有依赖，一个可并行独立任务</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">一个只能搜索，一个只能计算</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">没有区别</button>
+  <div class="quiz-explain">链管依赖顺序；异步管独立 I/O 并行。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="flash-final" data-label="闪卡 · 总复习" data-group="综合巩固">
+
+<h2 class="slide-title">终章闪卡</h2>
+<div class="flash-wrap" id="flash76" data-cards='[{"q": "core / agents / tools 各管什么？", "a": "core=地基接口；agents=范式实现；tools=能力外延。"}, {"q": "五种范式一句话？", "a": "Simple对话；ReAct边想边做；Reflection改稿；PlanSolve先拆后做；FunctionCall原生schema。"}, {"q": "下一章预告？", "a": "Memory 与 RAG——仍以 Tool 形式挂到现有 Agent。"}]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta"><span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash76',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash76',1)">下一张</button>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="summary" data-label="本章小结" data-group="7.6 小结与习题">
+
+<h2 class="slide-title">本章小结</h2>
+<p class="slide-sub">7.6 · 底座已立</p>
+<p class="lead">完成 HelloAgents 基础框架：统一 LLM、消息、配置、Agent 契约，以及五种范式与完整工具系统。</p>
+<ul>
+  <li>原则：分层解耦 · 职责单一 · 接口统一</li>
+  <li>范式：Simple / ReAct / Reflection / PlanSolve / FunctionCall</li>
+  <li>工具：基类 · 注册 · 自定义 · 多源 · 链 · 异步</li>
+  <li>完整测试：<a href="https://github.com/jjyaoao/HelloAgents/blob/main/examples/chapter07_basic_setup.py" target="_blank" rel="noopener">chapter07_basic_setup.py</a></li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="roadmap" data-label="后续章节地图" data-group="7.6 小结与习题">
+
+<h2 class="slide-title">底座之上继续生长</h2>
+<p class="slide-sub">延展性预留</p>
+<div class="arch-stack">
+  <div class="arch-block enc">第八章 · Memory / RAG 在此底座上扩展</div>
+  <div class="arch-block dec">第九章 · 上下文工程深化 Message</div>
+  <div class="arch-block head">第十章 · 智能体协议 → 新工具形态</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="7.6 小结与习题">
+
+<h2 class="slide-title">自测清单</h2>
+<p class="slide-sub">点击勾选 · 诚实自评</p>
+<ul class="check-list" id="checklist">
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能说清自建框架的四类痛点与「万物皆工具」</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能画出 core / agents / tools 分层并解释职责</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">会用继承扩展 provider，并说出自动检测优先级</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">理解 Message / Config / Agent.run 契约</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能对比五种 Agent 范式的适用场景</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能注册自定义工具，并说明链 vs 并行</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">知道完整实现与测试在 code/ 与 GitHub examples</span></li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="exercises" data-label="习题导读" data-group="7.6 小结与习题">
+
+<h2 class="slide-title">习题导读（6 大题）</h2>
+<p class="slide-sub">完整题面见源文档 / 学习版文末</p>
+<details class="expand-card" open><summary>1 · 为何自建与万物皆工具</summary><div class="expand-body">结合第六章经验谈四局限；分析万物皆工具优劣；对比第四章 vs 框架化。</div></details>
+<details class="expand-card"><summary>2 · 扩展 LLM（实践）</summary><div class="expand-body">继承加 Gemini/Anthropic；分析双环境变量优先级；对比 VLLM / SGLang / Ollama。</div></details>
+<details class="expand-card"><summary>3 · Message / Config / Agent</summary><div class="expand-body">Pydantic 优势；模板方法（正文抽象 run；习题 _execute 为扩展写法）；单例与配置一致性（正文 Config 非强制单例）。详见学习版 MD 习题导读。</div></details>
+<details class="expand-card"><summary>4 · 范式实践</summary><div class="expand-body">ReAct 三点改进；Reflection 加质量评分；设计 Tree-of-Thought。</div></details>
+<details class="expand-card"><summary>5 · 工具系统</summary><div class="expand-body">统一接口与多值返回；≥3 工具链场景；并行何时划算。</div></details>
+<details class="expand-card"><summary>6 · 可扩展性畅想</summary><div class="expand-body">流式输出；多轮分支回溯；插件系统架构。</div></details>
+
+</section>
+
+<section class="slide" data-id="end" data-label="下一章预告" data-group="7.6 小结与习题">
+
+<h2 class="slide-title">下一站：Memory 与 RAG</h2>
+<p class="slide-sub">框架底座已就绪</p>
+<p class="lead">第八章将在本章统一接口与工具抽象上，为 Agent 装上「记忆」与检索增强——能力边界继续外推。</p>
+<div class="callout" data-label="代码实操">
+教程内为原理与关键片段；完整工程请打开仓库 <code>code/chapter7/</code> 与官方 examples。建议：边看本页边在本地重写 My* 类并跑测试。
+</div>
+<p class="kbd-hint">恭喜完成本章互动教程。可用侧栏回看任意小节。</p>
+
+</section>
+
+</div>
+  </main>
+</div>
+
+<script>
+
+const slides = [...document.querySelectorAll(".slide")];
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+["flash71","flash72","flash74","flash75","flash76"].forEach(initFlash);
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+const archTexts = [
+  { t: "① Agents 实现层", p: "simple_agent / react_agent / reflection_agent / plan_solve_agent——面向用户的范式入口，统一继承 Agent 基类。" },
+  { t: "② Tools 工具层", p: "base · registry · chain · async_executor · builtin(calculator/search)。能力外延都挂在这里。" },
+  { t: "③ Core 核心层", p: "agent 基类、HelloAgentsLLM、Message、Config、exceptions——整个框架的地基。" },
+  { t: "④ 设计原则", p: "分层解耦、职责单一、接口统一——既好读，又方便按章节增量扩展。" }
+];
+function showArch(n) {
+  document.querySelectorAll("#archLayers .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("archPanel").innerHTML = `<h4>${archTexts[n].t}</h4><p>${archTexts[n].p}</p>`;
+}
+showArch(0);
+
+const myLlmTexts = [
+  { t: "① 创建 MyLLM(HelloAgentsLLM)", p: "在项目里新建 my_llm.py，继承基类，先 pass——准备重写而不改库源码。" },
+  { t: "② 重写 __init__", p: "若 provider=='modelscope'：读 MODELSCOPE_API_KEY、设默认 base_url 与模型、建 OpenAI 客户端；否则 super().__init__(...)." },
+  { t: "③ 业务侧使用", p: "load_dotenv(); llm=MyLLM(provider='modelscope'); 调用 think/invoke 与原生一致——定制不丢、升级不碎。" }
+];
+function showMyLlm(n) {
+  document.querySelectorAll("#myLlmSteps .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("myLlmPanel").innerHTML = `<h4>${myLlmTexts[n].t}</h4><p>${myLlmTexts[n].p}</p>`;
+}
+showMyLlm(0);
+
+const simpleTexts = [
+  { t: "组消息", p: "增强系统提示（注入工具说明）+ 历史 Message + 当前 user 输入。" },
+  { t: "调用 LLM", p: "未启用工具则 invoke 一次返回；启用则进入 _run_with_tools 循环。" },
+  { t: "解析 TOOL_CALL", p: "正则 [TOOL_CALL:name:params]；无匹配则视为最终回答。" },
+  { t: "执行工具", p: "经 ToolRegistry；calculator 直接表达式，其他可 key=value 智能解析。" },
+  { t: "写回历史", p: "把工具结果作为 user 消息塞回，再问 LLM；达 max 迭代则收尾并 add_message。" }
+];
+function showSimple(n) {
+  document.querySelectorAll("#simpleLoop .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("simplePanel").innerHTML = `<h4>${simpleTexts[n].t}</h4><p>${simpleTexts[n].p}</p>`;
+}
+showSimple(0);
+
+const reactTexts = [
+  { t: "填提示词模板", p: "注入 tools 描述、question、history；可用 custom_prompt 替换默认 MY_REACT_PROMPT。" },
+  { t: "调用 LLM", p: "messages=[{role:user, content:prompt}] → llm.invoke。" },
+  { t: "解析 Thought/Action", p: "_parse_output 拆出思考与动作；格式必须严格。" },
+  { t: "Finish？", p: "Action 以 Finish 开头 → 解析最终答案，写入历史并返回。" },
+  { t: "Observation", p: "解析 tool 名与输入 → registry.execute_tool → 追加 Action/Observation 到 current_history，进入下一步，直至 max_steps。" }
+];
+function showReact(n) {
+  document.querySelectorAll("#reactLoop .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("reactPanel").innerHTML = `<h4>${reactTexts[n].t}</h4><p>${reactTexts[n].p}</p>`;
+}
+showReact(0);
+
+const searchTexts = [
+  { t: "探测可用后端", p: "_setup_backends：检查 Tavily/SerpApi 密钥与依赖，填 available_backends。" },
+  { t: "优先 Tavily", p: "hybrid 下优先 AI 优化搜索；include_answer + 若干条结果摘要。" },
+  { t: "失败则降级", p: "捕获异常后切 SerpApi；都挂则提示配置环境变量——高可用思维。" },
+  { t: "统一格式化输出", p: "不同引擎原始 JSON 不同，格式化成 Agent 易读的字符串。" }
+];
+function showSearch(n) {
+  document.querySelectorAll("#searchLoop .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("searchPanel").innerHTML = `<h4>${searchTexts[n].t}</h4><p>${searchTexts[n].p}</p>`;
+}
+showSearch(0);
+
+goTo(0);
+
+</script>
+</body>
+</html>

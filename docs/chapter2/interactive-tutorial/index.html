@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第二章 · 智能体发展史 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 02 Strata
+   Same product line as Ch1; copper/amber strata accent for history
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(61, 168, 184, 0.22);
+  --line-strong: rgba(61, 168, 184, 0.45);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.18);
+  --copper: #c4885a;
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 70% 15%, black 18%, transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 38% at 12% 8%, rgba(196, 136, 90, 0.1), transparent),
+    radial-gradient(ellipse 45% 45% at 90% 85%, rgba(61, 168, 184, 0.1), transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.brand {
+  padding: 1.25rem 1.1rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand-kicker {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--copper);
+  margin-bottom: 0.35rem;
+}
+
+.brand h1 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.progress-wrap {
+  padding: 0.85rem 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.04em;
+}
+
+.progress-bar {
+  height: 3px;
+  background: var(--panel-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--copper), var(--amber), var(--cyan));
+  transition: width 0.35s ease;
+}
+
+.nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cyan) transparent;
+}
+
+.nav-group { margin-bottom: 0.75rem; }
+
+.nav-group-title {
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  padding: 0.4rem 0.6rem;
+}
+
+.nav button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1.35;
+}
+
+.nav button:hover {
+  color: var(--text);
+  background: rgba(196, 136, 90, 0.08);
+  border-color: var(--line);
+}
+
+.nav button.active {
+  color: var(--ink);
+  background: var(--cyan);
+  border-color: var(--cyan-bright);
+  font-weight: 600;
+}
+
+.nav button .num {
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  opacity: 0.7;
+  margin-right: 0.35rem;
+}
+
+.sidebar-foot {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  color: var(--text-mute);
+  letter-spacing: 0.06em;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85);
+  backdrop-filter: blur(6px);
+}
+
+.menu-btn {
+  display: none;
+  font-family: var(--font-display);
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  color: var(--cyan);
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+.slide-label {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  flex: 1;
+}
+
+.nav-controls { display: flex; gap: 0.4rem; }
+
+.btn {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: var(--radius);
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--cyan);
+  color: var(--cyan-bright);
+  background: rgba(61, 168, 184, 0.12);
+}
+
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--amber);
+  color: var(--ink);
+  border-color: var(--amber);
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #f0bc66;
+  color: var(--ink);
+  border-color: #f0bc66;
+}
+
+.slides-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cyan) transparent;
+}
+
+.slide {
+  display: none;
+  max-width: 920px;
+  margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+
+.slide.active { display: block; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 0.35rem;
+  color: var(--text);
+}
+
+.slide-sub {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 1.25rem;
+}
+
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+
+.term {
+  color: var(--cyan-bright);
+  border-bottom: 1px dashed rgba(94, 212, 224, 0.4);
+  cursor: help;
+}
+
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+
+.note {
+  border-left: 3px solid var(--amber);
+  background: var(--amber-dim);
+  padding: 0.85rem 1rem;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+}
+
+.note strong { color: var(--amber); }
+
+.callout {
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 1rem 1.15rem;
+  margin: 1.1rem 0;
+  position: relative;
+}
+
+.callout::before {
+  content: attr(data-label);
+  position: absolute;
+  top: -0.55rem;
+  left: 0.9rem;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--cyan);
+  padding: 0 0.4rem;
+}
+
+.analogy {
+  font-style: italic;
+  color: var(--paper);
+  border: 1px dashed var(--line-strong);
+  padding: 0.85rem 1rem;
+  margin: 1rem 0;
+  background: rgba(61, 168, 184, 0.05);
+}
+
+.analogy::before {
+  content: "类比 · ";
+  font-style: normal;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  text-transform: uppercase;
+}
+
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  color: var(--text-mute);
+  margin-top: 0.5rem;
+  letter-spacing: 0.04em;
+}
+
+.code-block {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  background: #071018;
+  border: 1px solid var(--line-strong);
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  color: #b8d4c8;
+  line-height: 1.55;
+  white-space: pre;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem;
+  margin: 1.2rem 0;
+}
+
+.flip-card {
+  perspective: 1000px;
+  height: 168px;
+  cursor: pointer;
+}
+
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.flip-face.back {
+  transform: rotateY(180deg);
+  background: var(--panel-2);
+  border-color: var(--cyan);
+}
+
+.flip-face h3 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--cyan-bright);
+  margin-bottom: 0.35rem;
+}
+
+.flip-face .en {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-mute);
+  margin-bottom: 0.5rem;
+}
+
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+
+.flip-hint {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--text-mute);
+  margin-top: 0.6rem;
+  text-transform: uppercase;
+}
+
+.expand-card {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+
+.expand-card summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  color: var(--text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+";
+  font-family: var(--font-display);
+  color: var(--cyan);
+  font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--cyan); }
+
+.expand-body {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.85rem;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 1.2rem 0;
+}
+
+.compare-col {
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 1rem;
+}
+
+.compare-col h3 {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--amber); }
+.compare-col li { font-size: 0.88rem; }
+
+.compare-vs {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--amber);
+  margin: -0.2rem 0;
+}
+
+.compare3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+  margin: 1.2rem 0;
+}
+
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+
+.timeline {
+  position: relative;
+  margin: 1.25rem 0;
+  padding-left: 1.4rem;
+  border-left: 2px solid var(--line-strong);
+}
+
+.tl-item {
+  position: relative;
+  margin-bottom: 1.15rem;
+  padding-left: 0.5rem;
+}
+
+.tl-item::before {
+  content: "";
+  position: absolute;
+  left: -1.55rem;
+  top: 0.45rem;
+  width: 10px;
+  height: 10px;
+  background: var(--copper);
+  border: 2px solid var(--ink);
+  box-shadow: 0 0 0 2px var(--copper);
+}
+
+.tl-item h4 {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  color: var(--cyan-bright);
+  margin-bottom: 0.25rem;
+}
+
+.tl-item .tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--amber);
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.loop-viz {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.4rem 0;
+  padding: 1.25rem;
+  border: 1px solid var(--line-strong);
+  background: rgba(15, 30, 44, 0.8);
+}
+
+.loop-node {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--cyan);
+  background: var(--panel-2);
+  color: var(--cyan-bright);
+  min-width: 100px;
+  text-align: center;
+  animation: pulseNode 2.8s ease-in-out infinite;
+}
+
+.loop-node:nth-child(1) { animation-delay: 0s; }
+.loop-node:nth-child(3) { animation-delay: 0.7s; }
+.loop-node:nth-child(5) { animation-delay: 1.4s; }
+.loop-node:nth-child(7) { animation-delay: 2.1s; }
+
+@keyframes pulseNode {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(61, 168, 184, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(61, 168, 184, 0.15); background: rgba(61, 168, 184, 0.15); }
+}
+
+.loop-arrow {
+  font-family: var(--font-display);
+  color: var(--amber);
+  font-size: 1.2rem;
+}
+
+.loop-desc {
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  color: var(--amber);
+  letter-spacing: 0.08em;
+  margin-top: 0.5rem;
+}
+
+.loop-stepper { margin: 1rem 0; }
+
+.loop-stepper .steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+
+.loop-stepper .step-btn {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  padding: 0.55rem 0.4rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.loop-stepper .step-btn.on {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: var(--amber-dim);
+}
+
+.loop-panel {
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 1rem 1.15rem;
+  min-height: 110px;
+}
+
+.loop-panel h4 {
+  font-family: var(--font-display);
+  color: var(--cyan-bright);
+  margin-bottom: 0.4rem;
+  font-size: 0.95rem;
+}
+
+.strata {
+  display: grid;
+  gap: 0.45rem;
+  margin: 1.2rem 0;
+}
+
+.strata-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+}
+
+.strata-row .era {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--amber);
+  text-transform: uppercase;
+}
+
+.strata-row strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  margin-bottom: 0.2rem;
+}
+
+.strata-row span { font-size: 0.82rem; color: var(--text-dim); }
+
+.flash-wrap { margin: 1rem 0; }
+
+.flash-card {
+  min-height: 200px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  transition: border-color 0.25s;
+  user-select: none;
+}
+
+.flash-card:hover { border-color: var(--cyan); }
+.flash-card .q {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--text);
+}
+.flash-card .a {
+  display: none;
+  font-size: 0.98rem;
+  color: var(--paper);
+  line-height: 1.55;
+}
+.flash-card.revealed .q { display: none; }
+.flash-card.revealed .a { display: block; }
+.flash-card.revealed { border-color: var(--amber); background: var(--amber-dim); }
+
+.flash-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  color: var(--text-mute);
+}
+
+.flash-controls { display: flex; gap: 0.4rem; }
+
+.quiz-item {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.85rem;
+}
+
+.quiz-item h4 {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.quiz-opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.35rem;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quiz-opt:hover:not(:disabled) {
+  border-color: var(--cyan);
+  color: var(--text);
+}
+
+.quiz-opt.correct {
+  border-color: var(--mint);
+  background: rgba(107, 200, 154, 0.15);
+  color: var(--mint);
+}
+
+.quiz-opt.wrong {
+  border-color: var(--coral);
+  background: rgba(224, 107, 90, 0.12);
+  color: var(--coral);
+}
+
+.quiz-opt:disabled { cursor: default; }
+
+.quiz-explain {
+  display: none;
+  margin-top: 0.65rem;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.88rem;
+  border-left: 3px solid var(--cyan);
+  background: rgba(61, 168, 184, 0.08);
+  color: var(--paper);
+}
+
+.quiz-explain.show { display: block; }
+
+.quiz-score {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--amber);
+  margin: 0.5rem 0 1rem;
+}
+
+.check-list {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+}
+
+.check-list li {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  margin-bottom: 0.4rem;
+  background: var(--panel);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.check-list li:hover { border-color: var(--line-strong); }
+.check-list li.done {
+  border-color: var(--mint);
+  background: rgba(107, 200, 154, 0.08);
+}
+.check-list li.done .ck-text { color: var(--mint); text-decoration: line-through; opacity: 0.85; }
+
+.ck-box {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--cyan);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: transparent;
+}
+
+.check-list li.done .ck-box {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: var(--ink);
+}
+
+.ck-text { font-size: 0.9rem; color: var(--text-dim); }
+
+.cover { text-align: left; padding: 1rem 0 2rem; }
+
+.cover-badge {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--copper);
+  border: 1px solid var(--line-strong);
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  margin-bottom: 1.25rem;
+}
+
+.cover h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+  max-width: 16ch;
+}
+
+.cover .tagline {
+  font-size: 1.1rem;
+  color: var(--paper);
+  max-width: 36em;
+  margin-bottom: 1.5rem;
+}
+
+.goals { display: grid; gap: 0.55rem; margin: 1.25rem 0 1.75rem; }
+
+.goal {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.goal-n {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--amber);
+  line-height: 1;
+}
+
+.goal p { margin: 0; font-size: 0.92rem; }
+
+.cover-img {
+  margin-top: 1.5rem;
+  border: 1px solid var(--line-strong);
+  max-width: 100%;
+  width: 100%;
+  background: var(--panel);
+}
+
+.kbd-hint {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  color: var(--text-mute);
+  letter-spacing: 0.04em;
+}
+
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  border: 1px solid var(--line-strong);
+  padding: 0.1rem 0.35rem;
+  color: var(--cyan);
+  background: var(--panel);
+}
+
+.kw-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+
+.kw {
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 0.9rem 1rem;
+}
+
+.kw h4 {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  color: var(--amber);
+  margin-bottom: 0.35rem;
+}
+
+.kw p { margin: 0; font-size: 0.85rem; }
+
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(86vw, 300px);
+    z-index: 40;
+    transform: translateX(-105%);
+    transition: transform 0.3s ease;
+    box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3, .kw-grid { grid-template-columns: 1fr; }
+  .loop-stepper .steps, .loop-stepper .steps.steps5 { grid-template-columns: repeat(2, 1fr); }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+  .strata-row { grid-template-columns: 1fr; }
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 35;
+  }
+  .overlay.show { display: block; }
+}
+
+@media (max-width: 520px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!--
+  COVERAGE CHECKLIST (原书节级 · 已拆详解页)
+  [x] 开篇：问题驱动、两坑、四关键词、类比、图2.1、知识地图
+  [x] 2.1 / 2.1.1 PSSH 充分性必要性构成影响
+  [x] 2.1.2 专家系统架构、KB、正反向链、MYCIN、CF
+  [x] 2.1.3 SHRDLU 语言/规划/记忆/地位
+  [x] 2.1.4 知识获取、常识、框架、脆弱性
+  [x] 2.2.1–2.2.3 ELIZA 思想、四步、代码、局限、效应
+  [x] 2.3.1–2.3.3 反思、Agency/涌现、MAS 启发
+  [x] 2.4.1–2.4.5 联结、RL、预训练、LLM Agent、思潮、技术栈
+  [x] 2.5 小结、误解、清单、习题、参考文献
+-->
+
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 02</div>
+      <h1>智能体发展史<br/>互动教程</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>学习进度</span>
+        <span id="progressText">1 / N</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">地层实验室 · 键盘 ← → 翻页</div>
+  </aside>
+  <main class="stage">
+    <div class="topbar">
+      <button class="menu-btn" type="button" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="kbd-hint"><span class="kbd">←</span> <span class="kbd">→</span></div>
+      <div class="nav-controls">
+        <button class="btn" id="btnPrev" type="button">上一页</button>
+        <button class="btn btn-primary" id="btnNext" type="button">下一页</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+      <section class="slide active" data-id="cover" data-label="封面 · 学习目标" data-group="开篇">
+        <div class="cover">
+          <div class="cover-badge">Chapter 02 · Strata Lab · Expanded</div>
+          <h2>智能体发展史</h2>
+          <p class="tagline">不是名词展览，而是一部「问题驱动」的技术进化纪录片：每一代方法，都在补上一代做不到的事。</p>
+          <h3 class="slide-sub" style="margin-top:0.5rem">本章学习目标</h3>
+          <div class="goals">
+            <div class="goal"><div class="goal-n">01</div><p>用「痛点→新范式→新局限」读懂符号主义 → 协作智能 → 学习范式 → LLM Agent 主线。</p></div>
+            <div class="goal"><div class="goal-n">02</div><p>能解释 PSSH、专家系统、ELIZA、心智社会、RL、预训练各自解决了什么、又卡在哪里。</p></div>
+            <div class="goal"><div class="goal-n">03</div><p>纠正误解：旧方法并非无用；现代 Agent 仍需规则与工程约束；路线不是非黑即白。</p></div>
+            <div class="goal"><div class="goal-n">04</div><p>能把多智能体、工具调用、感知-思考-行动闭环，映射回历史原型。</p></div>
+          </div>
+          <img class="cover-img" src="assets/ch2_cover.svg" alt="第二章演进地层封面" />
+        </div>
+      </section>
+      <section class="slide" data-id="howto" data-label="如何使用本教程" data-group="开篇">
+        <div class="slide-sub">使用说明</div>
+        <h2 class="slide-title">这是一份可翻页的精读讲义</h2>
+        <p class="lead">左侧目录按原书节级结构编排；每页讲透一个知识点，不是只列提纲。建议顺序学习，闪卡与选择题先想再看。</p>
+        <ul>
+          <li>键盘 ← → 或点「上一页 / 下一页」</li>
+          <li>翻转卡、闪卡、流程步进、展开卡均可点击</li>
+          <li>原书配图需联网；封面为本地 SVG</li>
+          <li>完整代码：code/chapter2/ELIZA.py</li>
+        </ul>
+        <div class="note"><strong>覆盖承诺：</strong>原书 2.1–2.5 全部小节均拆成独立详解页，不删节。</div>
+      </section>
+      <section class="slide" data-id="intro" data-label="开篇导读：为何长这样" data-group="开篇">
+        <div class="slide-sub">导读</div>
+        <h2 class="slide-title">为什么今天的 Agent 长这样？</h2>
+        <p class="lead">只看当下，容易把智能体理解成「LLM + 工具调用」。往回看：很多「新想法」几十年前就有雏形，只是条件不够成熟。</p>
+        <p>本章回答：现代 Agent 的核心设计思想从何而来？理解历史，是为了理解今天的技术选型为什么「不得不」长成现在这样。</p>
+        <div class="callout" data-label="读法提示"><p style="margin:0">把自己想成在看纪录片。看到多智能体、RL、LLM Agent 时，先问：它在补什么短板？</p></div>
+      </section>
+      <section class="slide" data-id="traps" data-label="学历史的两个坑" data-group="开篇">
+        <div class="slide-sub">导读 · 方法论</div>
+        <h2 class="slide-title">学历史最怕两件事</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>坑1：只记时间线</h3><ul>
+              <li>只背人名年份</li>
+              <li>不懂为什么出现</li>
+              <li>变成名词展览</li>
+            </ul></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-col b"><h3>坑2：只记结论</h3><ul>
+              <li>只记得旧方法过时</li>
+              <li>不知旧方法合理性</li>
+              <li>不知新方法代价</li>
+            </ul></div>
+        </div>
+        <div class="note"><strong>更好读法：</strong>把每种方法看成时代答案。推动历史前进的是：<strong>上一代做不到的事，逼着下一代想新办法。</strong></div>
+      </section>
+      <section class="slide" data-id="keywords" data-label="四关键词主线" data-group="开篇">
+        <div class="slide-sub">主线抓手</div>
+        <h2 class="slide-title">先记住四个关键词</h2>
+        <div class="kw-grid">
+          <div class="kw"><h4>符号主义</h4><p>规则写清楚就能推理。智能 = 对符号的操作。</p></div>
+          <div class="kw"><h4>专家系统</h4><p>知识库 + 推理机；垂直领域很强。</p></div>
+          <div class="kw"><h4>协作式智能</h4><p>心智社会：很多小能力配合出智能。</p></div>
+          <div class="kw"><h4>学习范式</h4><p>从数据与经验里自己长出能力。</p></div>
+        </div>
+        <p>后面细节都挂回这四个抓手：这一节补强了谁？暴露了谁的局限？</p>
+      </section>
+      <section class="slide" data-id="analogy-map" data-label="做题方式类比图" data-group="开篇">
+        <div class="slide-sub">直觉地图</div>
+        <h2 class="slide-title">把范式想成做题方式</h2>
+        <div class="strata">
+          <div class="strata-row"><div class="era">符号主义</div><div><strong>标准题库</strong><span>查写死规则；范围内强，题型一变就翻车</span></div></div>
+          <div class="strata-row"><div class="era">专家系统</div><div><strong>领域老师</strong><span>边界清楚；垂直域可靠，出界就脆弱</span></div></div>
+          <div class="strata-row"><div class="era">心智社会</div><div><strong>分工小队</strong><span>观察/规划/执行分工；智能从协作涌现</span></div></div>
+          <div class="strata-row"><div class="era">强化学习</div><div><strong>试错学生</strong><span>靠反馈学长期最优，而非抄标准答案</span></div></div>
+          <div class="strata-row"><div class="era">预训练LLM</div><div><strong>见多识广</strong><span>先验丰富；也可能记错、幻觉</span></div></div>
+        </div>
+        <div class="analogy">类比只为建立直觉。建立这张图后，读细节会轻松很多。</div>
+      </section>
+      <section class="slide" data-id="ladder" data-label="图2.1 演进阶梯" data-group="开篇">
+        <div class="slide-sub">问题驱动</div>
+        <h2 class="slide-title">每一个新范式，都在治上一代的病</h2>
+        <p class="lead"><strong>新方案带来能力飞跃，同时引入新局限</strong>——又为下一代埋下伏笔。</p>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-00.png" alt="图 2.1 AI 智能体的演进阶梯" />
+          <div class="fig-cap">图 2.1 AI 智能体的演进阶梯</div>
+        </div>
+        <div class="note"><strong>公式：</strong>痛点 → 新范式 → 新能力 → 新局限 → 下一代。整章反复演绎。</div>
+      </section>
+      <section class="slide" data-id="roadmap" data-label="本章知识地图" data-group="开篇">
+        <div class="slide-sub">导航地图</div>
+        <h2 class="slide-title">原书节级结构一览</h2>
+        <div class="strata">
+          <div class="strata-row"><div class="era">2.1</div><div><strong>符号与逻辑早期</strong><span>PSSH → 专家系统/MYCIN → SHRDLU → 四大挑战</span></div></div>
+          <div class="strata-row"><div class="era">2.2</div><div><strong>规则聊天机器人</strong><span>ELIZA 设计 → 四步机制 → 代码与局限</span></div></div>
+          <div class="strata-row"><div class="era">2.3</div><div><strong>心智社会</strong><span>反思单一模型 → Agency/涌现 → 启发 MAS</span></div></div>
+          <div class="strata-row"><div class="era">2.4</div><div><strong>学习与现代Agent</strong><span>联结 → RL → 预训练 → LLM Agent → 思潮/技术栈</span></div></div>
+          <div class="strata-row"><div class="era">2.5</div><div><strong>小结与习题</strong><span>进化逻辑、误解纠正、自测与习题</span></div></div>
+        </div>
+        <p>下面按节逐页精读：每页讲清「是什么 / 为什么重要 / 卡在哪里」。</p>
+      </section>
+      <section class="slide" data-id="s21" data-label="2.1 节导读" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1</div>
+        <h2 class="slide-title">基于符号与逻辑的早期智能体</h2>
+        <p class="lead">最早思路很自然：人类会思考是因为有规则，那给机器也写一套？</p>
+        <p>早期探索深受数理逻辑影响，催生<strong>符号主义（Symbolicism）</strong>，也称逻辑 AI / 传统 AI。</p>
+        <div class="callout" data-label="白话"><p style="margin:0">智能体 = 物理符号系统：用符号表示世界，用逻辑规划行动。智慧完全来自预编码知识与规则，不是自主学习。</p></div>
+      </section>
+      <section class="slide" data-id="s21-def" data-label="符号主义核心定义" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1 · 定义</div>
+        <h2 class="slide-title">智能 = 对符号的规则操作</h2>
+        <ul>
+          <li><strong>符号</strong>：可区分的离散标记，表示事物/概念/关系</li>
+          <li><strong>规则</strong>：根据已有符号推出新符号或行动</li>
+          <li><strong>推理</strong>：系统性推导，而非统计拟合</li>
+        </ul>
+        <div class="note"><strong>关键推论：</strong>不会自己长本事——能力上限几乎等于知识工程师写进去的东西。</div>
+      </section>
+      <section class="slide" data-id="pssh-who" data-label="2.1.1 PSSH 提出者" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.1</div>
+        <h2 class="slide-title">物理符号系统假说从哪来？</h2>
+        <p class="lead">1976 年，图灵奖得主<strong>艾伦·纽厄尔</strong>与<strong>赫伯特·西蒙</strong>提出 <strong>PSSH</strong>。</p>
+        <p>它为「计算机上实现通用智能」提供理论指导：若接受 PSSH，工程路径就指向——构造正确的符号表示与推理过程。</p>
+        <div class="analogy">像立了一块路标：心智研究从哲学争论，变成可工程实现的问题。</div>
+      </section>
+      <section class="slide" data-id="pssh-two" data-label="充分性与必要性" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.1 · 论断</div>
+        <h2 class="slide-title">PSSH 的两个核心论断</h2>
+        <div class="card-grid">
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>充分性论断</h3><div class="en">Sufficiency</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>充分性</h3><p>任一物理符号系统都具备产生通用智能行为的充分手段。——「有这套就够了」。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>必要性论断</h3><div class="en">Necessity</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>必要性</h3><p>任一能展现通用智能的系统，本质必然是物理符号系统。——「智能离不开符号系统」。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>合起来</h3><div class="en">Implication</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>含义</h3><p>智能本质被等同于符号计算；工程任务变成：找对表示 + 有效推理。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>大胆宣言</h3><div class="en">Essence</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>一句话</h3><p><strong>智能的本质，就是符号的计算与处理。</strong></p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="slide" data-id="pssh-elem" data-label="物理符号系统构成" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.1 · 构成</div>
+        <h2 class="slide-title">系统由什么构成？</h2>
+        <p>物理符号系统：可区分符号 + 对符号的操作过程；符号可组成表达式；过程可创建/修改/复制/销毁结构。</p>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-0.png" alt="图 2.2 物理符号系统的构成元素" />
+          <div class="fig-cap">图 2.2 物理符号系统的构成元素</div>
+        </div>
+        <p>只要符号与过程足够完备，原则上就能产生通用智能——这是符号时代最大的信心来源。</p>
+      </section>
+      <section class="slide" data-id="pssh-impact" data-label="PSSH 的深远影响" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.1 · 影响</div>
+        <h2 class="slide-title">假说如何塑造整个时代</h2>
+        <ul>
+          <li>专家系统：领域知识写成规则，推理机应用规则</li>
+          <li>自动规划：符号状态与算子搜索动作序列</li>
+          <li>早期自然语言理解：把句子解析为可操作符号结构</li>
+        </ul>
+        <div class="note"><strong>伏笔：</strong>当知识获取、常识与动态世界难住符号方法时，人们开始质疑 PSSH「充分性」是否过于乐观。</div>
+      </section>
+      <section class="slide" data-id="expert-intro" data-label="2.1.2 专家系统是什么" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.2</div>
+        <h2 class="slide-title">专家系统：符号主义最成功的应用</h2>
+        <p class="lead">目标：模拟人类专家在<strong>特定领域</strong>解决问题——把专家知识编码成程序，给出媲美甚至超越专家的结论。</p>
+        <div class="analogy">像把名医诊疗手册程序化：病人信息进来，按手册推理给出建议。</div>
+      </section>
+      <section class="slide" data-id="expert-arch" data-label="专家系统通用架构" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.2 · 架构</div>
+        <h2 class="slide-title">知识库 · 推理机 · 用户界面</h2>
+        <p>核心设计思想：<strong>知识与推理相分离</strong>——符号主义 AI 的重要特征。</p>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-1.png" alt="图 2.3 专家系统的通用架构" />
+          <div class="fig-cap">图 2.3 专家系统的通用架构</div>
+        </div>
+        <div class="callout" data-label="为什么分离？"><p style="margin:0">知识可随领域更新；推理引擎可复用。换领域主要重建知识库。</p></div>
+      </section>
+      <section class="slide" data-id="kb" data-label="知识库与产生式规则" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.2 · 知识库</div>
+        <h2 class="slide-title">知识库：智能从哪来</h2>
+        <p class="lead">关键是<strong>知识表示</strong>。最常用<strong>产生式规则</strong>：IF-THEN。例：IF 发烧 AND 咳嗽 THEN 可能呼吸道感染。</p>
+        <ul>
+          <li>IF：情境/条件</li>
+          <li>THEN：结论或行动</li>
+          <li>复杂系统可有成百上千条规则构成知识网络</li>
+        </ul>
+        <div class="note"><strong>工程现实：</strong>规则质量决定智力上限；写规则本身就是昂贵的知识工程。</div>
+      </section>
+      <section class="slide" data-id="forward" data-label="正向链推理" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.2 · 正向链</div>
+        <h2 class="slide-title">正向链：数据驱动往前推</h2>
+        <p class="lead"><strong>Forward Chaining</strong>：从已知事实出发，匹配 IF，触发 THEN，新结论加入事实库，直到目标或无规则可匹配。</p>
+        <ol>
+          <li>收集事实</li>
+          <li>扫描哪些 IF 已被满足</li>
+          <li>触发 THEN 产生新事实</li>
+          <li>重复直到诊断或无法继续</li>
+        </ol>
+        <div class="analogy">像看到一堆线索一路往下推——适合事实不断涌入的场景。</div>
+      </section>
+      <section class="slide" data-id="backward" data-label="反向链推理" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.2 · 反向链</div>
+        <h2 class="slide-title">反向链：目标驱动倒推证据</h2>
+        <p class="lead"><strong>Backward Chaining</strong>：从假设目标出发，找能推出该目标的规则，把 IF 当子目标递归，直到被已知事实证明。</p>
+        <ol>
+          <li>设定假设目标</li>
+          <li>找 THEN=该目标的规则</li>
+          <li>IF 变成待验证子目标</li>
+          <li>对未知条件提问或继续倒推</li>
+        </ol>
+        <div class="note"><strong>MYCIN 主用反向链：</strong>从「确定致病菌」出发，倒推证据并向医生提问。</div>
+      </section>
+      <section class="slide" data-id="chain-vs" data-label="正反向链对照" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.2 · 对照</div>
+        <h2 class="slide-title">两种推理方式怎么选？</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>正向链</h3><ul>
+              <li>事实 → 结论</li>
+              <li>数据驱动</li>
+              <li>像看到症状往下推</li>
+            </ul></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-col b"><h3>反向链</h3><ul>
+              <li>目标 ← 证据</li>
+              <li>目标驱动</li>
+              <li>像先假设再找证据（MYCIN）</li>
+            </ul></div>
+        </div>
+        <p>同一知识库可用不同策略；聪明主要来自知识库，推理机是通用引擎。</p>
+      </section>
+      <section class="slide" data-id="mycin-intro" data-label="MYCIN 是什么" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.2 · 案例</div>
+        <h2 class="slide-title">MYCIN：医疗专家系统里程碑</h2>
+        <p class="lead">斯坦福 1970 年代开发，辅助诊断细菌性血液感染并推荐抗生素。</p>
+        <ul>
+          <li>知识库约 <strong>600 条</strong> IF-THEN 规则</li>
+          <li>与医生问答收集症状/病史/化验</li>
+          <li>推理机主要采用<strong>反向链</strong></li>
+        </ul>
+        <p>成功被视为：精心知识工程 + 符号推理，可在专业领域展现卓越「智能」。</p>
+      </section>
+      <section class="slide" data-id="mycin-flow" data-label="MYCIN 反向链流程" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.2 · MYCIN 流程</div>
+        <h2 class="slide-title">从目标倒推到提问</h2>
+        <p>最高目标「确定致病菌」→ 倒推证据 → 向医生提问 → 收束到诊断与用药建议。</p>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-2.png" alt="图 2.4 MYCIN 反向链推理流程示意图" />
+          <div class="fig-cap">图 2.4 MYCIN 反向链推理流程示意图</div>
+        </div>
+        <div class="callout" data-label="交互形态"><p style="margin:0">边推边问，像真实问诊，降低一次性输入全部事实的负担。</p></div>
+      </section>
+      <section class="slide" data-id="mycin-cf" data-label="置信因子 CF" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.2 · CF</div>
+        <h2 class="slide-title">不确定性：置信因子</h2>
+        <p class="lead">MYCIN 引入 <strong>Certainty Factor（CF）</strong>：−1 到 1 表示结论可信度，处理医学不确定性。</p>
+        <ul>
+          <li>规则与结论可带可信程度，不是纯真/假</li>
+          <li>更贴近模糊医学知识</li>
+          <li>输出带可信度评估，便于医生解读</li>
+        </ul>
+        <div class="note">说明符号系统也能用数值化手段处理不确定推理。</div>
+      </section>
+      <section class="slide" data-id="mycin-impact" data-label="MYCIN 成就与意义" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.2 · 意义</div>
+        <h2 class="slide-title">它证明了什么，又留下什么</h2>
+        <ul>
+          <li>诊断表现超非专业医生、达专家水平</li>
+          <li>为垂直领域商业化应用铺路</li>
+          <li>但未大规模临床落地——技术/伦理/法律/接受度等多重因素（见习题）</li>
+        </ul>
+        <div class="analogy">超级专科计算器：专科题极强；出规则范围或需要责任归属时，很难直接替换人类医生。</div>
+      </section>
+      <section class="slide" data-id="shrdlu-intro" data-label="2.1.3 SHRDLU 导读" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.3</div>
+        <h2 class="slide-title">SHRDLU：积木世界里的综合智能体</h2>
+        <p class="lead">专家系统展示「深度」；<strong>特里·威诺格拉德</strong> 1968–1970 的 SHRDLU 在「广度」上突破。</p>
+        <p>在模拟三维积木世界中用自然语言交互，并操控虚拟机械臂。</p>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-3.png" alt="图 2.5 SHRDLU 的「积木世界」交互界面" />
+          <div class="fig-cap">图 2.5 SHRDLU 的「积木世界」交互界面</div>
+        </div>
+      </section>
+      <section class="slide" data-id="shrdlu-nlu" data-label="SHRDLU 自然语言理解" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.3 · 语言</div>
+        <h2 class="slide-title">消歧、指代与上下文</h2>
+        <details class="expand-card" open>
+          <summary>直接命令</summary>
+          <div class="expand-body"><p>Pick up a big red block. —— 解析对象属性并执行。</p></div>
+        </details>
+        <details class="expand-card">
+          <summary>指代消解</summary>
+          <div class="expand-body"><p>the one you are holding 需绑定当前抓取物。</p></div>
+        </details>
+        <details class="expand-card">
+          <summary>上下文记忆</summary>
+          <div class="expand-body"><p>先 Grasp the pyramid. 再问盒子里有什么，能联系上下文。</p></div>
+        </details>
+        <div class="note">语言模块与世界状态、行动历史绑在一起，不是孤立的。</div>
+      </section>
+      <section class="slide" data-id="shrdlu-plan" data-label="SHRDLU 规划与行动" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.3 · 规划</div>
+        <h2 class="slide-title">理解之后还要会规划</h2>
+        <p class="lead">「蓝积木放到红积木上」但红上已有绿积木 → 先移开绿，再放蓝。</p>
+        <ul>
+          <li>理解目标世界状态</li>
+          <li>检查障碍与前置条件</li>
+          <li>生成并执行动作序列</li>
+        </ul>
+        <div class="analogy">会下棋的机械臂助手：不只单步抓，会为最终摆放自动补中间步骤。</div>
+      </section>
+      <section class="slide" data-id="shrdlu-mem" data-label="SHRDLU 记忆与问答" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.3 · 记忆</div>
+        <h2 class="slide-title">能回答世界与动机</h2>
+        <ul>
+          <li>世界状态：Is there a large block behind a pyramid?</li>
+          <li>行为历史：Did you touch any pyramid before…?</li>
+          <li>行为动机：Why did you pick up the red block? → BECAUSE YOU ASKED ME TO.</li>
+        </ul>
+        <p>已具备感知-思考-行动闭环的早期雏形。</p>
+      </section>
+      <section class="slide" data-id="shrdlu-legacy" data-label="SHRDLU 历史地位" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.3 · 地位</div>
+        <h2 class="slide-title">三项深远影响</h2>
+        <div class="card-grid">
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>综合智能典范</h3><div class="en">Integration</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>奠基</h3><p>首次集成语言、规划、记忆；感知-思考-行动闭环奠基现代智能体。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>微观世界方法</h3><div class="en">Micro-world</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>方法</h3><p>在规则明确简化环境中探索复杂智能；影响机器人学与规划。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>乐观与反思</h3><div class="en">Limits</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>反思</h3><p>激发 AGI 乐观，但限于积木世界；引发符号处理 vs 真正理解之争。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>对今日启示</h3><div class="en">Today</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>映射</h3><p>仿真环境、工具沙箱仍在用「可控微观世界」验证 Agent。</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="slide" data-id="chal-intro" data-label="2.1.4 挑战总览" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.4</div>
+        <h2 class="slide-title">符号主义的根本性挑战</h2>
+        <p class="lead">80 年代起，从微观世界走向开放现实，撞上方法论固有难题。</p>
+        <div class="compare">
+          <div class="compare-col a"><h3>（1）知识层面</h3><ul>
+              <li>知识获取瓶颈</li>
+              <li>常识问题（Cyc）</li>
+            </ul></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-col b"><h3>（2）动态与脆弱</h3><ul>
+              <li>框架问题</li>
+              <li>系统脆弱性</li>
+            </ul></div>
+        </div>
+        <p>这些不是「再加点规则」就能轻松解决的小问题，而是开放世界中的结构性困境。</p>
+      </section>
+      <section class="slide" data-id="chal-ka" data-label="知识获取瓶颈" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.4 · 知识</div>
+        <h2 class="slide-title">知识获取瓶颈</h2>
+        <p class="lead">专家访谈→提炼→编码：成本高、耗时长、难规模化；内隐直觉难写成 IF-THEN。</p>
+        <ul>
+          <li>试图把整个世界手工符号化几乎不可能</li>
+          <li>知识一更新，规则库维护成本急剧上升</li>
+        </ul>
+        <div class="note"><strong>预告：</strong>预训练从海量数据压缩世界知识，换一种方式缓解这一瓶颈。</div>
+      </section>
+      <section class="slide" data-id="chal-cs" data-label="常识问题与 Cyc" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.4 · 常识</div>
+        <h2 class="slide-title">常识问题</h2>
+        <p class="lead">「水是湿的」「绳子能拉不能推」——除非显式编码，符号系统一无所知。</p>
+        <p><strong>Cyc</strong> 数十年手建常识库，应用仍非常有限——说明「把常识写完」极难。</p>
+        <div class="analogy">给机器人写生活说明书：例外永远写不完；小孩靠体验就能获得默会常识。</div>
+      </section>
+      <section class="slide" data-id="chal-frame" data-label="框架问题" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.4 · 框架</div>
+        <h2 class="slide-title">框架问题（Frame Problem）</h2>
+        <p class="lead">执行动作后，如何高效判断<strong>哪些事物未改变</strong>？为每个动作声明所有不变状态在计算上不可行。</p>
+        <div class="callout" data-label="直觉例子"><p style="margin:0">把杯子从桌挪到柜：墙色、天气通常不变。系统若要「证明不变」，规则数量会爆炸。</p></div>
+      </section>
+      <section class="slide" data-id="chal-brit" data-label="系统脆弱性" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1.4 · 脆弱</div>
+        <h2 class="slide-title">系统脆弱性（Brittleness）</h2>
+        <p class="lead">完全依赖预设规则：规则之外的微小变化就可能失灵。SHRDLU 成功正因为世界封闭完备。</p>
+        <div class="compare">
+          <div class="compare-col a"><h3>封闭微观世界</h3><ul>
+              <li>规则完备</li>
+              <li>例外少</li>
+              <li>表现惊艳</li>
+            </ul></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-col b"><h3>开放真实世界</h3><ul>
+              <li>例外无穷</li>
+              <li>覆盖不全</li>
+              <li>容易失灵</li>
+            </ul></div>
+        </div>
+      </section>
+      <section class="slide" data-id="flash-sym" data-label="速记 · 符号主义" data-group="2.1 符号主义">
+        <div class="slide-sub">§ 2.1 · 速记</div>
+        <h2 class="slide-title">闪卡：符号时代关键词</h2>
+        <div class="flash-wrap" id="flash1" data-cards='[{"q":"PSSH 一句话？","a":"智能的本质是符号的计算与处理；含充分性与必要性。"},{"q":"专家系统两大核心？","a":"知识库 + 推理机；知识与推理分离。"},{"q":"正向链 vs 反向链？","a":"正向事实驱动；反向从目标倒推（MYCIN 主用）。"},{"q":"MYCIN 的 CF？","a":"置信因子 −1~1，表示结论可信度。"},{"q":"SHRDLU 为何重要？","a":"集成语言/规划/记忆；奠基闭环；暴露封闭世界局限。"},{"q":"四大失败点？","a":"知识获取瓶颈、常识、框架问题、脆弱性。"}]'>
+          <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+          <div class="flash-meta"><span class="flash-idx"></span>
+            <div class="flash-controls">
+              <button class="btn" type="button" onclick="moveFlash('flash1',-1)">上一张</button>
+              <button class="btn" type="button" onclick="moveFlash('flash1',1)">下一张</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="slide" data-id="quiz-21a" data-label="检测 · 2.1（上）" data-group="2.1 符号主义">
+        <div class="slide-sub">问答检测 · 2.1A</div>
+        <h2 class="slide-title">自测：PSSH 与专家系统</h2>
+        <div class="quiz-score" id="score-q21a"></div>
+        <div class="quiz-item" data-quiz="q21a" data-answer="1">
+          <h4>PSSH「必要性论断」意思是？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">有神经网络就一定有通用智能</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">能展现通用智能的系统本质必然是物理符号系统</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">规则越多越脆弱</button>
+          <div class="quiz-explain">必要性：通用智能 ⇒ 物理符号系统。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q21a" data-answer="2">
+          <h4>MYCIN 主要采用哪种推理？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">纯正向链从不提问</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">强化学习试错</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">反向链：从目标倒推并向医生收集证据</button>
+          <div class="quiz-explain">从诊断目标出发反向找证据并提问。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q21a" data-answer="0">
+          <h4>知识与推理分离的好处？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">换领域主要重建知识库，推理引擎可复用</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">完全不需要规则</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">系统自动从图像学规则</button>
+          <div class="quiz-explain">推理机通用、知识库可替换。</div>
+        </div>
+      </section>
+      <section class="slide" data-id="quiz-21b" data-label="检测 · 2.1（下）" data-group="2.1 符号主义">
+        <div class="slide-sub">问答检测 · 2.1B</div>
+        <h2 class="slide-title">自测：SHRDLU 与挑战</h2>
+        <div class="quiz-score" id="score-q21b"></div>
+        <div class="quiz-item" data-quiz="q21b" data-answer="0">
+          <h4>「框架问题」主要在说？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">动作后如何高效判断哪些事实未改变</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">CSS 布局框架怎么选</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">用户界面长什么样</button>
+          <div class="quiz-explain">显式声明所有不变状态在计算上不可行。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q21b" data-answer="2">
+          <h4>SHRDLU 最大局限？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">完全不会自然语言</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">没有机械臂概念</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">能力严格限于规则完备的积木微观世界</button>
+          <div class="quiz-explain">成功依赖封闭世界。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q21b" data-answer="1">
+          <h4>知识获取瓶颈强调？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">GPU 不够快</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">专家知识编码成本高、难规模化</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">反向链一定更慢</button>
+          <div class="quiz-explain">手工知识工程是规模化核心障碍。</div>
+        </div>
+      </section>
+      <section class="slide" data-id="s22" data-label="2.2 节导读" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2</div>
+        <h2 class="slide-title">构建基于规则的聊天机器人</h2>
+        <p class="lead">理论讲完动手感受：早期聊天机器人并不「理解」人类，更像会套话的规则机器。</p>
+        <p>复现 <strong>ELIZA</strong>：它让人第一次强烈感到程序也能像在对话——语言交互本身就能带来强烈「智能感」。</p>
+        <div class="note"><strong>目标：</strong>理解规则驱动的优势与局限，印证 2.1.4 的理论挑战。</div>
+      </section>
+      <section class="slide" data-id="eliza-who" data-label="2.2.1 ELIZA 与魏泽鲍姆" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.1</div>
+        <h2 class="slide-title">ELIZA：会套话的规则机器</h2>
+        <p class="lead"><strong>约瑟夫·魏泽鲍姆</strong> 1966 年于 MIT 发布。ELIZA 是可执行不同脚本的框架；最著名是 <strong>DOCTOR</strong>（罗杰斯学派非指导性治疗师）。</p>
+        <div class="callout" data-label="工作方式"><p style="margin:0">识别关键词 → 套转换规则 → 把陈述变成开放式提问。例：「我为我的男朋友感到难过」→「你为什么会为你的男朋友感到难过？」</p></div>
+      </section>
+      <section class="slide" data-id="eliza-intent" data-label="设计本意与意外" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.1 · 思想</div>
+        <h2 class="slide-title">本意是拆穿「智能假象」</h2>
+        <p class="lead">魏泽鲍姆想证明：简单句式技巧就能在完全不理解内容时营造智能与共情假象。意外的是许多人产生情感依赖。</p>
+        <div class="analogy">像一面会反问的镜子：镜子不懂你的痛苦，但「把话抛回」会让人感觉被倾听。</div>
+      </section>
+      <section class="slide" data-id="eliza-4" data-label="2.2.2 四步总览" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.2</div>
+        <h2 class="slide-title">模式匹配与文本替换</h2>
+        <p class="lead">算法基于模式匹配与文本替换，可分解为四步：</p>
+        <div class="loop-stepper" id="elizaDemo">
+          <div class="steps">
+            <button type="button" class="step-btn on" onclick="showElizaStep(0)">① 关键词</button>
+            <button type="button" class="step-btn" onclick="showElizaStep(1)">② 分解</button>
+            <button type="button" class="step-btn" onclick="showElizaStep(2)">③ 重组</button>
+            <button type="button" class="step-btn" onclick="showElizaStep(3)">④ 代词</button>
+          </div>
+          <div class="loop-panel" id="elizaPanel">
+            <h4>① 关键词识别与排序</h4>
+            <p>规则库为每个关键词设优先级。多关键词时选优先级最高者。</p>
+          </div>
+        </div>
+        <p>复杂自然语言理解被简化成可操作的<strong>规则模式匹配游戏</strong>。</p>
+      </section>
+      <section class="slide" data-id="eliza-s1" data-label="步骤1：关键词优先级" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.2 · 步骤1</div>
+        <h2 class="slide-title">关键词识别与排序</h2>
+        <p class="lead">为 mother / dreamed / depressed 等设优先级；多关键词时选最高者。无匹配则走兜底（Please go on.）。</p>
+        <div class="note"><strong>工程含义：</strong>「智能感」很大程度来自优先级策略，而非语义理解。</div>
+      </section>
+      <section class="slide" data-id="eliza-s2" data-label="步骤2：分解规则" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.2 · 步骤2</div>
+        <h2 class="slide-title">分解：用通配符抓住其余部分</h2>
+        <ul>
+          <li>规则示例：<code style="font-family:var(--font-mono);color:var(--cyan)">* my *</code></li>
+          <li>用户输入："My mother is afraid of me"</li>
+          <li>捕获结果：["", "mother is afraid of me"]</li>
+        </ul>
+        <div class="callout" data-label="要点"><p style="margin:0">分解不是理解语法树，而是按模板切分字符串——高效，也很「盲」。</p></div>
+      </section>
+      <section class="slide" data-id="eliza-s3" data-label="步骤3：重组规则" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.2 · 步骤3</div>
+        <h2 class="slide-title">重组：从模板生成回应</h2>
+        <ul>
+          <li>从一组重组规则中选一条（常随机增多样性）</li>
+          <li>可把捕获片段嵌进带占位符的模板</li>
+          <li>例："Tell me more about your family."</li>
+        </ul>
+        <div class="analogy">像同一考点有多道换皮题：骨架相同，措辞不同。</div>
+      </section>
+      <section class="slide" data-id="eliza-s4" data-label="步骤4：代词与伪代码" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.2 · 步骤4</div>
+        <h2 class="slide-title">代词转换 + 整体伪代码</h2>
+        <p>重组前做 I→you、my→your 等转换，维持人称连贯。</p>
+        <div class="code-block">FUNCTION generate_response(user_input):
+  words = SPLIT(user_input)
+  best_rule = FIND_BEST_RULE(words)
+  IF best_rule is NULL: RETURN generic_response()
+  parts = DECOMPOSE(user_input, pattern)
+  IF failed: RETURN generic_response()
+  parts = TRANSFORM_PRONOUNS(parts)
+  RETURN REASSEMBLE(parts, reassembly_patterns)</div>
+        <p>五步：找规则 → 分解 → 代词转换 → 重组 → 返回。</p>
+      </section>
+      <section class="slide" data-id="eliza-code1" data-label="2.2.3 规则库代码" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.3 · 代码</div>
+        <h2 class="slide-title">迷你 ELIZA：规则库长什么样</h2>
+        <p class="lead">仓库文件：<code style="font-family:var(--font-mono);color:var(--cyan)">code/chapter2/ELIZA.py</code></p>
+        <div class="code-block">rules = {
+  r'I need (.*)': ["Why do you need {0}?", ...],
+  r'I am (.*)': ["How long have you been {0}?", ...],
+  r'.* mother .*': ["Tell me more about your mother.", ...],
+  r'.*': ["Please tell me more.", ...]  # 兜底
+}</div>
+        <div class="note">字典顺序 + 首次匹配显著影响行为；通配符 .* 必须放最后当兜底。</div>
+      </section>
+      <section class="slide" data-id="eliza-code2" data-label="代词转换与 respond" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.3 · 核心函数</div>
+        <h2 class="slide-title">swap_pronouns 与 respond</h2>
+        <div class="code-block">def swap_pronouns(phrase):
+  words = phrase.lower().split()
+  return " ".join(pronoun_swap.get(w, w) for w in words)
+
+def respond(user_input):
+  for pattern, responses in rules.items():
+    match = re.search(pattern, user_input, re.I)
+    if match:
+      capt = match.group(1) if match.groups() else ''
+      return random.choice(responses).format(swap_pronouns(capt))
+  return random.choice(rules[r'.*'])</div>
+        <p>全程没有语义解析器，只有正则 + 词典替换 + 随机模板。</p>
+      </section>
+      <section class="slide" data-id="eliza-demo" data-label="示例对话走读" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.3 · 示例</div>
+        <h2 class="slide-title">跑一遍，看它「像懂」的瞬间</h2>
+        <div class="code-block">Therapist: Hello! How can I help you today?
+You: I am feeling sad today.
+Therapist: How long have you been feeling sad today?
+You: I need some help with my project.
+Therapist: Are you sure you need some help with your project?
+You: My mother is not happy with my work.
+Therapist: Tell me more about your mother.</div>
+        <ul>
+          <li>I am (.*) → 套时长追问模板</li>
+          <li>I need (.*) → 反问是否真需要</li>
+          <li>mother → 转到家庭话题</li>
+        </ul>
+      </section>
+      <section class="slide" data-id="eliza-lim" data-label="三大局限" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.3 · 局限</div>
+        <h2 class="slide-title">看起来懂，其实不懂</h2>
+        <p class="lead">直接印证 2.1.4 的理论挑战：</p>
+        <div class="card-grid">
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>缺乏语义</h3><div class="en">No Meaning</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>不懂词义</h3><p>I am not happy 仍可能匹配 I am (.*)——否定词看不懂。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>无状态</h3><div class="en">Stateless</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>无上下文</h3><p>每次只看当前单句，记不住姓名职业。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>规则爆炸</h3><div class="en">Scale</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>难扩展</h3><p>规则越多冲突与优先级越难管；开放域穷举不可扩展。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>核心矛盾</h3><div class="en">Irony</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>本质</h3><p>看似智能完全依赖预编码规则；没有真正理解。</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="slide" data-id="eliza-effect" data-label="ELIZA 效应" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2.3 · 效应</div>
+        <h2 class="slide-title">ELIZA 效应：智能的幻觉</h2>
+        <ul>
+          <li>策略：被动提问者 + 开放式模板</li>
+          <li>心理：人类情感投射、补全意义</li>
+          <li>结果：体验远强于真实能力</li>
+        </ul>
+        <div class="note"><strong>对今日：</strong>聊天很像智能 ≠ 真有可靠推理。评估 Agent 要区分话术流畅与任务完成。</div>
+      </section>
+      <section class="slide" data-id="flash-eliza" data-label="速记 · ELIZA" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2 · 速记</div>
+        <h2 class="slide-title">闪卡：规则对话</h2>
+        <div class="flash-wrap" id="flash2" data-cards='[{"q":"魏泽鲍姆本意？","a":"证明简单技巧就能营造智能假象。"},{"q":"四步机制？","a":"关键词优先级 → 分解 → 重组 → 代词转换。"},{"q":"为何 I am not happy 翻车？","a":"只做模式匹配，不懂否定语义。"},{"q":"Stateless？","a":"无上下文记忆，每次只根据当前句回复。"},{"q":"ELIZA 效应？","a":"用户把无理解系统当作真正理解自己。"},{"q":"与 2.1.4 如何印证？","a":"语义缺失、不可扩展、脆弱性的现场版。"}]'>
+          <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+          <div class="flash-meta"><span class="flash-idx"></span>
+            <div class="flash-controls">
+              <button class="btn" type="button" onclick="moveFlash('flash2',-1)">上一张</button>
+              <button class="btn" type="button" onclick="moveFlash('flash2',1)">下一张</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="slide" data-id="quiz-22" data-label="检测 · 2.2" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">问答检测 · 2.2</div>
+        <h2 class="slide-title">自测：ELIZA 与规则对话</h2>
+        <div class="quiz-score" id="score-q22"></div>
+        <div class="quiz-item" data-quiz="q22" data-answer="2">
+          <h4>魏泽鲍姆设计 ELIZA 的本意？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">造真正理解情感的治疗师 AI</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">用强化学习学会共情</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">证明简单技巧就能营造智能假象</button>
+          <div class="quiz-explain">本意是演示不理解也能看起来像理解。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q22" data-answer="0">
+          <h4>代词转换的作用？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">I→you、my→your，维持人称连贯</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">翻译成拉丁文</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">计算 CF</button>
+          <div class="quiz-explain">让回应听起来像在跟「你」说话。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q22" data-answer="1">
+          <h4>ELIZA 效应指？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">规则越多越快</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">用户把无理解系统当作真正理解自己</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">反向链一定更好</button>
+          <div class="quiz-explain">智能幻觉来自策略与人类投射。</div>
+        </div>
+      </section>
+      <section class="slide" data-id="s23" data-label="2.3 节导读" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3</div>
+        <h2 class="slide-title">换思路：也许智能是协作出来的</h2>
+        <p class="lead">单一、集中、预设规则的引擎面对模糊与无穷变化时总是僵化脆弱。</p>
+        <div class="callout" data-label="明斯基名言"><p style="margin:0">What magical trick makes us intelligent? The trick is that there is no trick. … diversity, not any single perfect principle.——智能来自多样性。</p></div>
+      </section>
+      <section class="slide" data-id="mono-fail" data-label="单一模型的失败现场" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3.1</div>
+        <h2 class="slide-title">对「全知中央处理器」的反思</h2>
+        <p class="lead">专家系统有深度无常识；SHRDLU 困在积木世界；ELIZA 会说话却一无所知。都是 Top-down：全知中央处理器 + 统一逻辑。</p>
+        <ul>
+          <li>统一表示与推理试图包打天下</li>
+          <li>与自然智能运作方式相去甚远</li>
+          <li>多样化心智活动被塞进僵化框架导致停滞</li>
+        </ul>
+      </section>
+      <section class="slide" data-id="mono-q" data-label="明斯基的三个追问" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3.1 · 追问</div>
+        <h2 class="slide-title">理解 / 常识 / 如何构建</h2>
+        <details class="expand-card" open>
+          <summary>「理解」是什么？</summary>
+          <div class="expand-body"><p>单一能力，还是视觉/逻辑/情感/社会常识等数十种过程协同？</p></div>
+        </details>
+        <details class="expand-card">
+          <summary>「常识」是什么？</summary>
+          <div class="expand-body"><p>百万条规则知识库（Cyc），还是分布式经验与简单规则片段网络？</p></div>
+        </details>
+        <details class="expand-card">
+          <summary>如何构建？</summary>
+          <div class="expand-body"><p>追求完美统一逻辑，还是承认智能是不完美的大杂烩？</p></div>
+        </details>
+        <div class="note"><strong>转向：</strong>心智不是金字塔，而是扁平化协作的「社会」。</div>
+      </section>
+      <section class="slide" data-id="agency" data-label="简单智能体与机构" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3.2 · 定义</div>
+        <h2 class="slide-title">智能体可以是「无心」的</h2>
+        <p class="lead">这里的智能体：极其简单、专门化、自身无心的心智过程（LINE-FINDER、GRASP）。组成更强的<strong>机构（Agency）</strong>。</p>
+        <ul>
+          <li>去中心化激活与抑制信号相互影响</li>
+          <li>控制流动态，不是中央调度写死</li>
+          <li>单个部件不必理解全局目标</li>
+        </ul>
+      </section>
+      <section class="slide" data-id="emerge" data-label="涌现是关键" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3.2 · 关键</div>
+        <h2 class="slide-title">涌现（Emergence）</h2>
+        <p class="lead">复杂有目的行为并非高层预先规划，而是从大量简单部件的<strong>局部交互</strong>中自发产生。</p>
+        <div class="analogy">蚁群找最短路径：没有蚂蚁持有全局地图，群体行为却看起来很聪明。</div>
+      </section>
+      <section class="slide" data-id="tower" data-label="搭积木塔步进" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3.2 · 案例</div>
+        <h2 class="slide-title">简单智能体 → 机构 → 涌现</h2>
+        <div class="loop-stepper" id="buildDemo">
+          <div class="steps steps5">
+            <button type="button" class="step-btn on" onclick="showBuildStep(0)">目标</button>
+            <button type="button" class="step-btn" onclick="showBuildStep(1)">BUILDER</button>
+            <button type="button" class="step-btn" onclick="showBuildStep(2)">ADD</button>
+            <button type="button" class="step-btn" onclick="showBuildStep(3)">子机构</button>
+            <button type="button" class="step-btn" onclick="showBuildStep(4)">底层</button>
+          </div>
+          <div class="loop-panel" id="buildPanel">
+            <h4>高层目标激活 BUILD-TOWER</h4>
+            <p>它不知道具体物理动作，只负责激活下属（如 BUILDER）。</p>
+          </div>
+        </div>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-4.png" alt="图 2.6 「心智社会」中搭建积木塔行为的涌现机制" />
+          <div class="fig-cap">图 2.6 「心智社会」中搭建积木塔行为的涌现机制</div>
+        </div>
+      </section>
+      <section class="slide" data-id="tower-insight" data-label="无人持有全局规划" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3.2 · 洞见</div>
+        <h2 class="slide-title">为什么这很颠覆？</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>旧想象</h3><ul>
+              <li>必须有全知模块写出完整计划</li>
+            </ul></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-col b"><h3>心智社会</h3><ul>
+              <li>全局智能从局部交互涌现，无需中央全知</li>
+            </ul></div>
+        </div>
+        <div class="note">若 GRASP 失效，系统可能局部瘫痪——去中心化既有鲁棒潜力，也有故障与协调难题。</div>
+      </section>
+      <section class="slide" data-id="mas-q" data-label="从心智内到多智能体" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3.3</div>
+        <h2 class="slide-title">引出 DAI 与 MAS 的关键一问</h2>
+        <p class="lead">若心智内部智能由简单智能体协作涌现，多个物理分离实体之间能否协作涌现群体智能？</p>
+        <p>焦点从「全能单一智能体」转向「高效协作的群体」。为 <strong>DAI</strong> 与 <strong>MAS</strong> 提供概念基础。</p>
+      </section>
+      <section class="slide" data-id="mas-3" data-label="三大理论启发" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3.3 · 启发</div>
+        <h2 class="slide-title">去中心化 · 涌现计算 · 社会性</h2>
+        <div class="card-grid">
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>去中心化控制</h3><div class="en">Decentralized</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>无中央大脑</h3><p>无中央控制器；MAS 核心课题含无中心协调与任务分配。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>涌现式计算</h3><div class="en">Emergent</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>局部规则</h3><p>复杂解可从简单局部交互产生；启发蚁群、粒子群等。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>智能体社会性</h3><div class="en">Sociality</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>交互扩展</h3><p>扩展到 ACL、契约网、协商、信任与组织结构。</p></div>
+            </div>
+          </div>
+          <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-inner">
+              <div class="flip-face front"><h3>今日映射</h3><div class="en">Today</div><div class="flip-hint">点击翻转</div></div>
+              <div class="flip-face back"><h3>实践</h3><p>CrewAI / MetaGPT / CAMEL 等在不同程度上实践分工协作。</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="slide" data-id="flash-soc" data-label="速记 · 心智社会" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3 · 速记</div>
+        <h2 class="slide-title">闪卡：协作与涌现</h2>
+        <div class="flash-wrap" id="flash3" data-cards='[{"q":"心智社会批判什么？","a":"单一全知中央处理器包打天下的自上而下模型。"},{"q":"这里的智能体？","a":"极其简单、专门化、自身无心的心智过程。"},{"q":"Agency？","a":"一组协同工作的智能体/机构，完成更复杂任务。"},{"q":"涌现？","a":"复杂行为从局部交互自发产生，而非高层写好全部计划。"},{"q":"对 MAS 三点启发？","a":"去中心化、涌现计算、社会性。"},{"q":"LLM 时代过时了吗？","a":"否；协作涌现框架仍在，只是部件可以更强。"}]'>
+          <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+          <div class="flash-meta"><span class="flash-idx"></span>
+            <div class="flash-controls">
+              <button class="btn" type="button" onclick="moveFlash('flash3',-1)">上一张</button>
+              <button class="btn" type="button" onclick="moveFlash('flash3',1)">下一张</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="slide" data-id="quiz-23" data-label="检测 · 2.3" data-group="2.3 心智社会">
+        <div class="slide-sub">问答检测 · 2.3</div>
+        <h2 class="slide-title">自测：心智社会</h2>
+        <div class="quiz-score" id="score-q23"></div>
+        <div class="quiz-item" data-quiz="q23" data-answer="1">
+          <h4>底层「智能体」通常是？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">全能中央大模型</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">极其简单、专门化、自身无心的过程</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">必须具备完整自我意识</button>
+          <div class="quiz-explain">复杂智能来自协作涌现。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q23" data-answer="0">
+          <h4>涌现在搭积木塔中意味着？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">无人持有全局规划，行为从局部交互产生</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">必须先写好全部步骤</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">规则够多就不会失败</button>
+          <div class="quiz-explain">各部件不懂全局，交互中涌现。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q23" data-answer="2">
+          <h4>对 MAS 的启发不包括？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">去中心化控制</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">涌现式计算与社会性</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">必须用单一巨型知识库手写全部常识</button>
+          <div class="quiz-explain">手写常识是符号主义/Cyc 路线。</div>
+        </div>
+      </section>
+      <section class="slide" data-id="s24" data-label="2.4 节导读" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4</div>
+        <h2 class="slide-title">如果智能无法被完全设计，能否被学习出来？</h2>
+        <p class="lead">心智社会指出方向但路径不明；符号主义证明预编码不够鲁棒。汇合开启「学习」时代。</p>
+        <div class="strata">
+          <div class="strata-row"><div class="era">2.4.1</div><div><strong>联结主义</strong><span>分布式权重，从样本学习</span></div></div>
+          <div class="strata-row"><div class="era">2.4.2</div><div><strong>强化学习</strong><span>与环境试错，学序贯决策</span></div></div>
+          <div class="strata-row"><div class="era">2.4.3</div><div><strong>预训练</strong><span>大规模数据获得世界先验</span></div></div>
+          <div class="strata-row"><div class="era">2.4.4–5</div><div><strong>LLM Agent</strong><span>历史拼图融合 + 思潮/技术栈</span></div></div>
+        </div>
+      </section>
+      <section class="slide" data-id="conn-intro" data-label="2.4.1 联结主义兴起" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.1</div>
+        <h2 class="slide-title">从符号到联结</h2>
+        <p class="lead"><strong>联结主义</strong> 80 年代重新兴起：自下而上，灵感来自生物神经网络。智能体成为能通过经验自我优化的适应性系统。</p>
+      </section>
+      <section class="slide" data-id="conn-3" data-label="联结主义三点核心" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.1 · 核心</div>
+        <h2 class="slide-title">分布式表示 · 简单单元 · 学习调权</h2>
+        <ol>
+          <li><strong>分布式表示</strong>：知识以连接权重分布在神经元之间</li>
+          <li><strong>简单单元</strong>：加权输入 → 激活 → 输出</li>
+          <li><strong>学习调权</strong>：如反向传播，样本驱动迭代使输出接近目标</li>
+        </ol>
+        <div class="note"><strong>根本转变：</strong>从「显式编码知识」到「创造能学习知识的机器」。</div>
+      </section>
+      <section class="slide" data-id="conn-vs" data-label="符号 vs 联结对照" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.1 · 对照</div>
+        <h2 class="slide-title">两种构建智能的哲学</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>符号主义</h3><ul>
+              <li>自上而下</li>
+              <li>显式规则</li>
+              <li>可解释但脆弱</li>
+            </ul></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-col b"><h3>联结主义</h3><ul>
+              <li>自下而上</li>
+              <li>学习权重</li>
+              <li>感知强但不透明</li>
+            </ul></div>
+        </div>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-5.png" alt="图 2.7 符号主义与联结主义范式对比" />
+          <div class="fig-cap">图 2.7 符号主义与联结主义范式对比</div>
+        </div>
+        <p>深度学习赋予强大感知；但动态交互中的最优序贯决策还需 RL 补充。</p>
+      </section>
+      <section class="slide" data-id="rl-intro" data-label="2.4.2 强化学习导读" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.2</div>
+        <h2 class="slide-title">在试错中学决策</h2>
+        <p class="lead">感知问「图里有什么」；决策问「我该做什么」。<strong>RL</strong> 靠与环境交互、试错最大化长期收益。</p>
+        <p><strong>AlphaGo</strong>：状态→行动→终局奖惩；数百万次自我对弈优化策略，不靠棋谱直接指导。</p>
+      </section>
+      <section class="slide" data-id="rl-elems" data-label="RL 核心要素" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.2 · 要素</div>
+        <h2 class="slide-title">Agent / Env / S / A / R / π</h2>
+        <div class="kw-grid">
+          <div class="kw"><h4>智能体 Agent</h4><p>学习者与决策者</p></div>
+          <div class="kw"><h4>环境 Environment</h4><p>外部一切；规则与对手</p></div>
+          <div class="kw"><h4>状态 State S</h4><p>某时刻环境描述</p></div>
+          <div class="kw"><h4>行动 Action A</h4><p>可采取的操作</p></div>
+          <div class="kw"><h4>奖励 Reward R</h4><p>标量反馈</p></div>
+          <div class="kw"><h4>策略 Policy π</h4><p>状态→行动的映射</p></div>
+        </div>
+      </section>
+      <section class="slide" data-id="rl-loop" data-label="RL 交互循环" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.2 · 循环</div>
+        <h2 class="slide-title">感知 → 行动 → 学习 闭环</h2>
+        <div class="loop-viz">
+          <div class="loop-node">状态 Sₜ</div><div class="loop-arrow">→</div>
+          <div class="loop-node">策略选 Aₜ</div><div class="loop-arrow">→</div>
+          <div class="loop-node">新状态 Sₜ₊₁</div><div class="loop-arrow">→</div>
+          <div class="loop-node">奖励 Rₜ₊₁</div>
+          <div class="loop-desc">更新策略 π · 最大化累积回报</div>
+        </div>
+        <div class="loop-stepper" id="rlDemo">
+          <div class="steps">
+            <button type="button" class="step-btn on" onclick="showRlStep(0)">① 观察</button>
+            <button type="button" class="step-btn" onclick="showRlStep(1)">② 行动</button>
+            <button type="button" class="step-btn" onclick="showRlStep(2)">③ 转移</button>
+            <button type="button" class="step-btn" onclick="showRlStep(3)">④ 学习</button>
+          </div>
+          <div class="loop-panel" id="rlPanel">
+            <h4>① 观察当前状态</h4>
+            <p>时间步 t，智能体观察环境状态 Sₜ。</p>
+          </div>
+        </div>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-6.png" alt="图 2.8 强化学习的核心交互循环" />
+          <div class="fig-cap">图 2.8 强化学习的核心交互循环</div>
+        </div>
+      </section>
+      <section class="slide" data-id="rl-return" data-label="累积回报与远见" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.2 · 回报</div>
+        <h2 class="slide-title">目标不是单步奖励，而是回报</h2>
+        <p class="lead">最大化<strong>累积奖励 / 回报（Return）</strong>：有时牺牲眼前（弃子）换更大长期收益。</p>
+        <div class="note">与监督对比：监督需要带标签的正确动作；RL 常只有延迟奖惩，更适合游戏等序贯任务。</div>
+      </section>
+      <section class="slide" data-id="pt-why" data-label="2.4.3 为何需要预训练" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.3 · 动机</div>
+        <h2 class="slide-title">RL 缺先验，谁来先懂世界？</h2>
+        <p class="lead">RL 常需海量交互，起步缺乏先验。如何让智能体在学具体任务前先具备广泛世界理解？答案：大规模<strong>预训练</strong>。</p>
+      </section>
+      <section class="slide" data-id="pt-old" data-label="旧 NLP：一任务一模型" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.3 · 旧模式</div>
+        <h2 class="slide-title">从特定任务到通用模型</h2>
+        <ul>
+          <li>每任务从零训练，知识面窄难迁移</li>
+          <li>每任务大量人工标注</li>
+          <li>无法共享「语言本身的能力」</li>
+        </ul>
+        <p><strong>预训练-微调</strong>彻底改变这一现状。</p>
+      </section>
+      <section class="slide" data-id="pt-two" data-label="预训练与微调两阶段" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.3 · 两阶段</div>
+        <h2 class="slide-title">先学语言与世界，再适应任务</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>① 预训练</h3><ul>
+              <li>海量通用文本</li>
+              <li>自监督（常预测下一词）</li>
+              <li>学语法/事实/上下文</li>
+            </ul></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-col b"><h3>② 微调</h3><ul>
+              <li>少量下游标注</li>
+              <li>适应具体任务</li>
+              <li>成本远低于从零训练</li>
+            </ul></div>
+        </div>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-7.png" alt="图 2.9 「预训练-微调」范式示意图" />
+          <div class="fig-cap">图 2.9 「预训练-微调」范式示意图</div>
+        </div>
+        <div class="note">以隐式可扩展方式从数据压缩世界知识，缓解知识获取瓶颈。</div>
+      </section>
+      <section class="slide" data-id="pt-emerge" data-label="涌现能力：ICL 与 CoT" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.3 · 涌现</div>
+        <h2 class="slide-title">规模跨越阈值之后</h2>
+        <ul>
+          <li><strong>上下文学习（ICL）</strong>：Few-shot / Zero-shot，不调权重也能做新任务</li>
+          <li><strong>思维链（CoT）</strong>：先逐步推理，提升逻辑/算术/常识准确性</li>
+        </ul>
+        <p>LLM 兼具海量知识库与通用推理引擎——历史拼图基本齐了。</p>
+      </section>
+      <section class="slide" data-id="llm-intro" data-label="2.4.4 LLM 智能体导读" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.4</div>
+        <h2 class="slide-title">历史拼图如何合体</h2>
+        <p class="lead">符号给逻辑框架，联结与 RL 给学习与决策，LLM 给世界知识与通用推理——融在持续迭代闭环里。</p>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-8.png" alt="图 2.10 LLM 驱动的智能体核心组件架构" />
+          <div class="fig-cap">图 2.10 LLM 驱动的智能体核心组件架构</div>
+        </div>
+      </section>
+      <section class="slide" data-id="llm-perc" data-label="感知模块" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.4 · 感知</div>
+        <h2 class="slide-title">① 感知（Perception）</h2>
+        <p class="lead">感知模块从环境接收原始输入，形成观察：用户指令、API 数据、状态变化——决策起点。</p>
+      </section>
+      <section class="slide" data-id="llm-thought" data-label="思考：规划 + LLM + 记忆" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.4 · 思考</div>
+        <h2 class="slide-title">② 思考（Thought）</h2>
+        <details class="expand-card" open>
+          <summary>规划与分解</summary>
+          <div class="expand-body"><p>反思与自我批判，把宏观目标拆成可执行步骤。</p></div>
+        </details>
+        <details class="expand-card">
+          <summary>推理与决策</summary>
+          <div class="expand-body"><p>LLM 与记忆交互，决策下一步——通常是工具调用（Tool Call）。</p></div>
+        </details>
+        <div class="note">记忆让系统不再像 ELIZA 那样 Stateless——这是质变之一。</div>
+      </section>
+      <section class="slide" data-id="llm-act" data-label="行动与工具" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.4 · 行动</div>
+        <h2 class="slide-title">③ 行动（Action）</h2>
+        <p class="lead">执行模块解析工具调用，从工具箱选择代码执行器 / 搜索 / API 等与环境交互。</p>
+        <p>符号时代的「规划执行」在这里以工具调用形式复活。</p>
+      </section>
+      <section class="slide" data-id="llm-loop" data-label="观察回流与闭环" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.4 · 闭环</div>
+        <h2 class="slide-title">④ 观察与循环</h2>
+        <div class="loop-stepper" id="agentDemo">
+          <div class="steps">
+            <button type="button" class="step-btn on" onclick="showAgentStep(0)">① 感知</button>
+            <button type="button" class="step-btn" onclick="showAgentStep(1)">② 思考</button>
+            <button type="button" class="step-btn" onclick="showAgentStep(2)">③ 行动</button>
+            <button type="button" class="step-btn" onclick="showAgentStep(3)">④ 观察</button>
+          </div>
+          <div class="loop-panel" id="agentPanel">
+            <h4>① 感知 Perception</h4>
+            <p>感知模块从环境接收原始输入，形成观察，交给思考阶段。</p>
+          </div>
+        </div>
+        <ul>
+          <li>工具结果构成直接反馈</li>
+          <li>行动改变环境产生新状态</li>
+          <li>二者构成新观察；更新记忆，启动下一轮</li>
+        </ul>
+      </section>
+      <section class="slide" data-id="schools" data-label="2.4.5 三大思潮" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.5</div>
+        <h2 class="slide-title">符号 · 联结 · 行为（RL）</h2>
+        <div class="compare3">
+          <div class="compare-col a"><h3>符号主义</h3><ul>
+            <li>西蒙、明斯基等</li><li>符号操作与逻辑</li><li>SHRDLU、专家系统、深蓝</li>
+          </ul></div>
+          <div class="compare-col b"><h3>联结主义</h3><ul>
+            <li>辛顿等推动反向传播</li><li>神经网络 / 深度学习</li><li>CNN、Transformer</li>
+          </ul></div>
+          <div class="compare-col" style="border:1px solid var(--line-strong);background:var(--panel);padding:1rem">
+            <h3 style="font-family:var(--font-display);font-size:0.82rem;color:var(--copper);margin-bottom:0.65rem;padding-bottom:0.45rem;border-bottom:1px solid var(--line)">行为主义 → RL</h3>
+            <ul><li>与环境试错学策略</li><li>TD-Gammon → AlphaGo</li><li>复杂决策来自经验</li></ul>
+          </div>
+        </div>
+        <p>2020 年代：联结主义模型充当大脑，执行符号式推理与工具规划——<strong>神经-符号结合</strong>。</p>
+      </section>
+      <section class="slide" data-id="timeline" data-label="演进时间线" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.5 · 时间线</div>
+        <h2 class="slide-title">关键节点时间线</h2>
+        <div class="timeline">
+          <div class="tl-item"><span class="tag">1950s–70s</span><h4>符号古典时代</h4><p>PSSH、ELIZA、SHRDLU、MYCIN</p></div>
+          <div class="tl-item"><span class="tag">1980s</span><h4>瓶颈与转向</h4><p>知识获取/脆弱性；心智社会；联结主义复苏</p></div>
+          <div class="tl-item"><span class="tag">2010s</span><h4>深度 + RL 爆发</h4><p>深度学习感知；AlphaGo(2016)</p></div>
+          <div class="tl-item"><span class="tag">2020s</span><h4>LLM Agent</h4><p>预训练世界知识 + 工具循环；思潮融合</p></div>
+        </div>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-9.png" alt="图 2.11 智能体发展演进时间线（未完全版）" />
+          <div class="fig-cap">图 2.11 智能体发展演进时间线（未完全版）</div>
+        </div>
+      </section>
+      <section class="slide" data-id="stack" data-label="AI Agent 技术栈" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.5 · 技术栈</div>
+        <h2 class="slide-title">当代技术栈全貌</h2>
+        <p>Letta 2024-11 分层图：从底层模型到上层应用，理解市场与选型的参考。</p>
+        <div class="fig">
+          <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/2-figures/1757246501849-10.png" alt="图 2.12 AI Agent 技术栈概览（Letta, 2024）" />
+          <div class="fig-cap">图 2.12 AI Agent 技术栈概览（Letta, 2024）</div>
+        </div>
+        <div class="callout" data-label="读图提示"><p style="margin:0">不必背产品名。抓分层：模型底座 → 编排/记忆/工具 → 应用与评估。</p></div>
+      </section>
+      <section class="slide" data-id="flash-learn" data-label="速记 · 学习范式" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4 · 速记</div>
+        <h2 class="slide-title">闪卡：学习到现代 Agent</h2>
+        <div class="flash-wrap" id="flash4" data-cards='[{"q":"联结主义如何存知识？","a":"连接权重分布式存储，而非显式 IF-THEN。"},{"q":"RL 最大化什么？","a":"累积回报（Return），不是单步即时奖励。"},{"q":"预训练缓解哪一痛点？","a":"知识获取瓶颈：从数据隐式压缩世界知识。"},{"q":"涌现能力两例？","a":"上下文学习；思维链推理。"},{"q":"LLM Agent 四步？","a":"感知 → 思考 → 行动 → 观察回流。"},{"q":"三大思潮如何融合？","a":"联结主义模型充当大脑，执行符号式推理与工具规划。"}]'>
+          <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+          <div class="flash-meta"><span class="flash-idx"></span>
+            <div class="flash-controls">
+              <button class="btn" type="button" onclick="moveFlash('flash4',-1)">上一张</button>
+              <button class="btn" type="button" onclick="moveFlash('flash4',1)">下一张</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="slide" data-id="quiz-24a" data-label="检测 · 2.4（上）" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">问答检测 · 2.4A</div>
+        <h2 class="slide-title">自测：联结与强化学习</h2>
+        <div class="quiz-score" id="score-q24a"></div>
+        <div class="quiz-item" data-quiz="q24a" data-answer="1">
+          <h4>联结主义相对符号主义最根本转变？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">完全不再需要数据</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">从显式编码知识，转向从样本学习权重</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只用正向链</button>
+          <div class="quiz-explain">核心是编码知识 → 学习知识。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q24a" data-answer="0">
+          <h4>AlphaGo 自我对弈主要体现？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">强化学习：交互试错，用胜负优化策略</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">纯专家系统规则树</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">ELIZA 式关键词替换</button>
+          <div class="quiz-explain">状态-行动-奖励闭环是 RL 经典。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q24a" data-answer="2">
+          <h4>RL 特别适合序贯决策是因为？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">不需要任何反馈</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">必须有完整标注动作</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">可通过延迟奖惩在多步交互中优化长期回报</button>
+          <div class="quiz-explain">延迟奖惩 + 长期回报适合多步决策。</div>
+        </div>
+      </section>
+      <section class="slide" data-id="quiz-24b" data-label="检测 · 2.4（下）" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">问答检测 · 2.4B</div>
+        <h2 class="slide-title">自测：预训练与 LLM Agent</h2>
+        <div class="quiz-score" id="score-q24b"></div>
+        <div class="quiz-item" data-quiz="q24b" data-answer="0">
+          <h4>预训练如何缓解知识获取瓶颈？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">从海量文本自监督压缩世界知识，减少手工编码</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">要求专家写更多 IF-THEN</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">完全取消微调</button>
+          <div class="quiz-explain">隐式知识模型替代大规模手工符号化。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q24b" data-answer="2">
+          <h4>LLM Agent 中「行动」通常如何落地？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">只在脑中想象</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">必须改写全部权重</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">执行模块解析工具调用并调用搜索/代码/API</button>
+          <div class="quiz-explain">工具调用是行动接口。</div>
+        </div>
+        <div class="quiz-item" data-quiz="q24b" data-answer="1">
+          <h4>神经-符号结合指？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">彻底抛弃所有规则</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">联结主义模型充当大脑，执行符号式推理与工具规划</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只能用于围棋</button>
+          <div class="quiz-explain">现代 Agent 是思潮融合产物。</div>
+        </div>
+      </section>
+
+      <section class="slide" data-id="bridge-21-22" data-label="从理论到实践的桥" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.1 → 2.2</div>
+        <h2 class="slide-title">为什么要用 ELIZA 验证理论？</h2>
+        <p class="lead">2.1.4 的抽象挑战，在 ELIZA 里变成你能跑通的代码体验。</p>
+        <ul>
+          <li><strong>脆弱性</strong>：加个否定词就语义翻车</li>
+          <li><strong>知识获取</strong>：每多一种说法都要加规则</li>
+          <li><strong>不可扩展</strong>：开放域对话组合爆炸</li>
+        </ul>
+        <div class="note"><strong>建议：</strong>跑通 code/chapter2/ELIZA.py，再喂「I am not happy」观察翻车。</div>
+      </section>
+      <section class="slide" data-id="combo-explode" data-label="组合爆炸直觉" data-group="2.2 规则聊天机器人">
+        <div class="slide-sub">§ 2.2 · 扩展思考</div>
+        <h2 class="slide-title">为什么规则方法会组合爆炸？</h2>
+        <p>意图种类 × 说法变体 × 否定/时态/指代……规则数随表达方式快速膨胀，开放域几乎不可穷举。</p>
+        <div class="analogy">像给全世界所有可能的句子写标准答法——句子无穷，手册写不完。</div>
+      </section>
+      <section class="slide" data-id="minsky-quote" data-label="多样性名言精读" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3 · 精读</div>
+        <h2 class="slide-title">「没有魔术，只有多样性」</h2>
+        <p class="lead">智能不是某个完美原理，而是大量不同过程协作的结果。</p>
+        <ul>
+          <li>反对「再做一个更大统一推理引擎」的惯性</li>
+          <li>为多智能体、模块化 Agent 提供哲学合法性</li>
+          <li>多样性也带来冲突与协调成本</li>
+        </ul>
+      </section>
+      <section class="slide" data-id="mas-today" data-label="对照现代多智能体" data-group="2.3 心智社会">
+        <div class="slide-sub">§ 2.3.3 · 今日对照</div>
+        <h2 class="slide-title">心智社会 vs CrewAI / MetaGPT</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>心智社会</h3><ul><li>部件往往无心极简</li><li>激活/抑制局部交互</li><li>强调涌现</li></ul></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-col b"><h3>现代 MAS</h3><ul><li>角色常由强 LLM 扮演</li><li>显式协议与工作流</li><li>涌现 + 编排并存</li></ul></div>
+        </div>
+        <div class="note">思想血缘在，工程形态已变：部件更强，协调更显式。</div>
+      </section>
+      <section class="slide" data-id="sl-vs-rl" data-label="监督 vs 强化" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.2 · 对照</div>
+        <h2 class="slide-title">监督学习 vs 强化学习</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>监督学习</h3><ul><li>需要正确标签</li><li>适合分类/翻译</li><li>马里奥需大量按键示范</li></ul></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-col b"><h3>强化学习</h3><ul><li>常只有奖惩</li><li>适合序贯决策</li><li>马里奥用通关/死亡驱动试错</li></ul></div>
+        </div>
+        <div class="note">LLM 后期常用 RLHF 等强化信号对齐人类偏好。</div>
+      </section>
+      <section class="slide" data-id="pt-knowledge" data-label="隐式世界知识" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.3 · 深化</div>
+        <h2 class="slide-title">权重里的「世界模型」</h2>
+        <p class="lead">预训练参数压缩大量事实与语言规律，缓解知识获取瓶颈；也继承网络数据的偏见与错误。</p>
+        <ul><li>隐式分布式表示，不是一条条 IF-THEN</li><li>可迁移到多种下游任务</li><li>需要检索增强、对齐与人工审核等缓解手段</li></ul>
+      </section>
+      <section class="slide" data-id="modules-map" data-label="历史原型映射表" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.4 · 映射</div>
+        <h2 class="slide-title">今天的模块，历史上能找到谁？</h2>
+        <div class="strata">
+          <div class="strata-row"><div class="era">规划</div><div><strong>符号规划 / SHRDLU</strong><span>目标分解与动作序列</span></div></div>
+          <div class="strata-row"><div class="era">工具</div><div><strong>行动执行器</strong><span>从虚拟机械臂到 API/代码</span></div></div>
+          <div class="strata-row"><div class="era">记忆</div><div><strong>反 ELIZA 无状态</strong><span>多轮连贯的关键</span></div></div>
+          <div class="strata-row"><div class="era">多Agent</div><div><strong>心智社会 / MAS</strong><span>分工协作与涌现</span></div></div>
+          <div class="strata-row"><div class="era">大脑</div><div><strong>LLM</strong><span>世界知识 + 通用推理</span></div></div>
+        </div>
+      </section>
+      <section class="slide" data-id="neuro-sym" data-label="神经-符号结合" data-group="2.4 学习与现代Agent">
+        <div class="slide-sub">§ 2.4.5 · 融合</div>
+        <h2 class="slide-title">为什么说现代 Agent 是融合体？</h2>
+        <p>联结主义模型充当大脑，做工具调用与结构化输出（很「符号」），再用强化信号对齐——三大思潮同时在场。</p>
+        <div class="analogy">神经网络给乐感与记忆，符号接口给乐谱与指挥，强化学习按掌声调整演奏。</div>
+      </section>
+      <section class="slide" data-id="code-review-era" data-label="三时代代码审查" data-group="总结与习题">
+        <div class="slide-sub">习题 7 预热</div>
+        <h2 class="slide-title">智能代码审查：三个时代怎么做？</h2>
+        <div class="strata">
+          <div class="strata-row"><div class="era">1980s</div><div><strong>符号规则</strong><span>手写缺陷模式；覆盖面与脆弱性是死穴</span></div></div>
+          <div class="strata-row"><div class="era">2015</div><div><strong>深度学习</strong><span>学代码表示/分类；缺通用推理与工具闭环</span></div></div>
+          <div class="strata-row"><div class="era">今天</div><div><strong>LLM Agent</strong><span>感知PR→规划检查项→调用linter/测试→观察回流</span></div></div>
+        </div>
+        <div class="note">这道题帮助你把整章串成一条「任务如何从几乎不可能变为可行」的故事。</div>
+      </section>
+      <section class="slide" data-id="takeaways" data-label="十句带走" data-group="总结与习题">
+        <div class="slide-sub">浓缩</div>
+        <h2 class="slide-title">十句带走（可当复习提纲）</h2>
+        <ol>
+          <li>新范式在治旧范式的病，同时制造新病。</li>
+          <li>PSSH：智能≈符号计算（充分性+必要性）。</li>
+          <li>专家系统=知识库+推理机；MYCIN 用反向链+CF。</li>
+          <li>SHRDLU 奠基闭环，也暴露封闭世界。</li>
+          <li>符号四大难：获取、常识、框架、脆弱。</li>
+          <li>ELIZA：模式匹配制造智能幻觉。</li>
+          <li>心智社会：无心部件协作涌现复杂智能。</li>
+          <li>联结学感知，RL 学决策，预训练给世界先验。</li>
+          <li>LLM Agent=感知-思考-行动-观察 + 工具/记忆。</li>
+          <li>现代 Agent 是神经-符号-强化的融合，不是凭空出现。</li>
+        </ol>
+      </section>
+
+      <section class="slide" data-id="summary" data-label="2.5 本章小结" data-group="总结与习题">
+        <div class="slide-sub">§ 2.5</div>
+        <h2 class="slide-title">带走一条进化逻辑，而不是年表</h2>
+        <p class="lead">规则不够 → 引入学习；单体不够 → 考虑协作；静态知识不够 → 大规模数据与预训练。现代 Agent 是叠加产物。</p>
+        <div class="strata">
+          <div class="strata-row"><div class="era">回顾</div><div><strong>符号主义探索与局限</strong><span>专家系统 + ELIZA 实践边界</span></div></div>
+          <div class="strata-row"><div class="era">回顾</div><div><strong>分布式智能萌芽</strong><span>心智社会 → MAS 哲学启发</span></div></div>
+          <div class="strata-row"><div class="era">回顾</div><div><strong>学习范式演进</strong><span>联结 → RL → 预训练 LLM</span></div></div>
+          <div class="strata-row"><div class="era">回顾</div><div><strong>现代 Agent 诞生</strong><span>模型/记忆/规划/工具融合</span></div></div>
+        </div>
+      </section>
+      <section class="slide" data-id="myths" data-label="纠正三个误解" data-group="总结与习题">
+        <div class="slide-sub">§ 2.5 · 误解</div>
+        <h2 class="slide-title">旧方法并非无用</h2>
+        <div class="callout" data-label="纠正三个误解"><p style="margin:0">① 旧方法过时 ≠ 无用：规则与协作思想仍活在今天系统里。<br/>② 现代 Agent 并未摆脱规则：仍需格式、约束、协议与工具接口。<br/>③ 路线不是非黑即白：好系统往往是学习与规则并存、神经与符号混合。</p></div>
+        <div class="analogy">历史不是直线，而是在「规则↔学习」「单体↔协作」「静态↔动态」之间找更好平衡。</div>
+      </section>
+      <section class="slide" data-id="checklist" data-label="自测清单" data-group="总结与习题">
+        <div class="slide-sub">自测清单</div>
+        <h2 class="slide-title">勾选：我真的懂了吗？</h2>
+        <ul class="check-list" id="checklist">
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能用「痛点→新范式→新局限」讲述演进主线</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能说出 PSSH 充分性/必要性，以及「智能=符号计算」</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能解释专家系统、正反向链与 MYCIN/CF</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能说明 SHRDLU 贡献与封闭世界局限</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能列举知识获取瓶颈、常识、框架问题、脆弱性</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能描述 ELIZA 四步、局限与 ELIZA 效应</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能解释心智社会、Agency、涌现及对 MAS 启发</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能对比符号 vs 联结，说出 RL 要素与回报</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能说明预训练-微调、涌现能力与 LLM Agent 闭环</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能纠正三类常见误解</span></li>
+        </ul>
+      </section>
+      <section class="slide" data-id="exercises" data-label="习题导引（1–3）" data-group="总结与习题">
+        <div class="slide-sub">习题</div>
+        <h2 class="slide-title">以史为鉴：热身题 A</h2>
+        <div class="quiz-item" data-quiz="ex" data-answer="0">
+          <h4>哪类问题最直接挑战 PSSH「充分性」？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">知识获取瓶颈与常识缺失，使有符号系统仍难产生通用智能</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">字体不好看</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">GPU 太贵</button>
+          <div class="quiz-explain">充分性说物理符号系统足以产生通用智能；知识/常识瓶颈表明远不够落地。</div>
+        </div>
+        <div class="quiz-item" data-quiz="ex" data-answer="2">
+          <h4>专家系统时代做代码审查最可能卡在？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">没有 IF-THEN</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">不能存文本</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">规则难覆盖开放组合，知识获取与脆弱性爆表</button>
+          <div class="quiz-explain">开放域放大规则爆炸与脆弱性。</div>
+        </div>
+        <div class="note">完整题面见学习版：MYCIN 临床落地、扩展 ELIZA 记忆、组合爆炸等。</div>
+      </section>
+      <section class="slide" data-id="exercises2" data-label="习题导引（4–7）" data-group="总结与习题">
+        <div class="slide-sub">习题</div>
+        <h2 class="slide-title">以史为鉴：热身题 B</h2>
+        <div class="quiz-item" data-quiz="ex2" data-answer="1">
+          <h4>心智社会在 LLM 时代是否完全过时？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">是，每个 Agent 必须无心</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">否，协作/涌现/去中心化仍启发多智能体，部件可变强</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">是，只能用于积木世界</button>
+          <div class="quiz-explain">框架未失效；需辨析关联与差异。</div>
+        </div>
+        <div class="quiz-item" data-quiz="ex2" data-answer="0">
+          <h4>预训练相对符号主义知识表示的本质区别？</h4>
+          <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">隐式分布式压缩 vs 显式规则符号化</button>
+          <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">完全不需要数据</button>
+          <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只能用于翻译</button>
+          <div class="quiz-explain">表示方式从手工符号转向数据驱动隐式模型。</div>
+        </div>
+        <div class="note">继续：RL vs 监督数据需求、预训练偏见、三时代代码审查方案——回学习版完整作答。</div>
+      </section>
+      <section class="slide" data-id="refs" data-label="参考文献与下一步" data-group="总结与习题">
+        <div class="slide-sub">收尾</div>
+        <h2 class="slide-title">参考文献与下一步</h2>
+        <ol>
+          <li>NEWELL &amp; SIMON. Symbols and search. CACM, 1976.</li>
+          <li>BUCHANAN &amp; SHORTLIFFE. MYCIN experiments. 1984.</li>
+          <li>WINOGRAD. Understanding natural language. 1972.</li>
+          <li>LENAT &amp; GUHA. Cyc midterm report. 1990.</li>
+          <li>MCCARTHY &amp; HAYES. Frame problem. 1969.</li>
+          <li>WEIZENBAUM. ELIZA. CACM, 1966.</li>
+          <li>MINSKY. The Society of Mind. 1986.</li>
+          <li>RUMELHART et al. PDP. 1986.</li>
+          <li>SILVER et al. AlphaGo. Nature, 2016.</li>
+          <li>LETTA. The AI agents stack. 2024.</li>
+        </ol>
+        <div class="callout" data-label="覆盖范围"><p style="margin:0">已覆盖原书 2.1.1–2.5 全部知识点详解页。下一章聚焦大语言模型。</p></div>
+        <button class="btn btn-primary" type="button" onclick="goTo(0)" style="margin-top:0.75rem">回到封面</button>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let idx = 0;
+const navEl = document.getElementById("nav");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const slideLabel = document.getElementById("slideLabel");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null, groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group || "章节";
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  progressFill.style.width = (((idx + 1) / slides.length) * 100) + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  flashState[id] = { cards: JSON.parse(wrap.dataset.cards), i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id], wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+["flash1","flash2","flash3","flash4"].forEach(initFlash);
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer), chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+const elizaTexts = [
+  { t: "① 关键词识别与排序", p: "规则库为关键词设优先级；多关键词时选最高者。" },
+  { t: "② 分解规则", p: "用带 * 的模式捕获其余部分。例：* my * 匹配 My mother is afraid of me。" },
+  { t: "③ 重组规则", p: "从模板组中（常随机）选一条生成回应，可填入捕获内容。" },
+  { t: "④ 代词转换", p: "重组前 I→you、my→your，维持人称连贯。" }
+];
+function showElizaStep(n) {
+  document.querySelectorAll("#elizaDemo .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("elizaPanel").innerHTML = `<h4>${elizaTexts[n].t}</h4><p>${elizaTexts[n].p}</p>`;
+}
+const buildTexts = [
+  { t: "高层目标激活 BUILD-TOWER", p: "不知道具体物理动作，只激活下属如 BUILDER。" },
+  { t: "BUILDER 循环", p: "塔没搭完就激活 ADD-BLOCK。" },
+  { t: "ADD-BLOCK 协调", p: "依次激活 FIND-BLOCK、GET-BLOCK、PUT-ON-TOP。" },
+  { t: "子机构分工", p: "每个子机构只负责一块。" },
+  { t: "底层无心智能体", p: "SEE-SHAPE、REACH、GRASP 各做一件事；搭塔从交互中涌现。" }
+];
+function showBuildStep(n) {
+  document.querySelectorAll("#buildDemo .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("buildPanel").innerHTML = `<h4>${buildTexts[n].t}</h4><p>${buildTexts[n].p}</p>`;
+}
+const rlTexts = [
+  { t: "① 观察当前状态", p: "时间步 t，观察环境状态 Sₜ。" },
+  { t: "② 按策略行动", p: "根据策略 π 选择并执行 Aₜ。" },
+  { t: "③ 环境转移 + 奖励", p: "进入 Sₜ₊₁，反馈即时奖励 Rₜ₊₁。" },
+  { t: "④ 用反馈学习", p: "更新策略；目标是最大化累积回报，而非单步奖励。" }
+];
+function showRlStep(n) {
+  document.querySelectorAll("#rlDemo .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("rlPanel").innerHTML = `<h4>${rlTexts[n].t}</h4><p>${rlTexts[n].p}</p>`;
+}
+const agentTexts = [
+  { t: "① 感知 Perception", p: "从环境接收输入，形成观察，作为决策起点。" },
+  { t: "② 思考 Thought", p: "规划模块分解目标；LLM 结合记忆推理，决策工具调用。" },
+  { t: "③ 行动 Action", p: "执行模块调用代码执行器/搜索/API 等与环境交互。" },
+  { t: "④ 观察与循环", p: "工具结果 + 新状态构成新观察；更新记忆，进入下一轮。" }
+];
+function showAgentStep(n) {
+  document.querySelectorAll("#agentDemo .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("agentPanel").innerHTML = `<h4>${agentTexts[n].t}</h4><p>${agentTexts[n].p}</p>`;
+}
+goTo(0);
+</script>
+</body>
+</html>

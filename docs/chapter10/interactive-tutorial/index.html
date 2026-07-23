@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第十章 · 智能体通信协议 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 10 Signal
+   Same product line as Ch1–Ch8; electric cyan / neon teal primary signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(46, 230, 197, 0.14);
+  --line-strong: rgba(46, 230, 197, 0.36);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #2ee6c5;
+  --signal-bright: #5ff5d8;
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(46, 230, 197, 0.18), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(61, 168, 184, 0.10), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--cyan), var(--mint));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(46, 230, 197, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(46, 230, 197, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(95, 245, 216, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(46,230,197,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(46, 230, 197, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.cover-hero {
+  margin: 1rem 0 1.4rem; border: 1px solid var(--line-strong);
+  background: var(--panel); overflow: hidden;
+}
+.cover-hero img { width: 100%; height: auto; display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps7 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps6 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: rgba(46,230,197,0.12);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.arch-block.base { border-left: 3px solid var(--mint); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  transition: border-color 0.2s;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.05rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; margin-top: 1rem; color: var(--paper);
+  border-top: 1px solid var(--line); padding-top: 1rem; font-size: 0.95rem;
+}
+.flash-card.revealed .a { display: block; }
+.flash-idx {
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-mute); margin-bottom: 0.75rem; letter-spacing: 0.06em;
+}
+.flash-nav { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  margin-bottom: 0.75rem; color: var(--text);
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.4rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224,107,90,0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.75rem; padding: 0.75rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(46,230,197,0.08); color: var(--text-dim);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.78rem;
+  color: var(--cyan-bright); margin-top: 0.5rem;
+}
+.check-list { list-style: none; margin: 1rem 0; }
+.check-list li {
+  display: flex; align-items: flex-start; gap: 0.65rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--line);
+  color: var(--text-dim); font-size: 0.92rem;
+}
+.check-list input {
+  margin-top: 0.25rem; accent-color: var(--signal);
+  width: 18px; height: 18px; flex-shrink: 0;
+}
+.goal-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.goal-card {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; position: relative;
+}
+.goal-card .tag {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.goal-card h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+.goal-card p { font-size: 0.85rem; margin: 0; }
+.budget-lab {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1.15rem; margin: 1.2rem 0;
+}
+.budget-lab label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.08em; color: var(--text-mute);
+  display: block; margin-bottom: 0.35rem; text-transform: uppercase;
+}
+.budget-lab input[type="range"] {
+  width: 100%; accent-color: var(--signal); margin-bottom: 0.85rem;
+}
+.budget-bar {
+  display: flex; height: 36px; border: 1px solid var(--line-strong);
+  overflow: hidden; margin: 0.75rem 0;
+  font-family: var(--font-display); font-size: 0.65rem;
+}
+.budget-seg {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink); font-weight: 600; transition: width 0.3s ease;
+  overflow: hidden; white-space: nowrap;
+}
+.budget-seg.sys { background: var(--signal); }
+.budget-seg.ev { background: var(--cyan); }
+.budget-seg.ctx { background: var(--amber); }
+.budget-seg.free { background: var(--panel-2); color: var(--text-mute); }
+.budget-meta {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  color: var(--text-dim); line-height: 1.6;
+}
+.budget-warn {
+  margin-top: 0.65rem; padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--amber); background: var(--amber-dim);
+  font-size: 0.88rem; color: var(--paper); display: none;
+}
+.budget-warn.show { display: block; }
+.template-map {
+  display: grid; gap: 0.35rem; margin: 1rem 0;
+  font-family: var(--font-mono); font-size: 0.8rem;
+}
+.template-map div {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 0.55rem 0.85rem; color: var(--text-dim);
+}
+.template-map div strong { color: var(--signal-bright); font-weight: 500; }
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 40;
+}
+.overlay.show { display: block; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: min(86vw, 300px);
+    z-index: 50; transform: translateX(-105%); transition: transform 0.3s;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3 { grid-template-columns: 1fr; }
+  .loop-stepper .steps,
+  .loop-stepper .steps.steps5,
+  .loop-stepper .steps.steps3,
+  .loop-stepper .steps.steps4,
+  .loop-stepper .steps.steps7,
+  .loop-stepper .steps.steps6 { grid-template-columns: repeat(2, 1fr); }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+}
+
+.msg-lab {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1.15rem; margin: 1.2rem 0;
+}
+.msg-lab .wire {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  border: 1px solid var(--line); background: #071018;
+  padding: 0.85rem; color: #b8d4c8; min-height: 88px; margin-top: 0.75rem;
+  white-space: pre-wrap; line-height: 1.55;
+}
+.transport-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.55rem; margin: 1rem 0;
+}
+.transport-chip {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem; cursor: pointer; transition: all 0.2s;
+}
+.transport-chip.on, .transport-chip:hover {
+  border-color: var(--signal); background: rgba(46,230,197,0.08);
+}
+.transport-chip h4 {
+  font-family: var(--font-display); font-size: 0.8rem;
+  color: var(--signal-bright); margin-bottom: 0.25rem;
+}
+.transport-chip p { font-size: 0.78rem; margin: 0; color: var(--text-dim); }
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 10</div>
+      <h1>第十章 · 智能体通信协议</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>进度</span>
+        <span id="progressText">1 / 1</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">CYAN SIGNAL · ← → 翻页</div>
+  </aside>
+
+  <main class="stage">
+    <div class="topbar">
+      <button class="menu-btn" type="button" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button class="btn" id="btnPrev" type="button">← 上一页</button>
+        <button class="btn btn-primary" id="btnNext" type="button">下一页 →</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+
+<!--
+  COVERAGE CHECKLIST (源文档小节对照 · 第十章 智能体通信协议.md)
+  [x] 开篇：为何需要协议 · 三限制（工具集成/能力扩展/协作缺失）
+  [x] 新手术语加厚：协议 / 握手 / Host·Client·Server / Task·Artifact / DID·发现
+  [x] 10.1.1 为何需要通信协议 · TCP/IP 类比 · MCPTool 简化
+  [x] 10.1.2 MCP / A2A / ANP 设计理念 · 图10.1–10.3 · 表10.1 · 选型口诀
+  [x] 10.1.3 HelloAgents 三层架构 · 图10.4 · protocols/ + protocol_tools
+  [x] 10.1.4 安装 hello-agents[protocol]==0.2.2 · 快速体验三协议
+  [x] 10.2.1 MCP 概念：USB-C · Host/Client/Server · Tools/Resources/Prompts
+  [x] 10.2.1 工作流 · vs Function Calling · 图10.5–10.6 · 表10.2–10.3
+  [x] 10.2.2 MCP 客户端：连接 · list_tools · call_tool · 异步 API
+  [x] 10.2.3 五种传输：Memory / Stdio / HTTP / SSE / StreamableHTTP · 表10.4
+  [x] 10.2.4 MCPTool 自动展开 · 前缀防冲突 · Agent 集成
+  [x] 10.2.5 社区生态 · 官方与热门服务器 · 表10.5–10.6
+  [x] 10.3.1 A2A 动机 · 星型 vs P2P · Task/Artifact · 生命周期 · 图10.7–10.8
+  [x] 10.3.2–10.3.4 A2AServer skill · A2ATool · Agent 中使用
+  [x] 10.4.1–10.4.3 ANP 目标 · 发现/DID/执行 · 注册发现路由 · 调度案例
+  [x] 10.5 自定义 MCP 服务器动机 · 天气案例 · 发布（Smithery 等）
+  [x] 10.6 总结 · 自测清单 · 习题导读
+-->
+
+<section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
+<p class="slide-sub">Lab 10 · Industrial Blueprint</p>
+<h2 class="slide-title">第十章 · 智能体通信协议</h2>
+<p class="lead">单体智能体已经会推理、调工具、记上下文——下一步：如何<strong>标准化</strong>地连外部世界、与其它智能体协作、在大规模网络中被发现？</p>
+<div class="cover-hero"><img src="assets/ch10_cover.svg" alt="Lab 10 协议握手"/></div>
+<div class="note"><strong>本章三条线：</strong>MCP（工具桥梁）· A2A（点对点协作）· ANP（网络发现与路由）。</div>
+
+</section>
+<section class="slide" data-id="goals" data-label="本章地图" data-group="开篇">
+<p class="slide-sub">10.1 → 10.6 · 协议到实战</p>
+<h2 class="slide-title">本章地图</h2>
+<div class="goal-grid">
+  <div class="goal-card"><div class="tag">10.1</div><h3>协议基础</h3><p>为何需要协议；MCP/A2A/ANP 理念对比；HelloAgents 三层架构。</p></div>
+  <div class="goal-card"><div class="tag">10.2</div><h3>MCP 实战</h3><p>USB-C 心智、握手与工具流、五种传输、自动展开、社区生态。</p></div>
+  <div class="goal-card"><div class="tag">10.3–10.4</div><h3>A2A · ANP</h3><p>Task/Artifact 与任务生命周期；服务发现、DID、负载调度。</p></div>
+  <div class="goal-card"><div class="tag">10.5–10.6</div><h3>自定义与总结</h3><p>自建 MCP 服务器与发布路径；选型口诀与自测。</p></div>
+</div>
+<div class="callout" data-label="学习目标">学完后你应能：用白话区分三协议；画出 MCP 握手与工具调用流；说明 A2A 与星型协调器差异；用 ANP 思路做服务发现选型。</div>
+
+</section>
+<section class="slide" data-id="install" data-label="安装与快速体验" data-group="开篇">
+<p class="slide-sub">10.1.4 · hello-agents[protocol]</p>
+<h2 class="slide-title">安装与三协议快闪</h2>
+<div class="code-block">pip install "hello-agents[protocol]==0.2.2"
+# 另需本机 Node.js（npx 拉取社区 MCP 服务器时）</div>
+<div class="arch-stack">
+  <div class="arch-block enc">MCPTool <span class="sub">访问工具 / 资源 · list_tools → call_tool</span></div>
+  <div class="arch-block head">A2ATool <span class="sub">连其它智能体 · 任务与工件</span></div>
+  <div class="arch-block dec">ANPTool <span class="sub">注册 / 发现 / 选路 · 概念性轻量实现</span></div>
+</div>
+<div class="code-block">from hello_agents.tools import MCPTool, A2ATool, ANPTool
+
+mcp_tool = MCPTool()
+print(mcp_tool.run({"action": "call_tool", "tool_name": "add", "arguments": {"a": 10, "b": 20}}))
+
+anp_tool = ANPTool()
+anp_tool.run({"action": "register_service", "service_id": "calculator",
+              "service_type": "math", "endpoint": "http://localhost:8080"})
+print(anp_tool.run({"action": "discover_services"}))
+
+a2a_tool = A2ATool("http://localhost:5000")  # 指向已启动的 A2A 服务</div>
+<div class="note"><strong>提醒：</strong>协议生态仍早期——优先用成熟 MCP；A2A/ANP 以理解思想与框架接口为主，不必急着造轮子。</div>
+
+</section>
+<section class="slide" data-id="terms" data-label="新手术语加厚" data-group="开篇">
+<p class="slide-sub">贯穿全章 · 建议收藏</p>
+<h2 class="slide-title">先把词说人话</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>通信协议</h3><span class="en">Protocol</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>双方约定「怎么打招呼、消息长什么样、出错怎么办」的规则书。没有协议，每个工具都得手写适配器。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>握手</h3><span class="en">Handshake</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>正式干活前的「接通电话」：建连、交换能力清单、确认版本。MCP 里常见 initialize + list_tools。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>Host / Client / Server</h3><span class="en">MCP 三层</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p><strong>Host</strong>是用户界面（如桌面 App）；<strong>Client</strong>负责按协议通话；<strong>Server</strong>真正干活（读文件、查库）。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>Task / Artifact</h3><span class="en">A2A 核心抽象</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p><strong>Task</strong>是可协商、可跟踪的协作任务；<strong>Artifact</strong>是任务产出物（草稿、报告片段）。比「调一次函数」更像项目协作。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>服务发现</h3><span class="en">Discovery</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>不知道谁能干这活时，先查「黄页」：按类型/能力找节点。ANP 解决「上千个 Agent 时如何找对人」。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>DID</h3><span class="en">去中心化身份</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>不靠中央账号系统的数字身份证。ANP 用 DID + 签名验证「你是不是你声称的那个 Agent」。</p></div>
+  </div></div>
+</div>
+<div class="analogy">MCP ≈ USB-C（插上就能用工具）；A2A ≈ 同事对讲机（点对点派活）；ANP ≈ 互联网黄页 + 路由（在大网里找服务）。</div>
+
+</section>
+<section class="slide" data-id="why" data-label="为何需要协议" data-group="10.1 基础">
+<p class="slide-sub">10.1.1 · 三个根本限制</p>
+<h2 class="slide-title">单体 Agent 的天花板</h2>
+<p class="lead">即便 ReAct + 计算器 + 搜索已经很好用，复杂系统仍会撞上三堵墙。</p>
+<details class="expand-card"><summary>工具集成困境</summary><div class="expand-body"><p>每接一个 GitHub / 数据库 / 天气 API，都要手写 Tool 类：HTTP、鉴权、错误处理重复一遍；别人的工具也难直接复用。</p></div></details>
+<details class="expand-card"><summary>能力扩展瓶颈</summary><div class="expand-body"><p>能力被「预先 add_tool 的集合」锁死，运行时很难动态发现新服务。</p></div></details>
+<details class="expand-card"><summary>协作缺失</summary><div class="expand-body"><p>研究员 + 撰写员 + 编辑这类任务，只能靠人工编排脚本硬串——没有标准「Agent 对 Agent」对话层。</p></div></details>
+<div class="callout" data-label="协议价值">标准化接口 · 互操作性 · 动态发现 · 可扩展性——像 TCP/IP 让设备互通，而不是为每对设备写专用线。</div>
+<div class="code-block"># 有协议后：连上 MCP 服务器即获得工具包
+from hello_agents.tools import MCPTool
+github_mcp = MCPTool(server_command=["npx", "-y", "@modelcontextprotocol/server-github"])
+agent.add_tool(github_mcp)</div>
+
+</section>
+<section class="slide" data-id="triad" data-label="三种协议总览" data-group="10.1 基础">
+<p class="slide-sub">10.1.2 · 设计理念</p>
+<h2 class="slide-title">MCP · A2A · ANP 一张图说清</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>MCP · 工具桥梁</h3>
+    <ul>
+      <li>Anthropic 提出</li>
+      <li>Agent ↔ 外部工具/资源</li>
+      <li>哲学：上下文共享</li>
+      <li>像 USB-C</li>
+    </ul>
+  </div>
+  <div class="compare-col b"><h3>A2A · 点对点对话</h3>
+    <ul>
+      <li>Google / A2A Project</li>
+      <li>Agent ↔ Agent</li>
+      <li>哲学：对等通信</li>
+      <li>像团队对讲</li>
+    </ul>
+  </div>
+  <div class="compare-col c"><h3>ANP · 网络基建</h3>
+    <ul>
+      <li>开源社区（概念+实现并存）</li>
+      <li>大规模发现与路由</li>
+      <li>哲学：去中心化发现</li>
+      <li>像互联网黄页</li>
+    </ul>
+  </div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-1.png" alt="图10.1" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 10.1（离线要点）</strong><br>MCP：统一访问文件/库/API，并共享结构、历史等上下文，而不只是裸 RPC。</div>
+  <p class="fig-cap">图 10.1 MCP 设计思想</p>
+</div>
+
+</section>
+<section class="slide" data-id="triad-figs" data-label="理念图 · A2A/ANP" data-group="10.1 基础">
+<p class="slide-sub">10.1.2 · 继续对照</p>
+<h2 class="slide-title">对等协作 vs 网络发现</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-2.png" alt="图10.2" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 10.2（离线要点）</strong><br>A2A：每个 Agent 既是提供者也是消费者；网状互连，避免中央协调器单点瓶颈。</div>
+  <p class="fig-cap">图 10.2 A2A 设计思想</p>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-3.png" alt="图10.3" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 10.3（离线要点）</strong><br>ANP：注册、发现、路由——成百上千节点时不必预配置全部连接。</div>
+  <p class="fig-cap">图 10.3 ANP 设计思想</p>
+</div>
+
+</section>
+<section class="slide" data-id="choose" data-label="如何选型" data-group="10.1 基础">
+<p class="slide-sub">10.1.2 · 表 10.1 + 口诀</p>
+<h2 class="slide-title">选型口诀（先背这个）</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-table-1.png" alt="表10.1" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>表 10.1（离线要点）</strong><br>MCP：工具访问 / 单 Agent 增强 · A2A：小团队协作 · ANP：大规模开放网络。</div>
+  <p class="fig-cap">表 10.1 三种协议对比</p>
+</div>
+<ul>
+  <li>要访问文件、数据库、API → <strong>MCP</strong></li>
+  <li>要多个专业 Agent 互相委托、协商 → <strong>A2A</strong></li>
+  <li>要上千节点动态发现与负载路由 → <strong>ANP</strong></li>
+</ul>
+<div class="note"><strong>现实建议：</strong>MCP 生态相对成熟；优先选大公司或活跃维护的服务器。三协议可组合：MCP 拿数据，A2A 派活，ANP 找人。</div>
+
+</section>
+<section class="slide" data-id="arch" data-label="HelloAgents 架构" data-group="10.1 基础">
+<p class="slide-sub">10.1.3 · 三层设计</p>
+<h2 class="slide-title">协议如何塞进框架</h2>
+<p>目标：学习者用最简单方式上手，同时保留复杂场景的灵活性。</p>
+<div class="arch-stack">
+  <div class="arch-block enc">智能体集成层 <span class="sub">ReAct / SimpleAgent 等只通过 Tool System 使用协议，不关心底层</span></div>
+  <div class="arch-block head">工具封装层 <span class="sub">MCPTool / A2ATool / ANPTool · 统一 run() · 继承 BaseTool</span></div>
+  <div class="arch-block dec">协议实现层 <span class="sub">MCP(FastMCP) · A2A(a2a-sdk) · ANP(轻量概念实现)</span></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-4.png" alt="图10.4" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 10.4（离线要点）</strong><br>protocols/mcp|a2a|anp + tools/builtin/protocol_tools.py 分层封装。</div>
+  <p class="fig-cap">图 10.4 HelloAgents 通信协议设计</p>
+</div>
+<div class="code-block">hello_agents/
+├── protocols/
+│   ├── mcp/   # client.py · server.py · utils.py
+│   ├── a2a/   # implementation.py（可选依赖 a2a-sdk）
+│   └── anp/   # implementation.py（概念性服务发现）
+└── tools/builtin/protocol_tools.py</div>
+
+</section>
+<section class="slide" data-id="flash101" data-label="闪卡 · 10.1" data-group="10.1 基础">
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · 协议基础</h2>
+<div class="flash-wrap" id="flash101" data-cards='[
+  {"q":"通信协议主要解决哪三类痛点？","a":"工具集成重复、能力无法动态扩展、多智能体协作缺乏标准通道。"},
+  {"q":"MCP / A2A / ANP 各解决什么问题？","a":"MCP：如何访问工具；A2A：如何与其它 Agent 对话协作；ANP：如何在大网中发现与连接。"},
+  {"q":"HelloAgents 为何把协议都封成 Tool？","a":"让任意 Agent 以同一 add_tool/run 接口使用不同协议，降低心智负担。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash101',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash101',1)">下一张</button>
+  </div>
+</div>
+
+</section>
+<section class="slide" data-id="quiz101" data-label="检测 · 10.1" data-group="10.1 基础">
+<p class="slide-sub">含解析 · 选完看说明</p>
+<h2 class="slide-title">小测 · 基础</h2>
+<div class="quiz-item" data-quiz="q101" data-answer="1">
+  <h4>1. 智能客服要「查订单数据库」，优先选？</h4>
+  <button class="quiz-opt" data-i="0" type="button" onclick="answerQuiz(this)">A2A——找另一个客服 Agent 口头问</button>
+  <button class="quiz-opt" data-i="1" type="button" onclick="answerQuiz(this)">MCP——标准化访问数据库/工具服务</button>
+  <button class="quiz-opt" data-i="2" type="button" onclick="answerQuiz(this)">ANP——先建全城黄页再查库</button>
+  <div class="quiz-explain">访问外部系统/数据属于「工具桥梁」场景，MCP 最贴切。A2A 管协作，ANP 管大规模发现。</div>
+</div>
+<div class="quiz-item" data-quiz="q101" data-answer="2">
+  <h4>2. 中央协调器星型拓扑的主要问题不包括？</h4>
+  <button class="quiz-opt" data-i="0" type="button" onclick="answerQuiz(this)">单点故障</button>
+  <button class="quiz-opt" data-i="1" type="button" onclick="answerQuiz(this)">性能瓶颈</button>
+  <button class="quiz-opt" data-i="2" type="button" onclick="answerQuiz(this)">无法使用大语言模型</button>
+  <div class="quiz-explain">星型问题是故障/瓶颈/扩展难；与「能不能用 LLM」无关。A2A 用 P2P 缓解前三者。</div>
+</div>
+<p class="quiz-score" id="score-q101">本组已答：0 / 0 正确</p>
+
+</section>
+<section class="slide" data-id="mcp-usb" data-label="MCP：USB-C 心智" data-group="10.2 MCP">
+<p class="slide-sub">10.2.1 · 概念</p>
+<h2 class="slide-title">MCP：智能体的 USB-C</h2>
+<p class="lead">文件、数据库、GitHub、Slack、Drive……传统做法是每个服务一套适配器；换 LLM 厂商还要重写 Function Calling 格式。</p>
+<p><strong>MCP 统一</strong>智能体与外部工具的交互方式：只要 Host/模型侧支持 MCP，同一套服务器可复用。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-5.png" alt="图10.5" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 10.5（离线要点）</strong><br>用户问「桌面有哪些文档」→ Host(Claude Desktop) → 模型决定需文件 → Client 连文件系统 Server → 返回列表 → 模型作答。</div>
+  <p class="fig-cap">图 10.5 MCP 案例演示</p>
+</div>
+
+</section>
+<section class="slide" data-id="mcp-layers" data-label="Host · Client · Server" data-group="10.2 MCP">
+<p class="slide-sub">10.2.1 · 三层职责</p>
+<h2 class="slide-title">关注点分离</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>Host 宿主</h3><ul>
+    <li>用户直接交互的界面</li>
+    <li>管理对话与模型调用</li>
+    <li>例：Claude Desktop</li>
+  </ul></div>
+  <div class="compare-col b"><h3>Client 客户端</h3><ul>
+    <li>按 MCP 建连/发请求</li>
+    <li>把工具描述喂给模型</li>
+    <li>转发 call_tool 结果</li>
+  </ul></div>
+  <div class="compare-col c"><h3>Server 服务器</h3><ul>
+    <li>实现具体能力</li>
+    <li>读文件、查 API…</li>
+    <li>开发者主要写这里</li>
+  </ul></div>
+</div>
+<div class="analogy">Host 像餐厅前台；Client 像懂「点菜协议」的服务员；Server 像后厨——你开一家特色后厨（MCP Server），所有懂协议的前台都能点你的菜。</div>
+
+</section>
+<section class="slide" data-id="mcp-handshake" data-label="握手与消息流" data-group="10.2 MCP">
+<p class="slide-sub">新手加厚 · 步进可视化</p>
+<h2 class="slide-title">MCP 握手 → 工具调用</h2>
+<p>点步骤，看「电话接通」到「干活返回」的完整消息流。</p>
+<div class="loop-stepper" id="mcpHandshake">
+  <div class="steps steps5">
+    <button class="step-btn" type="button">① 建连</button>
+    <button class="step-btn" type="button">② 握手</button>
+    <button class="step-btn" type="button">③ 发现</button>
+    <button class="step-btn" type="button">④ 调用</button>
+    <button class="step-btn" type="button">⑤ 整合</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="msg-lab">
+  <p style="margin:0 0 0.5rem;font-family:var(--font-display);font-size:0.72rem;letter-spacing:0.1em;color:var(--text-mute);">示例报文感（示意）</p>
+  <div class="wire" id="mcpWire">选择上方步骤查看示意报文…</div>
+</div>
+
+</section>
+<section class="slide" data-id="mcp-caps" data-label="Tools · Resources · Prompts" data-group="10.2 MCP">
+<p class="slide-sub">10.2.1 · 三大能力 · 表 10.2</p>
+<h2 class="slide-title">MCP 能提供什么？</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>Tools 工具</h3><p>主动执行操作：写文件、发消息、跑查询。</p></div>
+  <div class="compare-col b"><h3>Resources 资源</h3><p>被动提供数据：文档、仓库快照、配置。</p></div>
+  <div class="compare-col c"><h3>Prompts 提示</h3><p>指导性模板：可复用的提示骨架。</p></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-table-2.png" alt="表10.2" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>表 10.2（离线要点）</strong><br>Tools=主动 · Resources=被动数据 · Prompts=指导模板。本章实战以 Tools 为主。</div>
+  <p class="fig-cap">表 10.2 MCP 核心能力</p>
+</div>
+<div class="note"><strong>写工具描述很重要：</strong>模型靠描述决定「用不用、怎么用」——描述糊，调用就瞎。</div>
+
+</section>
+<section class="slide" data-id="mcp-workflow" data-label="工具选择流程" data-group="10.2 MCP">
+<p class="slide-sub">10.2.1 · 图 10.6</p>
+<h2 class="slide-title">模型如何决定用哪个工具？</h2>
+<div class="loop-stepper" id="mcpToolFlow">
+  <div class="steps steps5">
+    <button class="step-btn" type="button">发现</button>
+    <button class="step-btn" type="button">上下文</button>
+    <button class="step-btn" type="button">推理</button>
+    <button class="step-btn" type="button">执行</button>
+    <button class="step-btn" type="button">回答</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-6.png" alt="图10.6" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 10.6（离线要点）</strong><br>list_tools → 注入系统提示 → LLM 决策 → call_tool → 结果回灌 → 最终自然语言回答。</div>
+  <p class="fig-cap">图 10.6 MCP 工作流程</p>
+</div>
+
+</section>
+<section class="slide" data-id="mcp-vs-fc" data-label="MCP vs Function Calling" data-group="10.2 MCP">
+<p class="slide-sub">10.2.1 · 表 10.3 · 互补不是替代</p>
+<h2 class="slide-title">已经有 Function Calling，为何还要 MCP？</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>Function Calling</h3>
+    <ul>
+      <li>模型能力：何时调、填什么参</li>
+      <li>各厂商 schema 格式不同</li>
+      <li>工具实现多半自己写</li>
+      <li>换模型常需改适配代码</li>
+    </ul>
+  </div>
+  <div class="compare-col b"><h3>MCP</h3>
+    <ul>
+      <li>工程协议：工具如何被描述与连接</li>
+      <li>统一客户端接口</li>
+      <li>可复用社区 Server</li>
+      <li>与模型厂商解耦</li>
+    </ul>
+  </div>
+</div>
+<div class="compare-vs">COMPLEMENTARY</div>
+<div class="analogy">Function Calling = 「你会打电话」；MCP = 「全球统一电话标准」。会打电话不等于插座制式统一。</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-table-3.png" alt="表10.3" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>表 10.3（离线要点）</strong><br>FC 偏模型侧智能；MCP 偏基础设施与互操作。二者叠加：模型决策 + 标准通道。</div>
+  <p class="fig-cap">表 10.3 Function Calling 与 MCP 对比</p>
+</div>
+
+</section>
+<section class="slide" data-id="mcp-client" data-label="MCP 客户端用法" data-group="10.2 MCP">
+<p class="slide-sub">10.2.2 · FastMCP · 异步优先</p>
+<h2 class="slide-title">连接 · 发现 · 调用</h2>
+<div class="code-block">import asyncio
+from hello_agents.protocols import MCPClient
+
+async def demo():
+    client = MCPClient([
+        "npx", "-y",
+        "@modelcontextprotocol/server-filesystem", "."
+    ])
+    async with client:
+        tools = await client.list_tools()
+        print([t["name"] for t in tools])
+        result = await client.call_tool("read_file", {"path": "README.md"})
+        print(result)
+
+asyncio.run(demo())</div>
+<details class="expand-card"><summary>也可以连自定义 Python Server</summary><div class="expand-body"><div class="code-block">client = MCPClient(["python", "my_mcp_server.py"])</div><p>用 <code>async with</code> 确保连接正确关闭。</p></div></details>
+<div class="callout" data-label="同步包装">业务里更常用 <code>MCPTool.run({...})</code> 同步接口；远程 HTTP/SSE 建议直接用底层 <code>MCPClient</code>。</div>
+
+</section>
+<section class="slide" data-id="mcp-transport" data-label="五种传输方式" data-group="10.2 MCP">
+<p class="slide-sub">10.2.3 · Transport Agnostic · 表 10.4</p>
+<h2 class="slide-title">传输层无关：同一协议，多种管道</h2>
+<p>点击芯片查看适用场景（HelloAgents / FastMCP 2.0）。</p>
+<div class="transport-grid" id="transportGrid">
+  <div class="transport-chip on" data-k="mem"><h4>Memory</h4><p>进程内 · 测试</p></div>
+  <div class="transport-chip" data-k="stdio"><h4>Stdio</h4><p>本地进程 · 开发</p></div>
+  <div class="transport-chip" data-k="http"><h4>HTTP</h4><p>远程 · 生产</p></div>
+  <div class="transport-chip" data-k="sse"><h4>SSE</h4><p>长连接流式</p></div>
+  <div class="transport-chip" data-k="stream"><h4>StreamableHTTP</h4><p>双向流式 HTTP</p></div>
+</div>
+<div class="loop-panel" id="transportPanel" style="margin-top:0.5rem"></div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-table-4.png" alt="表10.4" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>表 10.4（离线要点）</strong><br>Memory 测；Stdio 本地/npx；HTTP 远程服务；SSE 流式；StreamableHTTP 双向流。</div>
+  <p class="fig-cap">表 10.4 MCP 传输方式对比</p>
+</div>
+<div class="note"><strong>MCPTool</strong>主要覆盖 Memory/Stdio；HTTP/SSE/StreamableHTTP 用 <code>MCPClient(..., transport_type=...)</code>。</div>
+
+</section>
+<section class="slide" data-id="mcp-expand" data-label="自动展开进 Agent" data-group="10.2 MCP">
+<p class="slide-sub">10.2.4 · MCPTool</p>
+<h2 class="slide-title">一个 MCPTool → 展开成多个工具</h2>
+<p>把 MCP 服务器挂到 Agent 时，HelloAgents 会把服务器上的工具<strong>展开</strong>为 Agent 可直接调用的独立工具。</p>
+<div class="code-block">from hello_agents import SimpleAgent, HelloAgentsLLM
+from hello_agents.tools import MCPTool
+
+agent = SimpleAgent(name="助手", llm=HelloAgentsLLM())
+mcp_tool = MCPTool(name="calculator")  # 内置演示服务器
+agent.add_tool(mcp_tool)
+# ✅ 已展开为多个独立工具，如 add / multiply …
+
+# 社区文件系统
+fs = MCPTool(name="fs", server_command=["npx","-y","@modelcontextprotocol/server-filesystem","."])
+agent.add_tool(fs)  # → fs_read_file 等，前缀防冲突</div>
+<div class="callout" data-label="多服务器">每个 MCPTool 务必设不同 <code>name</code> 作前缀，避免 <code>read_file</code> 撞名。</div>
+
+</section>
+<section class="slide" data-id="mcp-eco" data-label="社区生态" data-group="10.2 MCP">
+<p class="slide-sub">10.2.5 · 少造轮子</p>
+<h2 class="slide-title">先搜社区，再写 Server</h2>
+<p>MCP 的巨大优势是生态：文件系统、数据库、GitHub…大量现成服务器。</p>
+<ul>
+  <li>社区精选列表（awesome-mcp-servers 等）</li>
+  <li>官方服务器：filesystem、github、postgres…（见表 10.5）</li>
+  <li>社区热门：浏览器、Slack、Notion…（见表 10.6）</li>
+</ul>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-table-5.png" alt="表10.5" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>表 10.5–10.6（离线要点）</strong><br>优先官方/大厂背书与活跃维护；时效取决于维护者，生产前务必验证权限与安全。</div>
+  <p class="fig-cap">表 10.5 常用官方 MCP 服务器（示意）</p>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-table-6.png" alt="表10.6" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>表 10.6（离线要点）</strong><br>社区热门服务器覆盖协作与生产力工具；选用前检查维护活跃度与权限模型。</div>
+  <p class="fig-cap">表 10.6 社区热门 MCP 服务器（示意）</p>
+</div>
+<div class="note"><strong>安全：</strong>Agent 能调用的工具 = 攻击面。危险操作需权限控制、沙箱与人工确认（习题亦强调）。</div>
+
+</section>
+<section class="slide" data-id="flash102" data-label="闪卡 · MCP" data-group="10.2 MCP">
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · MCP</h2>
+<div class="flash-wrap" id="flash102" data-cards='[
+  {"q":"MCP 三层分别干什么？","a":"Host 管用户与对话；Client 管协议通信与工具描述注入；Server 实现具体能力。"},
+  {"q":"Tools / Resources / Prompts 怎么区分？","a":"Tools 主动执行；Resources 被动供数；Prompts 提供指导模板。"},
+  {"q":"MCP 与 Function Calling 关系？","a":"互补：FC 是模型「何时调」的智能；MCP 是「如何标准连接工具」的基础设施。"},
+  {"q":"为何要给 MCPTool 设 name？","a":"作为展开工具名前缀，多服务器并存时避免工具名冲突。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash102',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash102',1)">下一张</button>
+  </div>
+</div>
+
+</section>
+<section class="slide" data-id="quiz102" data-label="检测 · MCP" data-group="10.2 MCP">
+<p class="slide-sub">含解析</p>
+<h2 class="slide-title">小测 · MCP</h2>
+<div class="quiz-item" data-quiz="q102" data-answer="0">
+  <h4>1. 本地用 npx 拉 filesystem 服务器，典型传输是？</h4>
+  <button class="quiz-opt" data-i="0" type="button" onclick="answerQuiz(this)">Stdio（标准输入输出）</button>
+  <button class="quiz-opt" data-i="1" type="button" onclick="answerQuiz(this)">仅 Memory</button>
+  <button class="quiz-opt" data-i="2" type="button" onclick="answerQuiz(this)">必须 SSE</button>
+  <div class="quiz-explain">社区包常以子进程 + Stdio 与客户端通信；Memory 多用于内置演示/测试。</div>
+</div>
+<div class="quiz-item" data-quiz="q102" data-answer="1">
+  <h4>2. 「上下文共享」意味着 MCP Server 只能返回字符串结果吗？</h4>
+  <button class="quiz-opt" data-i="0" type="button" onclick="answerQuiz(this)">是，只能返回最终答案字符串</button>
+  <button class="quiz-opt" data-i="1" type="button" onclick="answerQuiz(this)">否，还可提供结构、依赖、历史等丰富上下文</button>
+  <button class="quiz-opt" data-i="2" type="button" onclick="answerQuiz(this)">只能返回图片</button>
+  <div class="quiz-explain">MCP 强调比裸 RPC 更丰富的上下文（如代码结构、提交历史），帮助模型做更好决策。</div>
+</div>
+<p class="quiz-score" id="score-q102">本组已答：0 / 0 正确</p>
+
+</section>
+<section class="slide" data-id="a2a-why" data-label="A2A 设计动机" data-group="10.3 A2A">
+<p class="slide-sub">10.3.1 · 从工具到协作</p>
+<h2 class="slide-title">MCP 之后：Agent 如何互相说话？</h2>
+<p class="lead">研究员 / 撰写员 / 编辑要委托任务、协商能力、同步状态——这是 A2A 的舞台。</p>
+<div class="compare">
+  <div class="compare-col a"><h3>星型协调器</h3>
+    <ul>
+      <li>单点故障</li>
+      <li>中心成瓶颈</li>
+      <li>加减 Agent 要改中心逻辑</li>
+    </ul>
+  </div>
+  <div class="compare-col b"><h3>A2A 点对点</h3>
+    <ul>
+      <li>网状，直接通信</li>
+      <li>各自既是服务者又是消费者</li>
+      <li>更灵活可扩展</li>
+    </ul>
+  </div>
+</div>
+<div class="compare-vs">TOPOLOGY</div>
+
+</section>
+<section class="slide" data-id="a2a-concepts" data-label="Task 与 Artifact" data-group="10.3 A2A">
+<p class="slide-sub">10.3.1 · 表 10.7 · 与 MCP 最大区别</p>
+<h2 class="slide-title">协作的两个核心抽象</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>Task</h3><span class="en">任务</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>可创建、协商、代理、执行、完成/失败的协作单元——带着生命周期，不是一次性 RPC。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>Artifact</h3><span class="en">工件</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>任务产出：大纲、段落、评审意见。下一位 Agent 接着改，而不是只回一句「OK」。</p></div>
+  </div></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-table-7.png" alt="表10.7" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>表 10.7（离线要点）</strong><br>A2A 围绕 Task/Artifact 管理协作；MCP 围绕 Tool/Resource 访问能力。</div>
+  <p class="fig-cap">表 10.7 A2A 核心概念</p>
+</div>
+
+</section>
+<section class="slide" data-id="a2a-life" data-label="任务与请求生命周期" data-group="10.3 A2A">
+<p class="slide-sub">10.3.1 · 图 10.7–10.8</p>
+<h2 class="slide-title">任务状态机 + 请求四步</h2>
+<div class="loop-stepper" id="a2aLife">
+  <div class="steps steps6">
+    <button class="step-btn" type="button">创建</button>
+    <button class="step-btn" type="button">协商</button>
+    <button class="step-btn" type="button">代理</button>
+    <button class="step-btn" type="button">执行中</button>
+    <button class="step-btn" type="button">完成</button>
+    <button class="step-btn" type="button">失败</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="loop-stepper" id="a2aReq" style="margin-top:1.25rem">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">① 发现</button>
+    <button class="step-btn" type="button">② 鉴权</button>
+    <button class="step-btn" type="button">③ 发消息</button>
+    <button class="step-btn" type="button">④ 消息流</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-7.png" alt="图10.7" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 10.7–10.8（离线要点）</strong><br>任务生命周期支持协商与异常；请求侧含代理发现、身份验证、Send Message / Stream API。</div>
+  <p class="fig-cap">图 10.7 A2A 任务周期</p>
+</div>
+
+</section>
+<section class="slide" data-id="a2a-code" data-label="A2A 实战要点" data-group="10.3 A2A">
+<p class="slide-sub">10.3.2–10.3.4 · HelloAgents</p>
+<h2 class="slide-title">A2AServer · skill · A2ATool</h2>
+<p>官方实现多为样例且偏繁琐；HelloAgents 基于 a2a-sdk <strong>模拟协议思想</strong>，用装饰器挂技能：</p>
+<div class="code-block">from hello_agents.protocols.a2a.implementation import A2AServer, A2A_AVAILABLE
+
+calculator = A2AServer(
+    name="calculator-agent",
+    description="专业的数学计算智能体",
+    capabilities={"math": ["addition", "multiplication"]}
+)
+
+@calculator.skill("add")
+def add_numbers(query: str) -> str:
+    ...
+
+# 工具侧：A2ATool("http://localhost:5000") 挂到 Agent
+# 服务端可用线程启动 HTTP，供其它 Agent 调用</div>
+<details class="expand-card"><summary>依赖提示</summary><div class="expand-body"><p>若 <code>A2A_AVAILABLE</code> 为 False：<code>pip install a2a-sdk</code>（或随 <code>hello-agents[protocol]</code>）。</p></div></details>
+<div class="note"><strong>与第六章框架关系：</strong>AutoGen/CAMEL 是编排框架；A2A 是互操作协议——可互补，不简单互相替代（见习题）。</div>
+
+</section>
+<section class="slide" data-id="flash103" data-label="闪卡 · A2A" data-group="10.3 A2A">
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · A2A</h2>
+<div class="flash-wrap" id="flash103" data-cards='[
+  {"q":"A2A 相对中央协调器解决了什么？","a":"单点故障、中心瓶颈、扩展时改中心逻辑的困难——改为点对点对等通信。"},
+  {"q":"Task 与普通函数调用差在哪？","a":"Task 有标准化生命周期（协商/执行/完成/失败），可跟踪与异常处理，面向协作过程。"},
+  {"q":"小规模紧密协作优先 A2A 还是 ANP？","a":"优先 A2A；ANP 面向大规模开放网络的发现与路由。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash103',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash103',1)">下一张</button>
+  </div>
+</div>
+
+</section>
+<section class="slide" data-id="quiz103" data-label="检测 · A2A" data-group="10.3 A2A">
+<p class="slide-sub">含解析</p>
+<h2 class="slide-title">小测 · A2A</h2>
+<div class="quiz-item" data-quiz="q103" data-answer="2">
+  <h4>论文写作：研究员起草后交给撰写员润色，最贴切的协议层是？</h4>
+  <button class="quiz-opt" data-i="0" type="button" onclick="answerQuiz(this)">只用 MCP 读本地文件即可</button>
+  <button class="quiz-opt" data-i="1" type="button" onclick="answerQuiz(this)">只用 ANP 做负载均衡</button>
+  <button class="quiz-opt" data-i="2" type="button" onclick="answerQuiz(this)">A2A：Agent 间任务委托与工件传递</button>
+  <div class="quiz-explain">多 Agent 协作、传递草稿/工件，是 A2A 场景。MCP 可辅助取资料；ANP 在节点很多时找人。</div>
+</div>
+<p class="quiz-score" id="score-q103">本组已答：0 / 0 正确</p>
+
+</section>
+<section class="slide" data-id="anp-goal" data-label="ANP 协议目标" data-group="10.4 ANP">
+<p class="slide-sub">10.4.1 · 大规模开放网络</p>
+<h2 class="slide-title">工具会调、会对讲，如何「找对人」？</h2>
+<ul>
+  <li><strong>服务发现</strong>：新任务来了，谁能干？</li>
+  <li><strong>智能路由</strong>：多人能干时，按负载/成本选谁？</li>
+  <li><strong>动态扩展</strong>：新节点加入如何被看见？</li>
+</ul>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-table-8.png" alt="表10.8" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>表 10.8（离线要点）</strong><br>核心概念围绕服务描述、注册、发现、路由与（概念上的）网络节点管理。</div>
+  <p class="fig-cap">表 10.8 ANP 核心概念</p>
+</div>
+<div class="note">HelloAgents 中 ANP 为<strong>概念性轻量实现</strong>（亦有官方 AgentConnect）；重点学思想，生产需跟进官方规范。</div>
+
+</section>
+<section class="slide" data-id="anp-flow" data-label="ANP 三步流" data-group="10.4 ANP">
+<p class="slide-sub">10.4.1 · 图 10.9 · 步进</p>
+<h2 class="slide-title">发现 → DID 验证 → 标准执行</h2>
+<div class="loop-stepper" id="anpFlow">
+  <div class="steps steps3">
+    <button class="step-btn" type="button">① 发现匹配</button>
+    <button class="step-btn" type="button">② DID 鉴权</button>
+    <button class="step-btn" type="button">③ 服务执行</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-9.png" alt="图10.9" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 10.9（离线要点）</strong><br>爬取 <code>.well-known/agent-descriptions</code> 建索引 → DID 签名验真 → 标准接口交换数据。</div>
+  <p class="fig-cap">图 10.9 ANP 整体流程</p>
+</div>
+
+</section>
+<section class="slide" data-id="anp-code" data-label="注册 · 发现 · 网络" data-group="10.4 ANP">
+<p class="slide-sub">10.4.2 · API 心智</p>
+<h2 class="slide-title">ANPDiscovery 最小闭环</h2>
+<div class="code-block">from hello_agents.protocols import ANPDiscovery, register_service, discover_service, ANPNetwork
+
+discovery = ANPDiscovery()
+register_service(discovery=discovery, service_id="nlp_agent_1", service_name="NLP专家A",
+    service_type="nlp", capabilities=["text_analysis","ner"],
+    endpoint="http://localhost:8001",
+    metadata={"load": 0.3, "price": 0.01})
+
+nlp = discover_service(discovery, service_type="nlp")
+best = min(nlp, key=lambda s: s.metadata.get("load", 1.0))
+
+network = ANPNetwork(network_id="ai_cluster")
+for s in discovery.list_all_services():
+    network.add_node(s.service_id, s.endpoint)
+network.connect_nodes("nlp_agent_1", "nlp_agent_2")
+print(network.get_network_stats())</div>
+
+</section>
+<section class="slide" data-id="anp-case" data-label="调度与负载均衡" data-group="10.4 ANP">
+<p class="slide-sub">10.4.3 · 实战案例心智</p>
+<h2 class="slide-title">任务调度器 + ANPTool</h2>
+<p>注册多个 compute 节点（带 load / cpu / gpu 元数据）→ 调度 Agent 挂上 <code>ANPTool</code> → 用自然语言描述任务，让模型选出合适节点。</p>
+<details class="expand-card"><summary>负载均衡一句话</summary><div class="expand-body"><p><code>best = min(servers, key=lambda s: s.metadata.get("load", 1.0))</code>，请求后可模拟 <code>load += 0.1</code>。</p></div></details>
+<div class="callout" data-label="组合拳">ANP 找节点 → A2A 派任务 → MCP 让节点调用工具：三种协议可以叠在同一系统里。</div>
+
+</section>
+<section class="slide" data-id="flash104" data-label="闪卡 · ANP" data-group="10.4 ANP">
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · ANP</h2>
+<div class="flash-wrap" id="flash104" data-cards='[
+  {"q":"ANP 相对 MCP/A2A 多解决了什么？","a":"大规模开放网络中的服务发现、路由选择与动态扩展，而不只是单点工具调用或小团队对讲。"},
+  {"q":"DID 在 ANP 流程里扮演什么角色？","a":"去中心化身份：用私钥签名、公钥验签，建立可信通信，减少对中央账号系统的依赖。"},
+  {"q":"HelloAgents 里 ANP 实现的定位？","a":"概念性/教学向轻量实现，帮助理解注册发现路由；生产应对照官方规范与 AgentConnect。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash104',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash104',1)">下一张</button>
+  </div>
+</div>
+
+</section>
+<section class="slide" data-id="quiz104" data-label="检测 · ANP" data-group="10.4 ANP">
+<p class="slide-sub">含解析</p>
+<h2 class="slide-title">小测 · ANP</h2>
+<div class="quiz-item" data-quiz="q104" data-answer="1">
+  <h4>集群里 50 个可训练节点，新任务要「带 GPU 且负载最低」，优先依赖？</h4>
+  <button class="quiz-opt" data-i="0" type="button" onclick="answerQuiz(this)">只写死 IP 列表，不用任何发现机制</button>
+  <button class="quiz-opt" data-i="1" type="button" onclick="answerQuiz(this)">ANP 式发现 + 按 metadata 选路</button>
+  <button class="quiz-opt" data-i="2" type="button" onclick="answerQuiz(this)">只用 MCP Resources 存图片</button>
+  <div class="quiz-explain">节点多、动态加入、按能力/负载选择，正是 ANP 的目标场景。</div>
+</div>
+<p class="quiz-score" id="score-q104">本组已答：0 / 0 正确</p>
+
+</section>
+<section class="slide" data-id="custom-mcp" data-label="自定义 MCP 服务器" data-group="10.5 自定义">
+<p class="slide-sub">10.5.1–10.5.2 · 何时自建</p>
+<h2 class="slide-title">从「使用者」到「提供者」</h2>
+<details class="expand-card"><summary>为何自建？</summary><div class="expand-body"><ul>
+  <li>封装企业内部业务流程</li>
+  <li>安全访问私有数据 / 内网 API</li>
+  <li>高频场景性能优化</li>
+  <li>标准社区未覆盖的专有能力</li>
+</ul></div></details>
+<p>教学案例：天气查询 MCP——注册 <code>get_weather</code> / <code>list_supported_cities</code> 等工具，用 <code>MCPServer</code> 暴露。</p>
+<div class="code-block">from hello_agents.protocols import MCPServer
+
+weather_server = MCPServer(name="weather-server", description="真实天气查询服务")
+
+@weather_server.tool()
+def get_weather(city: str) -> str:
+    ...
+
+# 运行后可用 MCPClient / MCPTool 连接
+# 发布：文档演示经 Smithery 等平台上传（图 10.10–10.11）</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/10-figures/10-11.png" alt="图10.11" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 10.10–10.11（离线要点）</strong><br>自定义 Server 可打包发布到社区目录/托管平台，让其它 Host 一键安装。</div>
+  <p class="fig-cap">图 10.11 Smithery 发布成功示意</p>
+</div>
+
+</section>
+<section class="slide" data-id="combo" data-label="三协议终局对照" data-group="10.6 总结">
+<p class="slide-sub">10.6 · 定位复盘</p>
+<h2 class="slide-title">一张表记住职责</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>MCP</h3><p>智能体与<strong>工具</strong>的桥梁；增强单个 Agent 能力。</p></div>
+  <div class="compare-col b"><h3>A2A</h3><p>智能体之间的<strong>对话</strong>；小规模紧密协作。</p></div>
+  <div class="compare-col c"><h3>ANP</h3><p>智能体的「<strong>互联网</strong>」；发现、路由、负载。</p></div>
+</div>
+<div class="code-block">from hello_agents.tools import MCPTool, A2ATool, ANPTool
+agent.add_tool(MCPTool(...))
+agent.add_tool(A2ATool(...))
+agent.add_tool(ANPTool(...))</div>
+<div class="callout" data-label="实战经验">优先成熟社区 MCP；小团队协作用 A2A；大规模网络才上 ANP。协议早期，少造轮子。</div>
+
+</section>
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="10.6 总结">
+<p class="slide-sub">学完勾选</p>
+<h2 class="slide-title">本章小结 · 自测</h2>
+<ul class="check-list">
+  <li><input type="checkbox"/> 能用白话解释协议 / 握手 / Host·Client·Server</li>
+  <li><input type="checkbox"/> 能对比 MCP · A2A · ANP 的问题域与选型口诀</li>
+  <li><input type="checkbox"/> 能画出 MCP 握手与「发现→推理→调用→整合」消息流</li>
+  <li><input type="checkbox"/> 能说明 MCP 与 Function Calling 互补关系</li>
+  <li><input type="checkbox"/> 知道五种传输及 MCPTool vs MCPClient 适用边界</li>
+  <li><input type="checkbox"/> 理解 MCPTool 自动展开与 name 前缀防冲突</li>
+  <li><input type="checkbox"/> 能解释 A2A 的 Task/Artifact 与任务生命周期</li>
+  <li><input type="checkbox"/> 能描述 ANP 发现 → DID → 执行三步</li>
+  <li><input type="checkbox"/> 知道何时自建 MCP Server 以及发布路径概念</li>
+</ul>
+
+</section>
+<section class="slide" data-id="exercises" data-label="习题导读" data-group="10.6 总结">
+<p class="slide-sub">源文档 · 习题</p>
+<h2 class="slide-title">下一步怎么练？</h2>
+<ol>
+  <li><strong>选型与组合：</strong>为智能客服（查库 / 多客服协作 / 高并发）分别选协议，并设计三协议同构场景。</li>
+  <li><strong>MCP 动手：</strong>扩展 Server（查询/可视化/报表）；查阅 Resources &amp; Prompts；思考 Stdio vs HTTP 扩展。</li>
+  <li><strong>A2A 扩展：</strong>研究团队加「审稿人」；设计协商/投票消息；对比 AutoGen/CAMEL。</li>
+  <li><strong>ANP 深入：</strong>拓扑演进、智能路由、故障容错与信任评估。</li>
+  <li><strong>安全：</strong>危险工具权限、端到端加密、恶意节点信任评分。</li>
+</ol>
+<div class="note"><strong>文档：</strong><a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">MCP</a> · <a href="https://a2a-protocol.org/latest/" target="_blank" rel="noopener">A2A</a> · <a href="https://agent-network-protocol.com/guide/" target="_blank" rel="noopener">ANP</a></div>
+<p class="lead" style="margin-top:1.2rem">恭喜完成第十章互动教程。建议继续第十一章 · Agentic-RL。</p>
+
+</section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll(".slide"));
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+["flash101","flash102","flash103","flash104"].forEach(initFlash);
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+function bindStepper(rootId, texts, onStep) {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  function show(n) {
+    root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+    const panel = root.querySelector(".loop-panel");
+    panel.innerHTML = `<h4>${texts[n].t}</h4><p>${texts[n].p}</p>`;
+    if (onStep) onStep(n, texts[n]);
+  }
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.addEventListener("click", () => show(i)));
+  show(0);
+}
+
+const mcpWires = [
+  "→ spawn/connect Server (stdio | http | memory)\n← transport ready",
+  "→ initialize { protocolVersion, capabilities }\n← serverInfo + negotiated caps  // 握手完成",
+  "→ tools/list\n← [{ name, description, inputSchema }, ...]",
+  "→ tools/call { name: read_file, arguments: { path } }\n← content / error",
+  "Client 把结果塞回对话上下文\n→ LLM 生成最终自然语言回答"
+];
+
+bindStepper("mcpHandshake", [
+  { t: "① 建连", p: "Host/Client 按所选传输启动或连接 MCP Server（本地 Stdio 子进程，或远程 URL）。" },
+  { t: "② 握手", p: "交换协议版本与能力声明（initialize）。双方确认「用同一套规则说话」后才继续。" },
+  { t: "③ 发现", p: "调用 list_tools（以及可选 resources/prompts）拿到机器可读的能力清单。" },
+  { t: "④ 调用", p: "模型选定工具后，Client 发 call_tool；Server 执行并返回结构化结果。" },
+  { t: "⑤ 整合", p: "结果回到模型上下文，生成对用户的最终回答。整条链路对用户可透明。" }
+], (n) => {
+  const w = document.getElementById("mcpWire");
+  if (w) w.textContent = mcpWires[n];
+});
+
+bindStepper("mcpToolFlow", [
+  { t: "工具发现", p: "Client 连接后 list_tools()，拿到名称、说明、参数 schema。" },
+  { t: "上下文构建", p: "把工具列表转成模型能懂的描述，注入系统提示（「你可以使用以下工具…」）。" },
+  { t: "模型推理", p: "LLM 结合用户问题与工具描述，决定是否调用、调用哪个、填什么参数。" },
+  { t: "工具执行", p: "Client 经 MCP Server 执行所选工具，拿到结果（成功或错误）。" },
+  { t: "结果整合", p: "结果回灌模型；模型结合工具输出生成最终回答。描述质量决定调用质量。" }
+]);
+
+bindStepper("a2aLife", [
+  { t: "创建", p: "发起方创建 Task，描述目标与约束，进入可跟踪的协作单元。" },
+  { t: "协商", p: "对方评估能力与资源，接受、拒绝或提出调整（价格、时限、范围）。" },
+  { t: "代理", p: "必要时把子任务转给更合适的 Agent（delegation），保持责任链清晰。" },
+  { t: "执行中", p: "进行中可汇报进度；中间产物以 Artifact 形式沉淀。" },
+  { t: "完成", p: "交付最终 Artifact，关闭 Task，双方可归档协作记录。" },
+  { t: "失败", p: "超时、拒识、执行错误进入失败态；便于重试或换人——比「函数抛错」更结构化。" }
+]);
+
+bindStepper("a2aReq", [
+  { t: "① 代理发现", p: "找到目标 Agent 的端点与能力卡片（Agent Card / 描述）。" },
+  { t: "② 身份验证", p: "与鉴权服务交互，确认双方身份后再进入业务通道。" },
+  { t: "③ 发送消息 API", p: "同步/请求-响应式投递任务消息与上下文。" },
+  { t: "④ 发送消息流 API", p: "长任务用流式接口持续推送进度与部分 Artifact。" }
+]);
+
+bindStepper("anpFlow", [
+  { t: "① 服务发现与匹配", p: "经发现服务按语义/能力查询；索引可来自爬取各节点 .well-known/agent-descriptions。" },
+  { t: "② 基于 DID 的身份验证", p: "请求方用私钥签名；响应方解析 DID 取公钥验签，建立可信通道。" },
+  { t: "③ 标准化服务执行", p: "按预定义接口与数据格式完成调用（预订、查询等），保障跨平台互操作。" }
+]);
+
+const transportInfo = {
+  mem: { t: "Memory Transport", p: "同进程内存通道，适合单元测试与内置演示服务器：MCPTool() 无参即走此路径。" },
+  stdio: { t: "Stdio Transport", p: "拉起本地进程，用标准输入输出通信。本地开发与 npx 社区服务器最常见。" },
+  http: { t: "HTTP Transport", p: "远程 HTTP MCP 端点，适合生产/微服务。建议 MCPClient(\"http://...\")。" },
+  sse: { t: "SSE Transport", p: "Server-Sent Events，适合实时与流式长连接：transport_type=\"sse\"。" },
+  stream: { t: "StreamableHTTP", p: "在 HTTP 上做双向流式，适合需要持续交互的远程场景：transport_type=\"streamable_http\"。" }
+};
+(function bindTransport() {
+  const grid = document.getElementById("transportGrid");
+  const panel = document.getElementById("transportPanel");
+  if (!grid || !panel) return;
+  function show(k) {
+    grid.querySelectorAll(".transport-chip").forEach((c) => c.classList.toggle("on", c.dataset.k === k));
+    const info = transportInfo[k];
+    panel.innerHTML = `<h4>${info.t}</h4><p>${info.p}</p>`;
+  }
+  grid.querySelectorAll(".transport-chip").forEach((c) => c.addEventListener("click", () => show(c.dataset.k)));
+  show("mem");
+})();
+
+document.querySelectorAll(".fig img").forEach((img) => {
+  img.addEventListener("error", () => {
+    const fig = img.closest(".fig");
+    if (fig) fig.classList.add("offline");
+  });
+});
+
+goTo(0);
+</script>
+
+</body>
+</html>

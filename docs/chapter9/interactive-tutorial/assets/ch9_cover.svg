@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <rect width="960" height="420" fill="#0a1520"/>
+  <defs>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="rgba(224,122,74,0.16)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e07a4a" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#e8a84a" stop-opacity="0.14"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="420" fill="url(#g)"/>
+  <ellipse cx="720" cy="70" rx="300" ry="150" fill="url(#glow)"/>
+
+  <!-- GSSC pipeline blocks -->
+  <g font-family="Oxanium, sans-serif">
+    <rect x="56" y="72" width="150" height="64" fill="#0f1e2c" stroke="#e07a4a" stroke-width="1.5"/>
+    <text x="78" y="100" fill="#f4a574" font-size="13" letter-spacing="2">GATHER</text>
+    <text x="72" y="120" fill="#9aafb8" font-size="11">�G�</text>
+
+    <path d="M214 104h28" stroke="#e8a84a" stroke-width="2"/>
+    <polygon points="242,104 234,99 234,109" fill="#e8a84a"/>
+
+    <rect x="250" y="72" width="150" height="64" fill="#0f1e2c" stroke="#e8a84a" stroke-width="1.5"/>
+    <text x="276" y="100" fill="#e8a84a" font-size="13" letter-spacing="2">SELECT</text>
+    <text x="268" y="120" fill="#9aafb8" font-size="11">�s+��</text>
+
+    <path d="M408 104h28" stroke="#e8a84a" stroke-width="2"/>
+    <polygon points="436,104 428,99 428,109" fill="#e8a84a"/>
+
+    <rect x="444" y="72" width="150" height="64" fill="#0f1e2c" stroke="#3da8b8" stroke-width="1.5"/>
+    <text x="458" y="100" fill="#5ed4e0" font-size="13" letter-spacing="2">STRUCTURE</text>
+    <text x="468" y="120" fill="#9aafb8" font-size="11">:�M</text>
+
+    <path d="M602 104h28" stroke="#e8a84a" stroke-width="2"/>
+    <polygon points="630,104 622,99 622,109" fill="#e8a84a"/>
+
+    <rect x="638" y="72" width="150" height="64" fill="#0f1e2c" stroke="#6bc89a" stroke-width="1.5"/>
+    <text x="650" y="100" fill="#6bc89a" font-size="13" letter-spacing="2">COMPRESS</text>
+    <text x="658" y="120" fill="#9aafb8" font-size="11">��\�</text>
+  </g>
+
+  <!-- Window budget bar -->
+  <g font-family="Oxanium, sans-serif">
+    <text x="56" y="200" fill="#f4a574" font-size="12" letter-spacing="3">CONTEXT WINDOW BUDGET</text>
+    <rect x="56" y="214" width="560" height="28" fill="#152636" stroke="rgba(224,122,74,0.35)"/>
+    <rect x="56" y="214" width="112" height="28" fill="rgba(224,122,74,0.55)"/>
+    <rect x="168" y="214" width="220" height="28" fill="rgba(61,168,184,0.45)"/>
+    <rect x="388" y="214" width="140" height="28" fill="rgba(232,168,74,0.4)"/>
+    <text x="68" y="233" fill="#0a1520" font-size="11" font-weight="600">SYSTEM</text>
+    <text x="220" y="233" fill="#e6ede9" font-size="11">EVIDENCE + CONTEXT</text>
+    <text x="410" y="233" fill="#e6ede9" font-size="11">RESERVE</text>
+  </g>
+
+  <g font-family="Oxanium, sans-serif">
+    <circle cx="800" cy="280" r="78" fill="#152636" stroke="#e07a4a" stroke-width="2"/>
+    <text x="764" y="270" fill="#f4a574" font-size="13" letter-spacing="2">LAB 09</text>
+    <text x="748" y="296" fill="#e6ede9" font-size="15" letter-spacing="1">CONTEXT</text>
+    <text x="742" y="318" fill="#9aafb8" font-size="12">ENGINEERING</text>
+  </g>
+
+  <text x="56" y="380" fill="#6d8490" font-family="Oxanium, sans-serif" font-size="12" letter-spacing="2">HELLO-AGENTS  �  INDUSTRIAL BLUEPRINT LAB</text>
+</svg>

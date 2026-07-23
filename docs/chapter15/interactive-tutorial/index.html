@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第十五章 · 构建赛博小镇 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 15 Signal
+   Same product line as Ch1–Ch14; cyber neon-magenta primary signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(255, 92, 138, 0.14);
+  --line-strong: rgba(255, 92, 138, 0.36);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #ff5c8a;
+  --signal-bright: #ff8fb0;
+  --violet: #c4b5fd;
+  --violet-dim: rgba(196, 181, 253, 0.14);
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(255, 92, 138, 0.18), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(61, 168, 184, 0.10), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--cyan), var(--amber));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(255, 92, 138, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(255, 92, 138, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(180, 168, 255, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(139,124,246,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(255, 92, 138, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.compare4 {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare4 .compare-col h3 { font-size: 0.85rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps6 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps2 { grid-template-columns: repeat(2, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: rgba(139,124,246,0.12);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.arch-block.base { border-left: 3px solid var(--mint); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: center; text-align: center;
+  transition: border-color 0.25s; user-select: none;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.15rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; font-size: 0.98rem; color: var(--paper); line-height: 1.55;
+}
+.flash-card.revealed .q { display: none; }
+.flash-card.revealed .a { display: block; }
+.flash-card.revealed { border-color: var(--cyan); background: rgba(61,168,184,0.1); }
+.flash-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 0.75rem; font-family: var(--font-display);
+  font-size: 0.72rem; color: var(--text-mute);
+}
+.flash-controls { display: flex; gap: 0.4rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); margin-bottom: 0.75rem; line-height: 1.4;
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.35rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224, 107, 90, 0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.65rem; padding: 0.7rem 0.85rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(255, 92, 138, 0.08); color: var(--paper);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.85rem;
+  color: var(--cyan-bright); margin: 0.5rem 0 1rem;
+}
+.check-list { list-style: none; margin: 1rem 0; padding: 0; }
+.check-list li {
+  display: flex; gap: 0.65rem; align-items: flex-start;
+  padding: 0.55rem 0.7rem; border: 1px solid var(--line);
+  margin-bottom: 0.4rem; background: var(--panel);
+  cursor: pointer; transition: all 0.2s;
+}
+.check-list li:hover { border-color: var(--line-strong); }
+.check-list li.done {
+  border-color: var(--mint); background: var(--mint-dim);
+}
+.check-list li.done .ck-text { color: var(--mint); text-decoration: line-through; opacity: 0.85; }
+.ck-box {
+  width: 18px; height: 18px; border: 1px solid var(--signal);
+  flex-shrink: 0; margin-top: 0.15rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: transparent;
+}
+.check-list li.done .ck-box {
+  background: var(--mint); border-color: var(--mint); color: var(--ink);
+}
+.ck-text { font-size: 0.9rem; color: var(--text-dim); }
+.cover { text-align: left; padding: 1rem 0 2rem; }
+.cover-badge {
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--signal); border: 1px solid var(--line-strong);
+  display: inline-block; padding: 0.3rem 0.7rem; margin-bottom: 1.25rem;
+}
+.cover h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1.1; margin-bottom: 0.75rem; max-width: 18ch;
+}
+.cover .tagline {
+  font-size: 1.1rem; color: var(--paper);
+  max-width: 36em; margin-bottom: 1.5rem;
+}
+.goals { display: grid; gap: 0.55rem; margin: 1.25rem 0 1.75rem; }
+.goal {
+  display: grid; grid-template-columns: auto 1fr; gap: 0.85rem;
+  align-items: start; padding: 0.85rem 1rem;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.goal-n {
+  font-family: var(--font-display); font-size: 1.2rem;
+  color: var(--cyan-bright); line-height: 1;
+}
+.goal p { margin: 0; font-size: 0.92rem; }
+.cover-img {
+  margin-top: 1.5rem; border: 1px solid var(--line-strong);
+  max-width: 100%; width: 100%; background: var(--panel);
+}
+.kbd-hint {
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.04em;
+}
+.kbd {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  border: 1px solid var(--line-strong); padding: 0.1rem 0.35rem;
+  color: var(--signal); background: var(--panel);
+}
+.kw-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem; margin: 1rem 0;
+}
+.kw {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.9rem 1rem;
+}
+.kw h4 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.kw p { margin: 0; font-size: 0.85rem; }
+.path-hint {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--cyan-bright); background: rgba(61, 168, 184, 0.08);
+  border: 1px dashed rgba(61, 168, 184, 0.35);
+  padding: 0.65rem 0.85rem; margin: 0.85rem 0;
+}
+.matrix {
+  width: 100%; border-collapse: collapse; margin: 1rem 0;
+  font-size: 0.82rem;
+}
+.matrix th, .matrix td {
+  border: 1px solid var(--line-strong); padding: 0.55rem 0.65rem;
+  text-align: left; vertical-align: top;
+}
+.matrix th {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.06em; color: var(--signal-bright);
+  background: var(--panel-2);
+}
+.matrix td { color: var(--text-dim); background: var(--panel); }
+.tag-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0; }
+.tag-pill {
+  font-family: var(--font-display); font-size: 0.68rem;
+  letter-spacing: 0.06em; padding: 0.25rem 0.55rem;
+  border: 1px solid var(--line-strong); color: var(--signal);
+  background: rgba(139,124,246,0.1);
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0;
+    width: min(86vw, 300px); z-index: 40;
+    transform: translateX(-105%); transition: transform 0.3s ease;
+    box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3, .kw-grid, .compare4 { grid-template-columns: 1fr; }
+  .loop-stepper .steps, .loop-stepper .steps.steps5, .loop-stepper .steps.steps4,
+  .loop-stepper .steps.steps3, .loop-stepper .steps.steps6, .loop-stepper .steps.steps2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 35;
+  }
+  .overlay.show { display: block; }
+}
+@media (max-width: 520px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 15</div>
+      <h1>构建赛博小镇</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta"><span>进度</span><span id="progressText">1 / 1</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">← → 翻页 · 工业蓝图实验室</div>
+  </aside>
+  <main class="stage">
+    <div class="topbar">
+      <button type="button" class="menu-btn" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button type="button" class="btn" id="btnPrev">上一页</button>
+        <button type="button" class="btn btn-primary" id="btnNext">下一页</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+<!--
+  COVERAGE CHECKLIST (源文档 · 第十五章 构建赛博小镇.md)
+  [x] 封面与学习目标 / 本章地图 / 五大功能
+  [x] 15.1.1–15.1.3 动机·四层架构·数据流·目录·快速体验
+  [x] 15.2.1–15.2.4 SimpleAgent·角色·记忆·批量·混合模式
+  [x] 15.3.1–15.3.3 五级好感·计算·动态 Prompt
+  [x] 15.4.1–15.4.4 FastAPI·路由·状态日志·Godot 场景概念
+  [x] 15.5 选型·四场景·玩家·NPC 交互
+  [x] 15.6 API 客户端·对话 UI·主场景整合
+  [x] 15.7 回顾·扩展·挑战·自测·收官
+  [x] 互动：翻转卡·展开·闪卡·问答·步进·清单
+  slides: 40
+-->
+
+<section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
+
+<div class="cover">
+  <div class="cover-badge">Hello-Agents · Lab 15</div>
+  <h2>构建赛博小镇</h2>
+  <p class="tagline">把 HelloAgents 接到 Godot：智能 NPC、记忆、好感度与像素办公室——做出真正「活着」的 AI 小镇。</p>
+  <div class="goals">
+    <div class="goal"><div class="goal-n">01</div><p>理解「游戏引擎 + 后端服务」四层架构与一次对话的数据流</p></div>
+    <div class="goal"><div class="goal-n">02</div><p>用 SimpleAgent 打造带记忆的 NPC，掌握批量生成与混合模式</p></div>
+    <div class="goal"><div class="goal-n">03</div><p>实现五级好感度：情感分析 → 分数 → 动态 Prompt</p></div>
+    <div class="goal"><div class="goal-n">04</div><p>串通 FastAPI 与 Godot：场景、玩家控制、API 客户端与对话 UI</p></div>
+  </div>
+  <p class="kbd-hint">键盘 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · 侧栏可跳转 · 共 40 页</p>
+  <img class="cover-img" src="assets/ch15_cover.svg" alt="Lab 15 赛博小镇封面" />
+</div>
+
+</section>
+
+<section class="slide" data-id="map" data-label="本章地图" data-group="开篇">
+
+<h2 class="slide-title">本章地图</h2>
+<p class="slide-sub">15.1 → 15.7 · 从架构到可玩 Demo</p>
+<p class="lead">第十五章是全书的<strong>综合实战</strong>：前面学的 Agent、记忆、工具，在这里变成可走动、可聊天的办公室 NPC。</p>
+<div class="arch-stack">
+  <div class="arch-block enc">15.1 概述与架构<span class="sub">为什么做 AI 小镇 · 四层架构 · 5 分钟跑通</span></div>
+  <div class="arch-block dec">15.2 NPC 智能体<span class="sub">SimpleAgent · 角色 Prompt · 记忆 · 批量生成</span></div>
+  <div class="arch-block head">15.3 好感度<span class="sub">五级划分 · LLM 情感分析 · 影响对话风格</span></div>
+  <div class="arch-block base">15.4–15.6 工程落地<span class="sub">FastAPI · Godot 场景 · HTTP 通信</span></div>
+  <div class="arch-block enc">15.7 总结展望<span class="sub">技术栈回顾 · 扩展方向 · 挑战与未来</span></div>
+</div>
+<div class="note"><strong>前置建议：</strong>第七章 SimpleAgent、第八章 Memory（Working / Episodic）读过一遍，本章代码会「直接用」。</div>
+
+</section>
+
+<section class="slide" data-id="features" data-label="五大核心功能" data-group="开篇">
+
+<h2 class="slide-title">赛博小镇能做什么</h2>
+<p class="slide-sub">五个产品能力 · 对应后文实现</p>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')">
+    <div class="flip-inner">
+      <div class="flip-face"><h3>智能对话</h3><span class="en">NPC Dialogue</span><p class="flip-hint">点击翻转</p></div>
+      <div class="flip-face back"><p>自然语言聊，不靠对话树；每人有职业与性格 Prompt。</p></div>
+    </div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')">
+    <div class="flip-inner">
+      <div class="flip-face"><h3>记忆系统</h3><span class="en">Memory</span><p class="flip-hint">点击翻转</p></div>
+      <div class="flip-face back"><p>短期 Working + 长期 Episodic，能接上「上次聊的项目」。</p></div>
+    </div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')">
+    <div class="flip-inner">
+      <div class="flip-face"><h3>好感度</h3><span class="en">Affinity</span><p class="flip-hint">点击翻转</p></div>
+      <div class="flip-face back"><p>陌生→挚友五级；态度变化写进日志，可再做前端 UI。</p></div>
+    </div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')">
+    <div class="flip-inner">
+      <div class="flip-face"><h3>游戏交互</h3><span class="en">Godot 2D</span><p class="flip-hint">点击翻转</p></div>
+      <div class="flip-face back"><p>像素办公室 · WASD 移动 · 靠近按 E 开对话。</p></div>
+    </div>
+  </div>
+</div>
+<details class="expand-card"><summary>第五项：实时日志</summary>
+<div class="expand-body"><p>每次对话记：好感分、相关记忆、回复、分值变化、情感标签。可用 <code>python view_logs.py</code> 盯盘。</p></div>
+</details>
+
+</section>
+
+<section class="slide" data-id="why-town" data-label="为何构建 AI 小镇" data-group="15.1 架构">
+
+<h2 class="slide-title">为什么要构建 AI 小镇</h2>
+<p class="slide-sub">15.1.1 · 从对话树到「活着的」NPC</p>
+<div class="compare">
+  <div class="compare-col a"><h3>传统 NPC</h3><ul>
+    <li>固定台词 / 对话树</li>
+    <li>编剧写死分支</li>
+    <li>可控，但难有生命力</li>
+  </ul></div>
+  <div class="compare-col b"><h3>AI NPC（本章）</h3><ul>
+    <li>自然语言任意聊</li>
+    <li>记得互动与关系</li>
+    <li>性格、职业、说话风格独立</li>
+  </ul></div>
+</div>
+<p class="analogy">像《模拟人生》里有个性的邻居，但大脑换成了 LLM + 记忆 + 好感度。</p>
+<details class="expand-card"><summary>应用想象（教育 / 办公室 / 陪伴）</summary>
+<div class="expand-body">
+<ul>
+  <li>教育：历史人物、科学家互动教学</li>
+  <li>虚拟办公室：同事 / 导师答疑</li>
+  <li>陪伴与心理健康场景（需谨慎合规）</li>
+  <li>给传统游戏直接加 AI NPC</li>
+</ul>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="arch4" data-label="四层技术架构" data-group="15.1 架构">
+
+<h2 class="slide-title">技术架构概览</h2>
+<p class="slide-sub">15.1.2 · 游戏引擎 + 后端服务</p>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-1.png" alt="图 15.1 赛博小镇技术架构" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.1 赛博小镇技术架构 · 离线要点</strong><ul><li>前端：Godot 4.x 渲染 / 控制 / 对话 UI</li><li>后端：FastAPI 路由 / 状态 / 日志</li><li>智能体：HelloAgents SimpleAgent + 记忆 + 好感度</li><li>外部：LLM API · Qdrant · SQLite</li></ul></div>
+  <p class="fig-cap">图 15.1 赛博小镇技术架构</p>
+</div>
+<div class="arch-stack">
+  <div class="arch-block enc">前端层 · Godot<span class="sub">像素场景、玩家、NPC、DialogueUI</span></div>
+  <div class="arch-block dec">后端层 · FastAPI<span class="sub">API、状态机、对话编排、日志</span></div>
+  <div class="arch-block head">智能体层 · HelloAgents<span class="sub">每 NPC 一个 Agent，独立记忆</span></div>
+  <div class="arch-block base">外部服务<span class="sub">LLM · 向量库 · 关系型持久化</span></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="dataflow" data-label="一次对话数据流" data-group="15.1 架构">
+
+<h2 class="slide-title">数据流转过程</h2>
+<p class="slide-sub">15.1.2 · 按 E 之后发生了什么</p>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-2.png" alt="图 15.2 数据流转过程" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.2 数据流转过程 · 离线要点</strong><ul><li>Godot → HTTP 对话请求</li><li>FastAPI → SimpleAgent + 记忆检索</li><li>LLM 生成 → 更新好感度与日志</li><li>返回 JSON → Godot 展示回复</li></ul></div>
+  <p class="fig-cap">图 15.2 数据流转过程</p>
+</div>
+<div class="loop-stepper" id="flowLoop">
+  <div class="steps steps6">
+    <button type="button" class="step-btn on" onclick="showFlow(0)">① 按 E</button>
+    <button type="button" class="step-btn" onclick="showFlow(1)">② HTTP</button>
+    <button type="button" class="step-btn" onclick="showFlow(2)">③ Agent</button>
+    <button type="button" class="step-btn" onclick="showFlow(3)">④ 记忆</button>
+    <button type="button" class="step-btn" onclick="showFlow(4)">⑤ 更新</button>
+    <button type="button" class="step-btn" onclick="showFlow(5)">⑥ UI</button>
+  </div>
+  <div class="loop-panel" id="flowPanel"></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="proj-tree" data-label="项目目录结构" data-group="15.1 架构">
+
+<h2 class="slide-title">项目结构速览</h2>
+<p class="slide-sub">Helloagents-AI-Town · 前后端分家</p>
+<div class="code-block">Helloagents-AI-Town/
+├── helloagents-ai-town/     # Godot
+│   ├── scenes/  main · player · npc · dialogue_ui
+│   ├── scripts/ main.gd · player.gd · api_client.gd …
+│   └── assets/  characters · interiors · ui · audio
+└── backend/                 # Python
+    ├── main.py · agents.py · relationship_manager.py
+    ├── state_manager.py · logger.py · models.py
+    └── requirements.txt · .env.example</div>
+<p class="path-hint">仓库路径：code/chapter15/Helloagents-AI-Town</p>
+<div class="note"><strong>定位口诀：</strong>改画面看 <code>scenes/</code> + <code>scripts/</code>；改智能看 <code>backend/agents.py</code>；改关系看 <code>relationship_manager.py</code>。</div>
+
+</section>
+
+<section class="slide" data-id="quickstart" data-label="5 分钟快速体验" data-group="15.1 架构">
+
+<h2 class="slide-title">快速体验：5 分钟跑起来</h2>
+<p class="slide-sub">15.1.3 · 先看效果再钻实现</p>
+<div class="kw-grid">
+  <div class="kw"><h4>环境</h4><p>Godot ≥ 4.2 · Python ≥ 3.10 · LLM API Key</p></div>
+  <div class="kw"><h4>后端</h4><p><code>cd backend</code> → pip → 配 <code>.env</code> → <code>python main.py</code></p></div>
+  <div class="kw"><h4>前端</h4><p>导入 Godot 项目 → 打开 main.tscn → F5</p></div>
+  <div class="kw"><h4>操作</h4><p>WASD 移动 · 靠近 NPC · E 对话</p></div>
+</div>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-3.png" alt="图 15.3 游戏场景" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.3 游戏场景 · 离线要点</strong><ul><li>Datawhale 像素办公室</li><li>多 NPC 可走近交互</li></ul></div>
+  <p class="fig-cap">图 15.3 游戏场景</p>
+</div>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-4.png" alt="图 15.4 对话界面" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.4 对话界面 · 离线要点</strong><ul><li>输入任意自然语言</li><li>NPC 按角色与历史回复</li></ul></div>
+  <p class="fig-cap">图 15.4 对话界面</p>
+</div>
+<details class="expand-card"><summary>好感度在哪看？</summary>
+<div class="expand-body">
+<p>前端未必直接显示数值；看 <code>backend/logs/dialogue_YYYY-MM-DD.log</code> 或 <code>python view_logs.py</code>：当前分、记忆命中、Δ分、情感标签。</p>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="flash151" data-label="闪卡 · 15.1" data-group="15.1 架构">
+
+<h2 class="slide-title">闪卡 · 架构与体验</h2>
+<p class="slide-sub">点卡片看答案 · 左右切换</p>
+<div class="flash-wrap" id="flash151" data-cards='[
+  {"q":"四层架构分别是？","a":"Godot 前端 · FastAPI 后端 · HelloAgents 智能体 · LLM/向量/SQLite 外部服务"},
+  {"q":"玩家按 E 后第一跳是？","a":"Godot 经 HTTP 把对话请求打到 FastAPI"},
+  {"q":"每个 NPC 在智能体层是什么？","a":"独立的 SimpleAgent 实例，带自己的记忆与状态"},
+  {"q":"后端默认文档地址？","a":"http://0.0.0.0:8000/docs（启动成功后）"}
+]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta">
+    <span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash151',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash151',1)">下一张</button>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz151" data-label="检测 · 15.1" data-group="15.1 架构">
+
+<h2 class="slide-title">小测 · 15.1</h2>
+<p class="slide-sub">选完看解析</p>
+<p class="quiz-score" id="score-q151"></p>
+<div class="quiz-item" data-quiz="q151" data-answer="1">
+  <h4>1. 赛博小镇采用的总体架构是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">单体 Godot 内嵌 LLM</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">游戏引擎 + 后端服务分离</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">仅浏览器前端无后端</button>
+  <div class="quiz-explain">Godot 负责渲染与输入；Python/FastAPI + HelloAgents 负责智能与状态。</div>
+</div>
+<div class="quiz-item" data-quiz="q151" data-answer="2">
+  <h4>2. NPC 的智能主要落在哪一层？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">Godot GDScript 硬编码</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">SQLite 触发器</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">HelloAgents SimpleAgent</button>
+  <div class="quiz-explain">每个 NPC 一个 Agent；前端只负责展示与发请求。</div>
+</div>
+<div class="quiz-item" data-quiz="q151" data-answer="0">
+  <h4>3. 靠近 NPC 后默认交互键是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">E</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">空格</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">Enter</button>
+  <div class="quiz-explain">提示「按 E 键交互」；对话发送在 UI 内另有按钮/回车。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="simple-agent" data-label="SimpleAgent 创建 NPC" data-group="15.2 NPC">
+
+<h2 class="slide-title">基于 HelloAgents 的 SimpleAgent</h2>
+<p class="slide-sub">15.2.1 · 每 NPC 一个大脑</p>
+<p class="lead">流程：定义 ID/名/职业/性格 → 拼系统提示词 → <code>HelloAgentsLLM</code> + <code>MemoryManager</code> → <code>SimpleAgent</code>。</p>
+<div class="code-block">def create_npc_agent(npc_id, name, role, personality):
+    system_prompt = f"""你是{name},一位{role}。
+你的性格特点:{personality}
+你在Datawhale办公室工作..."""
+    llm = HelloAgentsLLM()
+    memory_manager = MemoryManager(
+        working_memory=WorkingMemory(capacity=10, ttl_minutes=120),
+        episodic_memory=EpisodicMemory(
+            db_path=f"memory_data/{npc_id}_episodic.db",
+            collection_name=f"{npc_id}_memories"))
+    return SimpleAgent(name=name, llm=llm,
+        system_prompt=system_prompt, memory_manager=memory_manager)</div>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-5.png" alt="图 15.5 NPC Agent 工作流程" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.5 NPC Agent 工作流程 · 离线要点</strong><ul><li>收消息 → 检索记忆 → LLM → 回写记忆</li></ul></div>
+  <p class="fig-cap">图 15.5 NPC Agent 工作流程</p>
+</div>
+<div class="note"><strong>参数直觉：</strong>Working 管「最近几句」；Episodic 管「很久以前相关话题」。</div>
+
+</section>
+
+<section class="slide" data-id="roles" data-label="三角色 Prompt" data-group="15.2 NPC">
+
+<h2 class="slide-title">NPC 角色设定与 Prompt</h2>
+<p class="slide-sub">15.2.2 · 性格写进系统提示词</p>
+<div class="compare3">
+  <div class="compare-col a"><h3>张三 · 工程师</h3><ul>
+    <li>严谨、直接</li>
+    <li>爱技术术语</li>
+    <li>在意代码质量</li>
+  </ul></div>
+  <div class="compare-col b"><h3>李四 · 产品</h3><ul>
+    <li>外向、善沟通</li>
+    <li>常问「为什么」</li>
+    <li>站用户视角</li>
+  </ul></div>
+  <div class="compare-col c"><h3>王五 · 设计</h3><ul>
+    <li>温和、有创意</li>
+    <li>审美敏感</li>
+    <li>爱谈视觉与体验</li>
+  </ul></div>
+</div>
+<div class="code-block">npc_zhang = {"npc_id":"zhang_san","name":"张三",
+  "role":"Python工程师",
+  "personality":"严谨、专业、喜欢分享技术知识。说话直接,注重代码质量。"}</div>
+<p>三个配置各一份即可；同一套 <code>create_npc_agent</code>，换字典就换人设。</p>
+
+</section>
+
+<section class="slide" data-id="memory-npc" data-label="记忆系统集成" data-group="15.2 NPC">
+
+<h2 class="slide-title">记忆系统集成</h2>
+<p class="slide-sub">15.2.3 · 短期连贯 + 长期回忆</p>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-6.png" alt="图 15.6 记忆系统架构" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.6 记忆系统架构 · 离线要点</strong><ul><li>Working：容量有限、TTL</li><li>Episodic：向量语义检索</li></ul></div>
+  <p class="fig-cap">图 15.6 记忆系统架构</p>
+</div>
+<div class="loop-stepper" id="memLoop">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showMem(0)">① 近期</button>
+    <button type="button" class="step-btn" onclick="showMem(1)">② 检索</button>
+    <button type="button" class="step-btn" onclick="showMem(2)">③ 上下文</button>
+    <button type="button" class="step-btn" onclick="showMem(3)">④ 生成</button>
+    <button type="button" class="step-btn" onclick="showMem(4)">⑤ 落盘</button>
+  </div>
+  <div class="loop-panel" id="memPanel"></div>
+</div>
+<p class="analogy">玩家说「它是什么颜色？」靠短期指代；说「还记得上次那个项目吗？」靠长期语义检索。</p>
+
+</section>
+
+<section class="slide" data-id="batch" data-label="批量对话生成" data-group="15.2 NPC">
+
+<h2 class="slide-title">批量对话：轻负载模式</h2>
+<p class="slide-sub">15.2.4 · 一次 LLM 生成三位 NPC 背景台词</p>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-7.png" alt="图 15.7 批量 vs 传统" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.7 批量 vs 传统 · 离线要点</strong><ul><li>传统：3 次 API</li><li>批量：1 次 JSON 出三句</li></ul></div>
+  <p class="fig-cap">图 15.7 批量 vs 传统</p>
+</div>
+<p>提示词要求<strong>严格 JSON</strong>：<code>{"张三":"...","李四":"...","王五":"..."}</code>，并给示例，降低解析失败率。</p>
+<div class="tag-row">
+  <span class="tag-pill">背景对话</span><span class="tag-pill">定时氛围</span>
+  <span class="tag-pill">降本</span><span class="tag-pill">同上下文关联</span>
+</div>
+<div class="callout" data-label="适用边界">适合自言自语 / 气泡氛围；玩家按 E 的一对一对话仍走单 Agent 即时响应。</div>
+
+</section>
+
+<section class="slide" data-id="hybrid" data-label="混合模式" data-group="15.2 NPC">
+
+<h2 class="slide-title">批量生成 + 即时响应</h2>
+<p class="slide-sub">15.2.4 · 既省钱又个性化</p>
+<div class="compare">
+  <div class="compare-col a"><h3>后台批量（约每 5 分钟）</h3><ul>
+    <li><code>generate_batch_dialogues()</code></li>
+    <li>写入 state_manager 背景台词</li>
+    <li>靠近未交互时显示「正在调试…」</li>
+  </ul></div>
+  <div class="compare-col b"><h3>POST /dialogue 即时</h3><ul>
+    <li>专属 Agent.run(消息)</li>
+    <li>带记忆 + 好感度</li>
+    <li>保证个性化质量</li>
+  </ul></div>
+</div>
+<details class="expand-card"><summary>四个工程收益</summary>
+<div class="expand-body"><ol>
+<li>降本：背景一次三句</li>
+<li>保质：交互仍单 Agent</li>
+<li>体验：NPC 始终「在活着」</li>
+<li>可调：按负载改批量频率</li>
+</ol></div></details>
+
+</section>
+
+<section class="slide" data-id="flash152" data-label="闪卡 · 15.2" data-group="15.2 NPC">
+
+<h2 class="slide-title">闪卡 · NPC 系统</h2>
+<p class="slide-sub">巩固 Agent / 记忆 / 批量</p>
+<div class="flash-wrap" id="flash152" data-cards='[
+  {"q":"WorkingMemory 示例参数？","a":"capacity=10，ttl_minutes=120（短期、会过期）"},
+  {"q":"批量生成返回格式？","a":"JSON：NPC 名 → 一句话"},
+  {"q":"玩家按 E 用哪条路径？","a":"即时 /dialogue + 专属 Agent，不用批量缓存当最终回复"},
+  {"q":"三 NPC 职业？","a":"张三 Python 工程师 · 李四产品经理 · 王五 UI 设计师"}
+]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta">
+    <span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash152',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash152',1)">下一张</button>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz152" data-label="检测 · 15.2" data-group="15.2 NPC">
+
+<h2 class="slide-title">小测 · 15.2</h2>
+<p class="quiz-score" id="score-q152"></p>
+<div class="quiz-item" data-quiz="q152" data-answer="1">
+  <h4>1. 长期对话回忆主要靠？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">仅 WorkingMemory</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">EpisodicMemory 语义检索</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">Godot 本地文件</button>
+  <div class="quiz-explain">Episodic + 向量检索找相关历史；Working 只管最近窗口。</div>
+</div>
+<div class="quiz-item" data-quiz="q152" data-answer="0">
+  <h4>2. 批量生成最适合？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">NPC 背景台词 / 氛围更新</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">替代所有玩家对话</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">渲染像素图</button>
+  <div class="quiz-explain">玩家交互仍即时 Agent，批量只管「看起来在忙」。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="affinity-lv" data-label="好感度五级" data-group="15.3 好感度">
+
+<h2 class="slide-title">好感度等级划分</h2>
+<p class="slide-sub">15.3.1 · 0–100 分五档</p>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-8.png" alt="图 15.8 好感度等级" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.8 好感度等级 · 离线要点</strong><ul><li>陌生→熟悉→友好→亲密→挚友</li></ul></div>
+  <p class="fig-cap">图 15.8 好感度等级</p>
+</div>
+<table class="matrix">
+<thead><tr><th>等级</th><th>分数</th><th>行为倾向</th></tr></thead>
+<tbody>
+<tr><td>陌生</td><td>0–20</td><td>礼貌疏远、回复短</td></tr>
+<tr><td>熟悉</td><td>21–40</td><td>自然交流、偶提工作</td></tr>
+<tr><td>友好</td><td>41–60</td><td>更详细、会主动问你</td></tr>
+<tr><td>亲密</td><td>61–80</td><td>私人话题、热情建议</td></tr>
+<tr><td>挚友</td><td>81–100</td><td>无话不谈、分享感受</td></tr>
+</tbody></table>
+<p class="note"><strong>玩法钩子：</strong>高好感再解锁特殊情报 / 任务（扩展方向）。</p>
+
+</section>
+
+<section class="slide" data-id="affinity-calc" data-label="好感度计算" data-group="15.3 好感度">
+
+<h2 class="slide-title">好感度计算逻辑</h2>
+<p class="slide-sub">15.3.2 · LLM 判态度，不是死加分</p>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-9.png" alt="图 15.9 计算流程" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.9 计算流程 · 离线要点</strong><ul><li>对话 → 情感分析 → Δ分 → clamp 0–100 → 更新等级</li></ul></div>
+  <p class="fig-cap">图 15.9 计算流程</p>
+</div>
+<div class="code-block"># 友好 +5 · 中立 +2 · 不友好 -3（再 clamp 到 [-3,5]）
+score_change = analyze_sentiment(player_message, npc_reply)
+new_score = max(0, min(100, current + score_change))
+level = get_affinity_level(new_score)</div>
+<div class="callout" data-label="容错">解析失败默认 +2（中立），避免一次坏响应毁掉关系曲线。</div>
+
+</section>
+
+<section class="slide" data-id="affinity-prompt" data-label="好感度影响对话" data-group="15.3 好感度">
+
+<h2 class="slide-title">好感度如何改说话方式</h2>
+<p class="slide-sub">15.3.3 · 动态拼接系统提示词</p>
+<div class="code-block">affinity_prompts = {
+  "陌生": "保持礼貌但不要过于热情。回复简短专业。",
+  "熟悉": "可以进行正常的交流。回复自然友好。",
+  "友好": "愿意分享更多信息。回复详细热情。",
+  "亲密": "可以分享私人话题。回复充满关心。",
+  "挚友": "无话不谈。回复亲切真诚。"
+}
+system_prompt = f"""你是{name}...
+当前与玩家的关系:{affinity_level}
+{affinity_prompts[affinity_level]}
+..."""</div>
+<p class="lead">分数是「背后账本」；玩家感到的是<strong>语气与信息密度</strong>在变。</p>
+
+</section>
+
+<section class="slide" data-id="quiz153" data-label="检测 · 15.3" data-group="15.3 好感度">
+
+<h2 class="slide-title">小测 · 15.3</h2>
+<p class="quiz-score" id="score-q153"></p>
+<div class="quiz-item" data-quiz="q153" data-answer="2">
+  <h4>1. 81–100 分对应？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">友好</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">亲密</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">挚友</button>
+  <div class="quiz-explain">挚友 81–100；亲密 61–80；友好 41–60。</div>
+</div>
+<div class="quiz-item" data-quiz="q153" data-answer="1">
+  <h4>2. 好感变化的主要判据来自？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">固定每次 +1</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">LLM 情感分析对话</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">Godot 碰撞次数</button>
+  <div class="quiz-explain">RelationshipManager.analyze_sentiment 用 LLM 判友好/中立/不友好。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="fastapi" data-label="FastAPI 应用结构" data-group="15.4 后端">
+
+<h2 class="slide-title">FastAPI 应用结构</h2>
+<p class="slide-sub">15.4.1 · main.py 入口</p>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-10.png" alt="图 15.10 后端应用结构" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.10 后端应用结构 · 离线要点</strong><ul><li>agents · relationship · state · logger · config · models</li></ul></div>
+  <p class="fig-cap">图 15.10 后端应用结构</p>
+</div>
+<ul>
+  <li>CORS：允许 Godot 跨域（生产应收紧 origins）</li>
+  <li><code>startup</code>：初始化 NPC Agents + 状态</li>
+  <li><code>GET /</code>：健康检查与 NPC 数量</li>
+  <li><code>uvicorn</code> 按 settings 的 HOST/PORT 启动</li>
+</ul>
+<div class="path-hint">核心管理器：NPCAgentManager · RelationshipManager · StateManager · DialogueLogger</div>
+
+</section>
+
+<section class="slide" data-id="api-routes" data-label="API 路由设计" data-group="15.4 后端">
+
+<h2 class="slide-title">核心 API 路由</h2>
+<p class="slide-sub">15.4.2 · 状态 / 对话 / 好感度</p>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-11.png" alt="图 15.11 API 调用流程" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.11 API 调用流程 · 离线要点</strong><ul><li>校验 → busy → Agent → 好感 → 日志 → 释放</li></ul></div>
+  <p class="fig-cap">图 15.11 API 调用流程</p>
+</div>
+<div class="kw-grid">
+  <div class="kw"><h4>GET /npcs/status</h4><p>全部 NPC 状态</p></div>
+  <div class="kw"><h4>GET /npcs/{id}/status</h4><p>单个状态</p></div>
+  <div class="kw"><h4>POST /dialogue</h4><p>核心对话闭环</p></div>
+  <div class="kw"><h4>GET /affinity/...</h4><p>查好感度</p></div>
+</div>
+<details class="expand-card"><summary>/dialogue 九步清单</summary>
+<div class="expand-body"><ol>
+<li>校验 NPC 存在</li><li>忙碌则 409</li><li>标记 busy</li>
+<li>取好感等级</li><li>Agent 生成</li><li>更新好感</li>
+<li>写日志</li><li>返回回复</li><li>finally 释放 busy</li>
+</ol></div></details>
+
+</section>
+
+<section class="slide" data-id="state-log" data-label="状态与日志" data-group="15.4 后端">
+
+<h2 class="slide-title">状态管理与日志系统</h2>
+<p class="slide-sub">15.4.3 · 防并发 + 可观测</p>
+<div class="compare">
+  <div class="compare-col a"><h3>StateManager</h3><ul>
+    <li>位置、busy、动作</li>
+    <li>避免一 NPC 多玩家同时聊</li>
+    <li>可挂背景台词字段</li>
+  </ul></div>
+  <div class="compare-col b"><h3>DialogueLogger</h3><ul>
+    <li>控制台 + 按日文件</li>
+    <li>好感 Δ、记忆命中、情感</li>
+    <li>排障与产品分析原料</li>
+  </ul></div>
+</div>
+<p class="analogy">busy 像「厕所门锁」：占着就 409，说完 finally 开门。</p>
+
+</section>
+
+<section class="slide" data-id="godot-scene" data-label="Godot 场景与节点" data-group="15.4 后端">
+
+<h2 class="slide-title">理解 Godot 场景系统</h2>
+<p class="slide-sub">15.4.4 · 场景 = 可复用预制件</p>
+<div class="kw-grid">
+  <div class="kw"><h4>节点 Node</h4><p>乐高块：Sprite2D、CharacterBody2D、Audio…</p></div>
+  <div class="kw"><h4>场景 Scene</h4><p><code>.tscn</code> 节点树；可嵌套实例化</p></div>
+</div>
+<div class="code-block">Player (CharacterBody2D)
+├─ AnimatedSprite2D
+├─ CollisionShape2D
+└─ Camera2D</div>
+<div class="note"><strong>为何 NPC 共用一个场景？</strong>改一次气泡/碰撞，张三李四王五全更新；差异用导出变量填。</div>
+
+</section>
+
+<section class="slide" data-id="quiz154" data-label="检测 · 15.4" data-group="15.4 后端">
+
+<h2 class="slide-title">小测 · 15.4</h2>
+<p class="quiz-score" id="score-q154"></p>
+<div class="quiz-item" data-quiz="q154" data-answer="1">
+  <h4>1. NPC 忙碌时对话接口应？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">静默丢弃</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">返回 409</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">返回 301</button>
+  <div class="quiz-explain">冲突资源用 409；finally 里释放 busy。</div>
+</div>
+<div class="quiz-item" data-quiz="q154" data-answer="0">
+  <h4>2. Godot 里「场景」更接近？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">可复用的节点树预制件</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">仅一张背景图</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">Python 模块</button>
+  <div class="quiz-explain">.tscn 保存节点树，可多次实例化。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="why-godot" data-label="为何选 Godot" data-group="15.5 Godot">
+
+<h2 class="slide-title">为什么选择 Godot</h2>
+<p class="slide-sub">15.5 开头 · 引擎选型</p>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>2D 友好</h3><p class="flip-hint">翻转</p></div>
+    <div class="flip-face back"><p>TileMap / AnimatedSprite2D / CharacterBody2D 成熟。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>开源免费</h3><p class="flip-hint">翻转</p></div>
+    <div class="flip-face back"><p>MIT，教学与开源友好，无运行时抽成焦虑。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>GDScript</h3><p class="flip-hint">翻转</p></div>
+    <div class="flip-face back"><p>语法像 Python，学过 Python 上手极快。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>易接后端</h3><p class="flip-hint">翻转</p></div>
+    <div class="flip-face back"><p>HTTPRequest 直连 FastAPI，前后端可独立测。</p></div>
+  </div></div>
+</div>
+<p class="callout" data-label="边界">大型重度 3D 可另选引擎；本项目 2D 像素办公室足够。</p>
+
+</section>
+
+<section class="slide" data-id="scenes4" data-label="四核心场景" data-group="15.5 Godot">
+
+<h2 class="slide-title">场景设计与资源组织</h2>
+<p class="slide-sub">15.5.1 · Main / Player / NPC / DialogueUI</p>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-12.png" alt="图 15.12 四个核心场景" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.12 四个核心场景 · 离线要点</strong><ul><li>Main 组合实例</li><li>Player/NPC/UI 独立可测</li></ul></div>
+  <p class="fig-cap">图 15.12 四个核心场景</p>
+</div>
+<ol>
+<li>建 Player.tscn（CharacterBody2D + 动画碰撞相机音效）</li>
+<li>建 NPC.tscn（交互 Area2D + 名称/气泡 Label）</li>
+<li>建 DialogueUI.tscn（CanvasLayer + 输入发送）</li>
+<li>Main 里实例化：背景、Player、三 NPC、UI、墙体、BGM</li>
+</ol>
+<div class="note">三 NPC = <strong>同一场景实例化三次</strong>，导出不同 npc_id / 名字。</div>
+
+</section>
+
+<section class="slide" data-id="player-ctl" data-label="玩家控制" data-group="15.5 Godot">
+
+<h2 class="slide-title">玩家控制实现</h2>
+<p class="slide-sub">15.5.2 · WASD · 动画 · 交互锁</p>
+<div class="loop-stepper" id="playerLoop">
+  <div class="steps steps4">
+    <button type="button" class="step-btn on" onclick="showPlayer(0)">输入</button>
+    <button type="button" class="step-btn" onclick="showPlayer(1)">移动</button>
+    <button type="button" class="step-btn" onclick="showPlayer(2)">动画</button>
+    <button type="button" class="step-btn" onclick="showPlayer(3)">交互锁</button>
+  </div>
+  <div class="loop-panel" id="playerPanel"></div>
+</div>
+<div class="code-block"># 关键：加入 "player" 组，NPC 靠组识别
+add_to_group("player")
+# 物理帧：is_interacting 则速度清零 + idle
+var input_direction = Input.get_vector("ui_left","ui_right","ui_up","ui_down")
+velocity = input_direction * speed
+move_and_slide()</div>
+
+</section>
+
+<section class="slide" data-id="npc-interact" data-label="NPC 行为与交互" data-group="15.5 Godot">
+
+<h2 class="slide-title">NPC 行为与交互</h2>
+<p class="slide-sub">15.5.3 · 靠近提示 · 按 E · 信号</p>
+<ul>
+  <li><code>InteractionArea</code>：body_entered / exited 维护 nearby</li>
+  <li>提示文案：「按 E 键交互」</li>
+  <li>E → 发信号给 Main / DialogueUI，带上 npc_id</li>
+  <li>可显示后台批量的背景台词气泡</li>
+</ul>
+<details class="expand-card"><summary>模块化好处</summary>
+<div class="expand-body"><p>碰撞形状、提示逻辑改在 NPC.tscn 一次完成；Main 只负责接线（信号 → API → UI）。</p></div></details>
+
+</section>
+
+<section class="slide" data-id="quiz155" data-label="检测 · 15.5" data-group="15.5 Godot">
+
+<h2 class="slide-title">小测 · 15.5</h2>
+<p class="quiz-score" id="score-q155"></p>
+<div class="quiz-item" data-quiz="q155" data-answer="2">
+  <h4>1. 三个办公室 NPC 推荐怎么做？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">复制三份完全不同的节点树手改</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">只用一张图没有场景</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">同一 NPC.tscn 实例化三次</button>
+  <div class="quiz-explain">场景实例化是 Godot 的核心复用手段。</div>
+</div>
+<div class="quiz-item" data-quiz="q155" data-answer="0">
+  <h4>2. 对话中禁用移动靠？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">is_interacting 标志</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">删除 Player 节点</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">关掉整个 Main</button>
+  <div class="quiz-explain">交互时 velocity=0 并播 idle，结束后再解锁。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="api-client" data-label="API 客户端" data-group="15.6 通信">
+
+<h2 class="slide-title">API 客户端封装</h2>
+<p class="slide-sub">15.6.1 · api_client.gd</p>
+<p>用 <code>HTTPRequest</code> 封装：基址、超时、JSON 编解码、信号回调（成功/失败）。</p>
+<div class="kw-grid">
+  <div class="kw"><h4>request_dialogue</h4><p>POST /dialogue</p></div>
+  <div class="kw"><h4>fetch_npc_status</h4><p>GET /npcs/status</p></div>
+  <div class="kw"><h4>get_affinity</h4><p>可选查询</p></div>
+  <div class="kw"><h4>信号</h4><p>dialogue_received / request_failed</p></div>
+</div>
+<div class="note"><strong>异步：</strong>请求发出后游戏继续跑；回包再更新 UI，避免卡死帧。</div>
+
+</section>
+
+<section class="slide" data-id="dialogue-ui" data-label="对话 UI" data-group="15.6 通信">
+
+<h2 class="slide-title">对话 UI 实现</h2>
+<p class="slide-sub">15.6.2 · 输入框与展示</p>
+<ul>
+  <li>显示 NPC 名 / 职称</li>
+  <li>RichTextLabel 展示回复</li>
+  <li>LineEdit + 发送 / 关闭</li>
+  <li>发送中可禁用按钮防连点</li>
+</ul>
+<p class="analogy">UI 像电话听筒：只负责说与听；真正「思考」在后端 Agent。</p>
+
+</section>
+
+<section class="slide" data-id="main-wire" data-label="主场景整合" data-group="15.6 通信">
+
+<h2 class="slide-title">主场景整合</h2>
+<p class="slide-sub">15.6.3 · 信号把一切焊上</p>
+<div class="loop-stepper" id="wireLoop">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showWire(0)">E 交互</button>
+    <button type="button" class="step-btn" onclick="showWire(1)">开 UI</button>
+    <button type="button" class="step-btn" onclick="showWire(2)">发 API</button>
+    <button type="button" class="step-btn" onclick="showWire(3)">回写</button>
+    <button type="button" class="step-btn" onclick="showWire(4)">定时状态</button>
+  </div>
+  <div class="loop-panel" id="wirePanel"></div>
+</div>
+<p>定时拉 NPC 状态 → 更新气泡背景台词 → 办公室一直「有动静」。</p>
+
+</section>
+
+<section class="slide" data-id="quiz156" data-label="检测 · 15.6" data-group="15.6 通信">
+
+<h2 class="slide-title">小测 · 15.6</h2>
+<p class="quiz-score" id="score-q156"></p>
+<div class="quiz-item" data-quiz="q156" data-answer="1">
+  <h4>1. Godot 调 FastAPI 主要用？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">直接 import Python</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">HTTPRequest + REST</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">仅本地文件管道</button>
+  <div class="quiz-explain">前后端分离，HTTP JSON 是本章默认方案。</div>
+</div>
+<div class="quiz-item" data-quiz="q156" data-answer="0">
+  <h4>2. 组件间推荐耦合方式？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">信号（松耦合）</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">全局硬编码互相 get_node 乱改</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">把逻辑全写进一个 2000 行脚本</button>
+  <div class="quiz-explain">信号让 Player / NPC / UI / API 可独立测。</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="review" data-label="本章回顾" data-group="15.7 总结">
+
+<h2 class="slide-title">本章回顾</h2>
+<p class="slide-sub">15.7.1 · 五块积木</p>
+<div class="fig" data-offline="1">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/15-figures/15-15.png" alt="图 15.15 技术栈" loading="lazy" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>图 15.15 技术栈 · 离线要点</strong><ul><li>Godot · FastAPI · HelloAgents · LLM/向量/SQLite</li></ul></div>
+  <p class="fig-cap">图 15.15 技术栈</p>
+</div>
+<div class="arch-stack">
+  <div class="arch-block enc">分层架构<span class="sub">渲染 / API / Agent / 外部服务</span></div>
+  <div class="arch-block dec">NPC 智能<span class="sub">SimpleAgent + 角色 Prompt + 记忆</span></div>
+  <div class="arch-block head">关系系统<span class="sub">五级好感 + 动态语气</span></div>
+  <div class="arch-block base">Godot 工程<span class="sub">场景实例化 + HTTP + 信号</span></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="extend" data-label="扩展方向" data-group="15.7 总结">
+
+<h2 class="slide-title">可以往哪长</h2>
+<p class="slide-sub">15.7.2 · 七条路线</p>
+<details class="expand-card" open><summary>① 多人在线</summary><div class="expand-body">WebSocket + 持久化；每玩家独立好感。</div></details>
+<details class="expand-card"><summary>② 任务系统</summary><div class="expand-body">好感门槛触发调试/调研/评设计等任务。</div></details>
+<details class="expand-card"><summary>③ NPC 互聊</summary><div class="expand-body">后台自动对话，玩家旁观办公室八卦。</div></details>
+<details class="expand-card"><summary>④ 情感状态</summary><div class="expand-body">开心/难过等影响语气与主动性。</div></details>
+<details class="expand-card"><summary>⑤ 动态事件</summary><div class="expand-body">会议、派对、紧急任务。</div></details>
+<details class="expand-card"><summary>⑥ 更大世界</summary><div class="expand-body">咖啡厅、图书馆、公园多场景。</div></details>
+<details class="expand-card"><summary>⑦ 个性化学习</summary><div class="expand-body">记住玩家偏好与活跃时段。</div></details>
+
+</section>
+
+<section class="slide" data-id="challenges" data-label="挑战与展望" data-group="15.7 总结">
+
+<h2 class="slide-title">思考与展望</h2>
+<p class="slide-sub">15.7.3 · 潜力与三座山</p>
+<div class="compare3">
+  <div class="compare-col a"><h3>成本</h3><p>每句对话打 LLM，MMO 级会很贵 → 批量/缓存/本地小模型。</p></div>
+  <div class="compare-col b"><h3>延迟</h3><p>推理+网络可能数秒 → 打字机动画、预生成、边缘推理。</p></div>
+  <div class="compare-col c"><h3>可控</h3><p>生成内容需 Prompt + 过滤护栏。</p></div>
+</div>
+<p class="lead">趋势：更快更便宜的 LLM、端侧小模型，让「真 NPC」从 Demo 走向产品。</p>
+<div class="note"><strong>下一部分：</strong>毕业设计——单智能体 / 多智能体通用 Agent，进入你的创作时间。</div>
+
+</section>
+
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="15.7 总结">
+
+<h2 class="slide-title">自测清单</h2>
+<p class="slide-sub">点选勾掉 · 过关再用</p>
+<ul class="check-list" id="checklist">
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能画出四层架构并说出各层职责</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能说清一次按 E 的端到端数据流</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">会用 SimpleAgent + Working/Episodic 建 NPC</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">分清批量背景台词 vs 即时对话</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">记住五级好感分数带与 Prompt 挂钩方式</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">知道 /dialogue 为何要 busy + finally</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">理解 Godot 场景实例化与信号接线</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">本地跑通 backend + Godot Demo</span></li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="end" data-label="下一章预告" data-group="15.7 总结">
+
+<h2 class="slide-title">赛博小镇 · 完</h2>
+<p class="slide-sub">Lab 15 收官</p>
+<p class="lead">你已经把「Agent 理论」焊进了可玩的像素世界。接下来的毕业设计章节，会把舞台交给你：用单智能体与多智能体构造通用智能体。</p>
+<div class="goals">
+  <div class="goal"><div class="goal-n">代码</div><p><code>code/chapter15/Helloagents-AI-Town</code></p></div>
+  <div class="goal"><div class="goal-n">原书</div><p><code>docs/chapter15/第十五章 构建赛博小镇.md</code></p></div>
+  <div class="goal"><div class="goal-n">学习版</div><p><code>docs/chapter15/第十五章 构建赛博小镇-学习版.md</code></p></div>
+</div>
+<p class="kbd-hint">恭喜完成本章互动教程。可用侧栏回看任意小节。</p>
+
+</section>
+</div>
+  </main>
+</div>
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  progressFill.style.width = ((idx + 1) / slides.length) * 100 + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  flashState[id] = { cards: JSON.parse(wrap.dataset.cards), i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id], wrap = document.getElementById(id), card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+["flash151","flash152"].forEach(initFlash);
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer), chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+const flowTexts = [
+  { t: "① 玩家按 E", p: "靠近 NPC，Godot 打开交互，准备发送对话。" },
+  { t: "② HTTP API", p: "api_client 把 npc_id、player_message POST 到 FastAPI。" },
+  { t: "③ SimpleAgent", p: "对应 NPC 的 Agent 接手；按角色 Prompt 工作。" },
+  { t: "④ 记忆检索", p: "Working 取近期 + Episodic 搜相关历史，再调 LLM。" },
+  { t: "⑤ 状态与日志", p: "更新好感度，写 dialogue 日志，释放 busy。" },
+  { t: "⑥ 回写 UI", p: "JSON 返回 npc_reply；Godot 对话框展示。" }
+];
+function showFlow(n) {
+  document.querySelectorAll("#flowLoop .step-btn").forEach((b,i)=>b.classList.toggle("on", i===n));
+  document.getElementById("flowPanel").innerHTML = `<h4>${flowTexts[n].t}</h4><p>${flowTexts[n].p}</p>`;
+}
+showFlow(0);
+
+const memTexts = [
+  { t: "① 短期近期", p: "working_memory.get_recent_messages(5) 保连贯。" },
+  { t: "② 长期检索", p: "episodic_memory.search(query, top_k=3) 找相关往事。" },
+  { t: "③ 拼上下文", p: "recent + relevant 一起交给 Agent。" },
+  { t: "④ 生成回复", p: "agent.run(player_message, context=...)" },
+  { t: "⑤ 写入记忆", p: "add_interaction 把本轮问答落入记忆系统。" }
+];
+function showMem(n) {
+  document.querySelectorAll("#memLoop .step-btn").forEach((b,i)=>b.classList.toggle("on", i===n));
+  document.getElementById("memPanel").innerHTML = `<h4>${memTexts[n].t}</h4><p>${memTexts[n].p}</p>`;
+}
+showMem(0);
+
+const playerTexts = [
+  { t: "输入向量", p: "Input.get_vector 读方向（可绑 WASD / 方向键）。" },
+  { t: "物理移动", p: "velocity = dir * speed；move_and_slide()。" },
+  { t: "四向动画", p: "按主方向播 walk_* / idle，必要时 flip_h。" },
+  { t: "交互锁定", p: "is_interacting 时清零速度、停走路音效，防边走边聊。" }
+];
+function showPlayer(n) {
+  document.querySelectorAll("#playerLoop .step-btn").forEach((b,i)=>b.classList.toggle("on", i===n));
+  document.getElementById("playerPanel").innerHTML = `<h4>${playerTexts[n].t}</h4><p>${playerTexts[n].p}</p>`;
+}
+showPlayer(0);
+
+const wireTexts = [
+  { t: "E 交互", p: "NPC 检测玩家在 InteractionArea，发交互信号。" },
+  { t: "打开 UI", p: "DialogueUI 显示名称职称，玩家输入框获焦。" },
+  { t: "发 API", p: "ApiClient.request_dialogue → POST /dialogue。" },
+  { t: "回写展示", p: "dialogue_received → 填充回复；结束可关 UI 解锁移动。" },
+  { t: "定时状态", p: "轮询 /npcs/status，刷新背景台词气泡。" }
+];
+function showWire(n) {
+  document.querySelectorAll("#wireLoop .step-btn").forEach((b,i)=>b.classList.toggle("on", i===n));
+  document.getElementById("wirePanel").innerHTML = `<h4>${wireTexts[n].t}</h4><p>${wireTexts[n].p}</p>`;
+}
+showWire(0);
+
+goTo(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第九章 · 上下文工程 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 09 Signal
+   Same product line as Ch1–Ch8; coral / warm-amber primary signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(224, 122, 74, 0.14);
+  --line-strong: rgba(224, 122, 74, 0.36);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #e07a4a;
+  --signal-bright: #f4a574;
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(224, 122, 74, 0.18), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(232, 168, 74, 0.10), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--amber), var(--cyan));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(224, 122, 74, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(224, 122, 74, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(244, 165, 116, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(224,122,74,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(224, 122, 74, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.cover-hero {
+  margin: 1rem 0 1.4rem; border: 1px solid var(--line-strong);
+  background: var(--panel); overflow: hidden;
+}
+.cover-hero img { width: 100%; height: auto; display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps7 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: rgba(224,122,74,0.12);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.arch-block.base { border-left: 3px solid var(--mint); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  transition: border-color 0.2s;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.05rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; margin-top: 1rem; color: var(--paper);
+  border-top: 1px solid var(--line); padding-top: 1rem; font-size: 0.95rem;
+}
+.flash-card.revealed .a { display: block; }
+.flash-idx {
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-mute); margin-bottom: 0.75rem; letter-spacing: 0.06em;
+}
+.flash-nav { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  margin-bottom: 0.75rem; color: var(--text);
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.4rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224,107,90,0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.75rem; padding: 0.75rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(224,122,74,0.08); color: var(--text-dim);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.78rem;
+  color: var(--cyan-bright); margin-top: 0.5rem;
+}
+.check-list { list-style: none; margin: 1rem 0; }
+.check-list li {
+  display: flex; align-items: flex-start; gap: 0.65rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--line);
+  color: var(--text-dim); font-size: 0.92rem;
+}
+.check-list input {
+  margin-top: 0.25rem; accent-color: var(--signal);
+  width: 18px; height: 18px; flex-shrink: 0;
+}
+.goal-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.goal-card {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; position: relative;
+}
+.goal-card .tag {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.goal-card h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+.goal-card p { font-size: 0.85rem; margin: 0; }
+.budget-lab {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1.15rem; margin: 1.2rem 0;
+}
+.budget-lab label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.08em; color: var(--text-mute);
+  display: block; margin-bottom: 0.35rem; text-transform: uppercase;
+}
+.budget-lab input[type="range"] {
+  width: 100%; accent-color: var(--signal); margin-bottom: 0.85rem;
+}
+.budget-bar {
+  display: flex; height: 36px; border: 1px solid var(--line-strong);
+  overflow: hidden; margin: 0.75rem 0;
+  font-family: var(--font-display); font-size: 0.65rem;
+}
+.budget-seg {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink); font-weight: 600; transition: width 0.3s ease;
+  overflow: hidden; white-space: nowrap;
+}
+.budget-seg.sys { background: var(--signal); }
+.budget-seg.ev { background: var(--cyan); }
+.budget-seg.ctx { background: var(--amber); }
+.budget-seg.free { background: var(--panel-2); color: var(--text-mute); }
+.budget-meta {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  color: var(--text-dim); line-height: 1.6;
+}
+.budget-warn {
+  margin-top: 0.65rem; padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--amber); background: var(--amber-dim);
+  font-size: 0.88rem; color: var(--paper); display: none;
+}
+.budget-warn.show { display: block; }
+.template-map {
+  display: grid; gap: 0.35rem; margin: 1rem 0;
+  font-family: var(--font-mono); font-size: 0.8rem;
+}
+.template-map div {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 0.55rem 0.85rem; color: var(--text-dim);
+}
+.template-map div strong { color: var(--signal-bright); font-weight: 500; }
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 40;
+}
+.overlay.show { display: block; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: min(86vw, 300px);
+    z-index: 50; transform: translateX(-105%); transition: transform 0.3s;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3 { grid-template-columns: 1fr; }
+  .loop-stepper .steps,
+  .loop-stepper .steps.steps5,
+  .loop-stepper .steps.steps3,
+  .loop-stepper .steps.steps4,
+  .loop-stepper .steps.steps7 { grid-template-columns: repeat(2, 1fr); }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+}
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 09</div>
+      <h1>第九章 · 上下文工程</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>进度</span>
+        <span id="progressText">1 / 1</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">CORAL SIGNAL · ← → 翻页</div>
+  </aside>
+
+  <main class="stage">
+    <div class="topbar">
+      <button class="menu-btn" type="button" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button class="btn" id="btnPrev" type="button">← 上一页</button>
+        <button class="btn btn-primary" id="btnNext" type="button">下一页 →</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+
+<!--
+  COVERAGE CHECKLIST (源文档小节对照 · 第九章 上下文工程.md)
+  [x] 开篇：安装 hello-agents[all]==0.2.8 · ContextBuilder / NoteTool / TerminalTool
+  [x] 9.1 什么是上下文工程 · vs 提示工程 · 图9.1
+  [x] 新手术语加厚：Context Window / 压缩 / 写入·选择·隔离 / Prompt 装配
+  [x] 与第八章「记忆与检索」边界对照
+  [x] 9.2 为什么重要 · 上下文腐蚀 · 注意力预算 · Transformer n²
+  [x] 9.2.1 有效上下文解剖学：System Prompt / Tools / Few-shot · 图9.2
+  [x] 9.2.2 JIT 上下文 · 智能体式搜索 · 渐进式披露 · 混合策略
+  [x] 9.2.3 长时程：Compaction / Structured notes / Sub-agent
+  [x] 9.3.1–9.3.2 设计动机 · ContextPacket · ContextConfig
+  [x] 9.3.3 GSSC 流水线可视化 · 窗口预算步进
+  [x] 9.3.4–9.3.5 使用示例 · Agent 集成 · 最佳实践
+  [x] 9.4 NoteTool：理念 · vs MemoryTool · YAML+MD · 七操作 · 集成 · 最佳实践
+  [x] 9.5 TerminalTool：JIT 文件 · 四层安全 · 模式 · 协同
+  [x] 9.6 代码库维护助手：场景 · 三层架构 · 流程 · 效果
+  [x] 9.7 总结 · 自测清单 · 习题导读
+-->
+
+<section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
+
+<p class="slide-sub">Lab 09 · Industrial Blueprint</p>
+<h2 class="slide-title">第九章 · 上下文工程</h2>
+<p class="lead">仅有记忆与检索还不够——每次调用模型前，如何以可复用、可度量的方式拼装「最优信息集合」？本章带你进入 Context Engineering。</p>
+<div class="cover-hero"><img src="assets/ch9_cover.svg" alt="Lab 09 GSSC 与窗口预算"/></div>
+<div class="note"><strong>本章交付物：</strong>ContextBuilder（GSSC）· NoteTool · TerminalTool · 代码库维护助手长程案例。<br/><strong>细读文本：</strong>同目录上级 <code>第九章 上下文工程-学习版.md</code>（与本 HTML 互补）。</div>
+
+</section>
+
+<section class="slide" data-id="goals" data-label="本章地图" data-group="开篇">
+
+<p class="slide-sub">9.1 → 9.7 · 理论到长程实战</p>
+<h2 class="slide-title">本章地图</h2>
+<div class="goal-grid">
+  <div class="goal-card"><div class="tag">9.1–9.2</div><h3>心智模型</h3><p>提示工程 → 上下文工程；腐蚀、注意力预算、JIT、三大长程策略。</p></div>
+  <div class="goal-card"><div class="tag">9.3</div><h3>ContextBuilder</h3><p>Gather-Select-Structure-Compress 流水线与 token 预算守护。</p></div>
+  <div class="goal-card"><div class="tag">9.4–9.5</div><h3>外部记忆与即时探索</h3><p>NoteTool 结构化笔记；TerminalTool 安全终端。</p></div>
+  <div class="goal-card"><div class="tag">9.6–9.7</div><h3>整合实战</h3><p>代码库维护助手；总结与自测。</p></div>
+</div>
+<div class="callout" data-label="学习目标">学完后你应能：解释上下文窗口与腐蚀；画出 GSSC；区分 MemoryTool / NoteTool / TerminalTool；说明与第八章的边界。</div>
+
+</section>
+
+<section class="slide" data-id="install" data-label="安装与组件" data-group="开篇">
+
+<p class="slide-sub">开篇 · hello-agents 0.2.8</p>
+<h2 class="slide-title">安装与三大组件</h2>
+<div class="code-block">pip install "hello-agents[all]==0.2.8"</div>
+<p>配置 <code>.env</code> 中的 LLM API 后即可上手。本章新增：</p>
+<div class="arch-stack">
+  <div class="arch-block enc">ContextBuilder <span class="sub">hello_agents/context/builder.py · GSSC 统一接口</span></div>
+  <div class="arch-block head">NoteTool <span class="sub">结构化 Markdown 笔记 · 长时程外部记忆</span></div>
+  <div class="arch-block dec">TerminalTool <span class="sub">沙箱命令行 · JIT 文件系统访问</span></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="terms" data-label="新手术语加厚" data-group="开篇">
+
+<p class="slide-sub">贯穿全章 · 建议收藏</p>
+<h2 class="slide-title">先把词说人话</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>Context Window</h3><span class="en">上下文窗口</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>模型一次能「看见」的 token 容量上限。像办公桌面积：东西再多也只能摊开这么大一桌。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>压缩 / Compaction</h3><span class="en">窗口接力</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>桌面快满时，把旧材料浓缩成摘要便签，腾出空间继续干——不是删光，是高保真浓缩后重启。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>写入 · 选择 · 隔离</h3><span class="en">Write / Select / Isolate</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p><strong>写</strong>到窗外（笔记/文件）；<strong>选</strong>高信号进窗；<strong>隔</strong>开脏活到子代理干净窗口，只回摘要。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>Prompt 装配</h3><span class="en">Context Assembly</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>不是只改一句人话提示，而是把角色、任务、证据、历史、输出约束按骨架拼成「这一轮该看见的全部」。</p></div>
+  </div></div>
+</div>
+<div class="analogy">上下文工程 ≈ 每次开会前整理议程包：该带什么材料、预算多少页、过时附件归档——而不是只练「开场白怎么说」。</div>
+
+</section>
+
+<section class="slide" data-id="ch8-boundary" data-label="与第八章边界" data-group="开篇">
+
+<p class="slide-sub">Memory/RAG vs Context Engineering</p>
+<h2 class="slide-title">第八章与第九章：谁管什么？</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>第八章 · 记忆与检索</h3>
+    <ul>
+      <li>记住什么、如何存（Working/Episodic/Semantic…）</li>
+      <li>如何从知识库/向量库 <strong>找回</strong> 相关片段</li>
+      <li>工具：MemoryTool、RAGTool</li>
+      <li>回答：「库里有没有、找不找得到」</li>
+    </ul>
+  </div>
+  <div class="compare-col b"><h3>第九章 · 上下文工程</h3>
+    <ul>
+      <li>这一次调用，窗口里该放哪些 token</li>
+      <li>预算、排序、骨架、压缩、JIT 加载</li>
+      <li>工具：ContextBuilder、NoteTool、TerminalTool</li>
+      <li>回答：「放什么、放多少、怎么拼、超了怎么办」</li>
+    </ul>
+  </div>
+</div>
+<div class="compare-vs">BOUNDARY</div>
+<div class="note"><strong>一句话：</strong>第八章管「记与找」；第九章管「装进窗口的工程」。二者协作——检索结果只是候选，ContextBuilder 才决定最终入场券。</div>
+
+</section>
+
+<section class="slide" data-id="what-ce" data-label="什么是上下文工程" data-group="9.1 概念">
+
+<p class="slide-sub">9.1 · Context Engineering</p>
+<h2 class="slide-title">什么是上下文工程</h2>
+<p class="lead">上下文 = 对 LLM 采样时包含的那组 tokens。工程问题是：在模型固有约束下，优化这些 tokens 的效用。</p>
+<p>核心问题从「提示怎么写」升级为：<strong>什么样的上下文配置，最有可能让模型产出期望行为？</strong></p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/9-figures/9-1.webp" alt="图9.1" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 9.1（离线要点）</strong><br>提示工程 ⊂ 上下文工程：后者覆盖系统指令、工具、MCP、外部数据、消息历史等进入窗口的一切。</div>
+  <p class="fig-cap">图 9.1 Prompt engineering vs Context engineering</p>
+</div>
+
+</section>
+
+<section class="slide" data-id="pe-vs-ce" data-label="提示工程 vs 上下文工程" data-group="9.1 概念">
+
+<p class="slide-sub">9.1 · 对比卡</p>
+<h2 class="slide-title">演进关系</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>提示工程</h3>
+    <ul>
+      <li>焦点：指令措辞与结构化</li>
+      <li>典型：系统提示精调</li>
+      <li>适合：单轮分类 / 生成</li>
+    </ul>
+  </div>
+  <div class="compare-col b"><h3>上下文工程</h3>
+    <ul>
+      <li>焦点：推理期维护最优信息集合</li>
+      <li>包含：提示 + 工具 + 历史 + 外部数据…</li>
+      <li>适合：长时程、多轮、循环智能体</li>
+    </ul>
+  </div>
+</div>
+<div class="callout" data-label="艺与术">从不断扩张的「候选信息宇宙」中，甄别哪些进入有限窗口——这就是上下文工程的核心技艺。</div>
+
+</section>
+
+<section class="slide" data-id="flash91" data-label="闪卡 · 9.1" data-group="9.1 概念">
+
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · 概念入门</h2>
+<div class="flash-wrap" id="flash91" data-cards='[
+  {"q":"「上下文」在 LLM 调用中具体指什么？","a":"采样时包含的那组 tokens（系统指令、工具描述、历史、检索结果等全部可见状态）。"},
+  {"q":"提示工程与上下文工程的关键差别？","a":"前者优化指令写法；后者在推理阶段策划与维护进入窗口的整个信息集合。"},
+  {"q":"为何循环智能体特别需要上下文工程？","a":"每轮产生新数据，必须周期性提炼，否则窗口被噪声淹没。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash91',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash91',1)">下一张</button>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz91" data-label="检测 · 9.1" data-group="9.1 概念">
+
+<p class="slide-sub">选择题 · 含解析</p>
+<h2 class="slide-title">检测 · 9.1</h2>
+<div class="quiz-item" data-quiz="q91" data-answer="1">
+  <h4>1. 上下文工程主要回答哪类问题？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">如何把模型参数训得更大</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">如何为每次调用策划最优的 tokens 集合</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">如何只优化温度与 top_p</button>
+  <div class="quiz-explain">正确：焦点是推理期的信息策划与维护，而非训练超参。</div>
+</div>
+<div class="quiz-item" data-quiz="q91" data-answer="2">
+  <h4>2. 下列哪项通常属于「上下文」而非纯「提示措辞」？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">把「请」改成「务必」</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">调整标点符号</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">本轮注入的工具结果与检索证据</button>
+  <div class="quiz-explain">工具输出、检索片段、消息历史都是进入窗口的上下文组成部分。</div>
+</div>
+<p class="quiz-score" id="score-q91"></p>
+
+</section>
+
+<section class="slide" data-id="why-ce" data-label="为什么重要" data-group="9.2 为何重要">
+
+<p class="slide-sub">9.2 · Context Rot</p>
+<h2 class="slide-title">上下文是稀缺资源</h2>
+<p class="lead"><strong>上下文腐蚀（context rot）</strong>：窗口里 tokens 越多，模型从中准确回忆信息的能力反而可能下降。</p>
+<ul>
+  <li>像人类工作记忆：有容量与「注意力预算」</li>
+  <li>Transformer 两两注意力 ~ n²，关系被「拉薄」</li>
+  <li>训练分布偏短序列；位置插值可换长度但牺牲位置精度</li>
+  <li>表现是<strong>性能梯度</strong>，不是瞬间悬崖崩溃</li>
+</ul>
+<div class="analogy">桌面堆满发票时，反而找不到那张关键收据——不是桌子变小了，是注意力被稀释了。</div>
+
+</section>
+
+<section class="slide" data-id="anatomy" data-label="有效上下文解剖学" data-group="9.2 为何重要">
+
+<p class="slide-sub">9.2.1 · 高信号密度</p>
+<h2 class="slide-title">有效上下文的「解剖学」</h2>
+<p>目标：用尽可能少、但高信号密度的 tokens，最大化期望结果概率。</p>
+<details class="expand-card"><summary>系统提示 System Prompt</summary><div class="expand-body">
+<p>避免两极：过度硬编码 if-else；或过于空泛缺具体信号。分区组织（background / instructions / 工具指引 / 输出描述），追求「最小必要信息集」——最小 ≠ 最短。</p>
+</div></details>
+<details class="expand-card"><summary>工具 Tools · MVTS</summary><div class="expand-body">
+<p>职责单一、低重叠、错误鲁棒、入参清晰。臃肿工具集让「选哪个」本身含混——人类说不准，别指望智能体更好。精选<strong>最小可行工具集（MVTS）</strong>。</p>
+</div></details>
+<details class="expand-card"><summary>示例 Few-shot</summary><div class="expand-body">
+<p>精选多样且典型的示例画像期望行为；不要把所有边界条件一股脑塞进提示。好的示例胜过千言万语。</p>
+</div></details>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/9-figures/9-2.webp" alt="图9.2" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 9.2</strong>：校准系统提示——从过简到过繁找平衡，再配合运行时动态检索。</div>
+  <p class="fig-cap">图 9.2 Calibrating the system prompt</p>
+</div>
+
+</section>
+
+<section class="slide" data-id="jit" data-label="JIT 与智能体式搜索" data-group="9.2 为何重要">
+
+<p class="slide-sub">9.2.2 · Just-in-time Context</p>
+<h2 class="slide-title">即时上下文与渐进式披露</h2>
+<p><strong>智能体 ≈ 在循环中自主调用工具的 LLM。</strong> 工程趋势：从「推理前一次性 embedding 检索」→「维护轻量引用，运行时按需加载」。</p>
+<div class="compare">
+  <div class="compare-col a"><h3>预加载</h3><ul><li>快，但易过时、易撑爆窗口</li><li>适合少量高价值静态材料（README）</li></ul></div>
+  <div class="compare-col b"><h3>JIT</h3><ul><li>路径/URL/查询作引用；head/tail/grep 探查</li><li>元数据（目录名、时间戳）也携带语义</li></ul></div>
+</div>
+<div class="callout" data-label="渐进式披露">每一步交互产生新上下文，指导下一步——只在工作记忆保留当前必要子集；用笔记做补充持久化。</div>
+<p>实践常用<strong>混合策略</strong>：前置少量高价值上下文 + 提供 glob/grep 继续探索。</p>
+
+</section>
+
+<section class="slide" data-id="long-horizon" data-label="长时程三大策略" data-group="9.2 为何重要">
+
+<p class="slide-sub">9.2.3 · Compaction / Notes / Sub-agent</p>
+<h2 class="slide-title">面向长时程任务</h2>
+<p>无限加大窗口不能根治污染与相关性退化。点击步进查看三大策略：</p>
+<div class="loop-stepper" id="longStrat">
+  <div class="steps steps3">
+    <button class="step-btn" type="button">压缩整合</button>
+    <button class="step-btn" type="button">结构化笔记</button>
+    <button class="step-btn" type="button">子代理</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="compare3">
+  <div class="compare-col a"><h3>选压缩</h3><p>要对话连续性、上下文接力</p></div>
+  <div class="compare-col b"><h3>选笔记</h3><p>有里程碑的迭代开发/研究</p></div>
+  <div class="compare-col c"><h3>选子代理</h3><p>复杂研究、可并行探索</p></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="wsi" data-label="写入·选择·隔离" data-group="9.2 为何重要">
+
+<p class="slide-sub">9.2.3 · Write / Select / Isolate</p>
+<h2 class="slide-title">三动作心智模型</h2>
+<p class="lead">把长程策略收成三个可操作动词——与 Anthropic 等语境中的 Write / Select / Isolate 对齐。</p>
+<div class="compare3">
+  <div class="compare-col a"><h3>Write 写入</h3><p>把状态写到<strong>窗外</strong>：NoteTool、文件、Memory。窗口只留引用或摘要。</p></div>
+  <div class="compare-col b"><h3>Select 选择</h3><p>从候选宇宙挑高信号进窗：GSSC 的 Select（相关+新近）+ 预算守护。</p></div>
+  <div class="compare-col c"><h3>Isolate 隔离</h3><p>脏活放到子代理干净窗口，主代理只收 1k–2k tokens 摘要。</p></div>
+</div>
+<div class="note"><strong>对照：</strong>压缩整合偏「接力式 Select+摘要」；结构化笔记偏 Write；子代理偏 Isolate。三者可组合。</div>
+
+</section>
+
+<section class="slide" data-id="flash92" data-label="闪卡 · 9.2" data-group="9.2 为何重要">
+
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · 为何重要</h2>
+<div class="flash-wrap" id="flash92" data-cards='[
+  {"q":"什么是上下文腐蚀？","a":"tokens 增多后，模型从上下文准确回忆信息的能力下降——注意力预算被摊薄。"},
+  {"q":"JIT 上下文相对预检索的核心好处？","a":"维护轻量引用、按需加载，避免整库塞窗；引用元数据还能暗示用途与时效。"},
+  {"q":"三大长程策略各适合什么？","a":"压缩→对话接力；笔记→里程碑追踪；子代理→并行深挖后回摘要。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash92',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash92',1)">下一张</button>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz92" data-label="检测 · 9.2" data-group="9.2 为何重要">
+
+<p class="slide-sub">选择题 · 含解析</p>
+<h2 class="slide-title">检测 · 9.2</h2>
+<div class="quiz-item" data-quiz="q92" data-answer="1">
+  <h4>1. 为何「窗口越大越好」仍不够？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">因为大窗口 API 一定更贵所以绝对不能用</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">存在 context rot：注意力预算有限，边际收益递减</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">因为 Transformer 无法处理超过 512 token</button>
+  <div class="quiz-explain">模型仍可能很强，但长上下文下检索与长程推理精度会梯度下降。</div>
+</div>
+<div class="quiz-item" data-quiz="q92" data-answer="0">
+  <h4>2. 「如果人类工程师都说不准用哪个工具」意味着？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">工具集可能臃肿、边界模糊，应收敛到 MVTS</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">应把所有工具描述复制十遍加强记忆</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">应关闭所有工具只靠提示</button>
+  <div class="quiz-explain">工具契约要清晰、低重叠；否则决策本身就含混。</div>
+</div>
+<p class="quiz-score" id="score-q92"></p>
+
+</section>
+
+<section class="slide" data-id="builder-motive" data-label="ContextBuilder 动机" data-group="9.3 ContextBuilder">
+
+<p class="slide-sub">9.3.1 · 设计目标</p>
+<h2 class="slide-title">为何需要 ContextBuilder</h2>
+<div class="arch-stack">
+  <div class="arch-block enc">统一入口<span class="sub">Gather → Select → Structure → Compress，减少每个 Agent 重复模板代码</span></div>
+  <div class="arch-block head">稳定形态<span class="sub">固定分区骨架，便于调试、A/B、评估</span></div>
+  <div class="arch-block dec">预算守护<span class="sub">token 内保高价值；超限兜底压缩</span></div>
+  <div class="arch-block base">最小规则<span class="sub">以相关性+新近性评分，不引入复杂来源优先级体系</span></div>
+</div>
+<div class="template-map">
+  <div><strong>[Role & Policies]</strong> 角色与行为准则</div>
+  <div><strong>[Task]</strong> 当前任务</div>
+  <div><strong>[State]</strong> 状态信息（设计骨架中提及）</div>
+  <div><strong>[Evidence]</strong> RAG/外部证据</div>
+  <div><strong>[Context]</strong> 历史与记忆</div>
+  <div><strong>[Output]</strong> 输出要求</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="data-structs" data-label="核心数据结构" data-group="9.3 ContextBuilder">
+
+<p class="slide-sub">9.3.2 · Packet & Config</p>
+<h2 class="slide-title">ContextPacket 与 ContextConfig</h2>
+<details class="expand-card" open><summary>ContextPacket · 候选信息包</summary><div class="expand-body">
+<div class="code-block">@dataclass
+class ContextPacket:
+    content: str
+    timestamp: datetime
+    token_count: int
+    relevance_score: float = 0.5  # clamp 到 [0,1]
+    metadata: Optional[Dict] = None</div>
+<p>信息的基本单元：内容、时间、token、相关性、元数据（如 type=system_instruction）。</p>
+</div></details>
+<details class="expand-card"><summary>ContextConfig · 预算与权重</summary><div class="expand-body">
+<div class="code-block">max_tokens=3000
+reserve_ratio=0.2      # 为系统指令预留
+min_relevance=0.1
+enable_compression=True
+recency_weight=0.3
+relevance_weight=0.7   # 二者之和须为 1.0</div>
+<p><code>reserve_ratio</code> 保证关键系统指令不被挤占。</p>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="gssc" data-label="GSSC 流水线" data-group="9.3 ContextBuilder">
+
+<p class="slide-sub">9.3.3 · 点击步进</p>
+<h2 class="slide-title">GSSC 流水线可视化</h2>
+<div class="loop-stepper" id="gsscFlow">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">Gather</button>
+    <button class="step-btn" type="button">Select</button>
+    <button class="step-btn" type="button">Structure</button>
+    <button class="step-btn" type="button">Compress</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="note"><strong>Select 公式：</strong>综合分 = relevance_weight × 相关性 + recency_weight × 新近性；新近性用指数衰减（约 24h 内高分）。相关性可用 Jaccard，生产可换向量相似度。</div>
+<div class="analogy">Gather=采购候选菜 · Select=按预算点菜 · Structure=摆盘分区 · Compress=桌满了就精简摆盘但不打乱菜单结构。</div>
+
+</section>
+
+<section class="slide" data-id="budget" data-label="窗口预算实验室" data-group="9.3 ContextBuilder">
+
+<p class="slide-sub">互动 · Token Budget</p>
+<h2 class="slide-title">窗口预算步进可视化</h2>
+<p>拖动滑块，观察系统预留、证据、上下文如何争夺有限窗口；超限时触发 Compress 提示。</p>
+<div class="budget-lab">
+  <label>max_tokens = <span id="budMaxLabel">3000</span></label>
+  <input type="range" id="budMax" min="1000" max="8000" step="100" value="3000" />
+  <label>reserve_ratio = <span id="budResLabel">20%</span></label>
+  <input type="range" id="budReserve" min="5" max="40" step="1" value="20" />
+  <label>Evidence 占用 ≈ <span id="budEvLabel">800</span></label>
+  <input type="range" id="budEv" min="0" max="5000" step="50" value="800" />
+  <label>Context 占用 ≈ <span id="budCtxLabel">1200</span></label>
+  <input type="range" id="budCtx" min="0" max="5000" step="50" value="1200" />
+  <div class="budget-bar">
+    <div class="budget-seg sys" id="segSys"></div>
+    <div class="budget-seg ev" id="segEv"></div>
+    <div class="budget-seg ctx" id="segCtx"></div>
+    <div class="budget-seg free" id="segFree"></div>
+  </div>
+  <div class="budget-meta" id="budMeta"></div>
+  <div class="budget-warn" id="budWarn"></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="builder-usage" data-label="使用与 Agent 集成" data-group="9.3 ContextBuilder">
+
+<p class="slide-sub">9.3.4 · 关键片段</p>
+<h2 class="slide-title">构建上下文并接入 Agent</h2>
+<div class="code-block">builder = ContextBuilder(memory_tool=..., rag_tool=..., config=ContextConfig(max_tokens=3000))
+context = builder.build(
+    user_query="如何优化Pandas的内存占用?",
+    conversation_history=history,
+    system_instructions="你是资深Python数据工程顾问..."
+)</div>
+<p>输出骨架示例：Role → Task → Evidence（RAG）→ Context（历史+记忆）→ Output。</p>
+<details class="expand-card"><summary>ContextAwareAgent 思路</summary><div class="expand-body">
+<p><code>run()</code>：用 builder 生成 optimized_context → 作为 system 调 LLM → 追加历史 → 摘要写入 MemoryTool。ContextBuilder 成为 Agent 的「上下文管理大脑」。</p>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="builder-best" data-label="最佳实践" data-group="9.3 ContextBuilder">
+
+<p class="slide-sub">9.3.5</p>
+<h2 class="slide-title">ContextBuilder 优化建议</h2>
+<ol>
+  <li><strong>动态预算</strong>：简单任务缩小 max_tokens，复杂任务加大</li>
+  <li><strong>相关性升级</strong>：生产用向量相似度替代关键词 Jaccard</li>
+  <li><strong>缓存</strong>：不变的系统指令/知识可缓存</li>
+  <li><strong>监控日志</strong>：记录选中包数、token 使用率</li>
+  <li><strong>A/B</strong>：调 relevance/recency 权重找最优</li>
+</ol>
+
+</section>
+
+<section class="slide" data-id="flash93" data-label="闪卡 · 9.3" data-group="9.3 ContextBuilder">
+
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · ContextBuilder</h2>
+<div class="flash-wrap" id="flash93" data-cards='[
+  {"q":"GSSC 四个字母各代表什么？","a":"Gather 汇集 · Select 选择 · Structure 结构化 · Compress 压缩。"},
+  {"q":"Select 阶段为何先扣系统指令 token？","a":"系统指令高优先级始终保留；剩余预算再贪心装入高分包。"},
+  {"q":"Compress 为何强调「分区压缩」？","a":"尽量保持模板结构完整，而不是整段乱砍导致骨架崩坏。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash93',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash93',1)">下一张</button>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz93" data-label="检测 · 9.3" data-group="9.3 ContextBuilder">
+
+<p class="slide-sub">选择题 · 含解析</p>
+<h2 class="slide-title">检测 · 9.3</h2>
+<div class="quiz-item" data-quiz="q93" data-answer="2">
+  <h4>1. recency_weight + relevance_weight 必须？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">都大于 1</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">等于 0</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">等于 1.0（Config 断言）</button>
+  <div class="quiz-explain">ContextConfig.__post_init__ 要求两者之和为 1。</div>
+</div>
+<div class="quiz-item" data-quiz="q93" data-answer="0">
+  <h4>2. Gather 阶段对 Memory/RAG 失败的处理是？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">try/except 告警后继续，不中断整条流水线</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">立即抛出并终止 Agent</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">清空所有系统指令重来</button>
+  <div class="quiz-explain">容错是 Gather 的关键设计：单源失败不影响整体。</div>
+</div>
+<p class="quiz-score" id="score-q93"></p>
+
+</section>
+
+<section class="slide" data-id="note-why" data-label="NoteTool 理念" data-group="9.4 NoteTool">
+
+<p class="slide-sub">9.4.1 · vs MemoryTool</p>
+<h2 class="slide-title">为何还要结构化笔记？</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>MemoryTool（第八章）</h3>
+    <ul><li>对话式记忆：工作/情景/语义</li><li>向量与图谱等后端</li><li>偏「聊过什么、知道什么」</li></ul>
+  </div>
+  <div class="compare-col b"><h3>NoteTool（本章）</h3>
+    <ul><li>项目式任务追踪</li><li>Markdown + YAML，Git 友好</li><li>低开销状态：task_state / blocker / action…</li></ul>
+  </div>
+</div>
+<p>场景：长期重构、文献综述、每轮对话前 search/list 笔记注入 ContextBuilder。</p>
+
+</section>
+
+<section class="slide" data-id="note-format" data-label="存储格式" data-group="9.4 NoteTool">
+
+<p class="slide-sub">9.4.2 · YAML + Markdown</p>
+<h2 class="slide-title">笔记文件与索引</h2>
+<div class="code-block">---
+id: note_20250119_153000_0
+title: 项目进展 - 第一阶段
+type: task_state
+tags: [refactoring, phase1]
+created_at: ...
+updated_at: ...
+---
+
+# 正文 Markdown …</div>
+<p>另有 <code>notes_index.json</code> 集中元数据，加速检索与完整性校验。文件名即 ID。</p>
+
+</section>
+
+<section class="slide" data-id="note-ops" data-label="七大操作" data-group="9.4 NoteTool">
+
+<p class="slide-sub">9.4.3 · 生命周期</p>
+<h2 class="slide-title">NoteTool 核心操作</h2>
+<div class="loop-stepper" id="noteOps">
+  <div class="steps steps7">
+    <button class="step-btn" type="button">create</button>
+    <button class="step-btn" type="button">read</button>
+    <button class="step-btn" type="button">update</button>
+    <button class="step-btn" type="button">search</button>
+    <button class="step-btn" type="button">list</button>
+    <button class="step-btn" type="button">summary</button>
+    <button class="step-btn" type="button">delete</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="note"><strong>类型建议：</strong>task_state · conclusion · blocker · action · reference · general；与 ContextBuilder 配合时 blocker 相关性可设更高。</div>
+
+</section>
+
+<section class="slide" data-id="note-integrate" data-label="与 Builder 集成" data-group="9.4 NoteTool">
+
+<p class="slide-sub">9.4.4–9.4.5</p>
+<h2 class="slide-title">笔记回注上下文</h2>
+<div class="code-block">relevant = note_tool.run({"action":"search","query":user_input,"limit":3})
+# → 转 ContextPacket(metadata.type="note")
+context = builder.build(..., custom_packets=note_packets)</div>
+<p>最佳实践：合理分类；解决 blocker 后升格为 conclusion；限制注入条数防过载；Markdown 可人审 + Git 追踪。</p>
+
+</section>
+
+<section class="slide" data-id="flash94" data-label="闪卡 · 9.4" data-group="9.4 NoteTool">
+
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · NoteTool</h2>
+<div class="flash-wrap" id="flash94" data-cards='[
+  {"q":"NoteTool 相对 MemoryTool 的定位？","a":"面向项目式、可版本控制的结构化外部记忆；Memory 更偏对话式分层记忆。"},
+  {"q":"七大操作有哪些？","a":"create / read / update / search / list / summary / delete。"},
+  {"q":"为何用 YAML+Markdown？","a":"机器可解析元数据 + 人类可读正文，天然适合 Git。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash94',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash94',1)">下一张</button>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz94" data-label="检测 · 9.4" data-group="9.4 NoteTool">
+
+<p class="slide-sub">选择题 · 含解析</p>
+<h2 class="slide-title">检测 · 9.4</h2>
+<div class="quiz-item" data-quiz="q94" data-answer="1">
+  <h4>1. 长期重构任务中「依赖冲突」最适合记成？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">reference</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">blocker</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只写进 system prompt 永不更新</button>
+  <div class="quiz-explain">阻塞点用 blocker，后续检索可优先注入。</div>
+</div>
+<div class="quiz-item" data-quiz="q94" data-answer="0">
+  <h4>2. notes_index.json 的主要作用？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">快速检索元数据、校验完整性</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">存储向量嵌入</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">替代 LLM 推理</button>
+  <div class="quiz-explain">索引集中管理元数据，避免每次打开全部 md。</div>
+</div>
+<p class="quiz-score" id="score-q94"></p>
+
+</section>
+
+<section class="slide" data-id="term-why" data-label="TerminalTool 理念" data-group="9.5 TerminalTool">
+
+<p class="slide-sub">9.5.1 · JIT 文件系统</p>
+<h2 class="slide-title">即时探索，而非预索引一切</h2>
+<p>代码库探索、日志分析、数据预览——需要<strong>实时轻量</strong>访问，而不是先向量化整个仓库。</p>
+<div class="code-block"># 预索引：成本高、易过时
+# JIT：
+terminal.run({"command": "find . -name '*.py' -type f"})
+terminal.run({"command": "grep -r 'class UserService' ."})
+terminal.run({"command": "head -n 50 src/services/user.py"})</div>
+<p>落地 9.2.2 的 JIT 理念。</p>
+
+</section>
+
+<section class="slide" data-id="term-sec" data-label="四层安全机制" data-group="9.5 TerminalTool">
+
+<p class="slide-sub">9.5.1 · 安全第一</p>
+<h2 class="slide-title">强大但危险 → 多层防护</h2>
+<div class="loop-stepper" id="secLayers">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">白名单</button>
+    <button class="step-btn" type="button">沙箱</button>
+    <button class="step-btn" type="button">超时</button>
+    <button class="step-btn" type="button">输出上限</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="callout" data-label="示例">terminal.run({"command": "rm -rf /"}) → ❌ 不允许的命令: rm</div>
+
+</section>
+
+<section class="slide" data-id="term-usage" data-label="模式与协同" data-group="9.5 TerminalTool">
+
+<p class="slide-sub">9.5.2–9.5.4</p>
+<h2 class="slide-title">导航、分析、与其他工具协作</h2>
+<details class="expand-card" open><summary>核心能力</summary><div class="expand-body">
+<p><code>_execute_command</code>：在 current_dir 下 subprocess，合并 stderr，检查返回码与输出大小。<code>cd</code> 特殊处理并校验仍在 workspace 内。</p>
+</div></details>
+<details class="expand-card"><summary>典型模式</summary><div class="expand-body">
+<p>探索式导航（ls → cd → tree → grep）；CSV head/wc/cut；日志 tail|grep；代码库 sed/awk 片段提取。</p>
+</div></details>
+<details class="expand-card"><summary>协同</summary><div class="expand-body">
+<p>结构写入 MemoryTool 语义记忆；慢查询写入 NoteTool blocker；输出转 ContextPacket 交给 ContextBuilder。</p>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="flash95" data-label="闪卡 · 9.5" data-group="9.5 TerminalTool">
+
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · TerminalTool</h2>
+<div class="flash-wrap" id="flash95" data-cards='[
+  {"q":"TerminalTool 实现了哪一节理念？","a":"9.2.2 JIT 上下文：按需探索文件，而非预加载整库。"},
+  {"q":"四层安全分别是？","a":"命令白名单、工作目录沙箱、超时、输出大小限制。"},
+  {"q":"cd .. 会怎样？","a":"若逃出 workspace 则拒绝；只允许在沙箱内导航。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash95',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash95',1)">下一张</button>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="quiz95" data-label="检测 · 9.5" data-group="9.5 TerminalTool">
+
+<p class="slide-sub">选择题 · 含解析</p>
+<h2 class="slide-title">检测 · 9.5</h2>
+<div class="quiz-item" data-quiz="q95" data-answer="2">
+  <h4>1. 白名单设计的主要目的？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">让模型写得更快</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">强制使用 GPU</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只允许安全只读命令，禁止破坏性操作</button>
+  <div class="quiz-explain">能力强大必须配安全边界。</div>
+</div>
+<div class="quiz-item" data-quiz="q95" data-answer="0">
+  <h4>2. 发现慢查询后较好的工程动作是？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">Terminal 分析日志 → NoteTool 记 blocker → 后续进上下文</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">把整个日志文件永久粘贴进 system prompt</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">忽略，等窗口自动变大</button>
+  <div class="quiz-explain">JIT 探查 + 结构化外存 + 回注，正是本章协同套路。</div>
+</div>
+<p class="quiz-score" id="score-q95"></p>
+
+</section>
+
+<section class="slide" data-id="case-scene" data-label="场景与挑战" data-group="9.6 长程实战">
+
+<p class="slide-sub">9.6.1 · 代码库维护助手</p>
+<h2 class="slide-title">场景设定</h2>
+<p>中型 Flask Web 应用 ≈50 个 py 文件，存在技术债务。助手需要：探索结构、识别问题、追踪进度、给连贯重构建议。</p>
+<div class="compare3">
+  <div class="compare-col a"><h3>挑战1</h3><p>代码量超窗口 → Terminal 按需看</p></div>
+  <div class="compare-col b"><h3>挑战2</h3><p>跨天会话 → NoteTool 记进度</p></div>
+  <div class="compare-col c"><h3>挑战3</h3><p>信息噪声 → ContextBuilder 筛选</p></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="case-arch" data-label="三层架构" data-group="9.6 长程实战">
+
+<p class="slide-sub">9.6.2 · 图 9.3</p>
+<h2 class="slide-title">系统架构</h2>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/9-figures/9-3.png" alt="图9.3" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 9.3 要点</strong>：上层交互/模式（explore·analyze·plan·auto）→ 中层 ContextBuilder 装配 → 下层 Terminal / Note / Memory 工具。</div>
+  <p class="fig-cap">图 9.3 代码库维护助手三层架构</p>
+</div>
+<div class="arch-stack">
+  <div class="arch-block enc">交互层 · 模式化 run()</div>
+  <div class="arch-block head">上下文层 · ContextBuilder + Packets</div>
+  <div class="arch-block dec">工具层 · Terminal + Note + Memory</div>
+</div>
+
+</section>
+
+<section class="slide" data-id="case-flow" data-label="运行流程步进" data-group="9.6 长程实战">
+
+<p class="slide-sub">9.6.3–9.6.4</p>
+<h2 class="slide-title">CodebaseMaintainer 主循环</h2>
+<div class="loop-stepper" id="caseFlow">
+  <div class="steps steps5">
+    <button class="step-btn" type="button">预处理</button>
+    <button class="step-btn" type="button">笔记</button>
+    <button class="step-btn" type="button">GSSC</button>
+    <button class="step-btn" type="button">LLM</button>
+    <button class="step-btn" type="button">后处理</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="code-block">maintainer = CodebaseMaintainer("myapp", "./myapp", llm)
+maintainer.run("帮我看看项目结构", mode="explore")
+maintainer.run("有哪些 TODO/复杂度问题？", mode="analyze")
+maintainer.run("下周重构计划？", mode="plan")</div>
+
+</section>
+
+<section class="slide" data-id="case-effect" data-label="运行效果" data-group="9.6 长程实战">
+
+<p class="slide-sub">9.6.5</p>
+<h2 class="slide-title">长程智能体关键特性</h2>
+<ul>
+  <li><strong>跨会话连贯</strong>：笔记让 Day1 发现在 Day3 规划时仍在</li>
+  <li><strong>智能上下文</strong>：优先 blocker，按模式动态预处理</li>
+  <li><strong>即时文件访问</strong>：无需预索引整库</li>
+  <li><strong>自动知识管理</strong>：问题→blocker，计划→action</li>
+  <li><strong>人机协作</strong>：人可直接改 Markdown 笔记干预</li>
+</ul>
+<p>可扩展：加 RAG、拆多代理、接测试/git、做 Gradio 界面。</p>
+
+</section>
+
+<section class="slide" data-id="summary" data-label="本章总结" data-group="9.7 总结自测">
+
+<p class="slide-sub">9.7</p>
+<h2 class="slide-title">理论 · 工程 · 收获</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>理论</h3><ul><li>提示→上下文演进</li><li>腐蚀与注意力预算</li><li>压缩/笔记/子代理</li></ul></div>
+  <div class="compare-col b"><h3>工程</h3><ul><li>ContextBuilder·GSSC</li><li>NoteTool</li><li>TerminalTool</li><li>维护助手</li></ul></div>
+  <div class="compare-col c"><h3>收获</h3><ul><li>分层：即时+会话+持久</li><li>相关+新近筛选</li><li>安全第一</li><li>人机协作</li></ul></div>
+</div>
+<div class="note">下一章预告：智能体通信协议——与外部世界更广泛交互。</div>
+
+</section>
+
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="9.7 总结自测">
+
+<p class="slide-sub">勾选过关</p>
+<h2 class="slide-title">本章小结自测</h2>
+<ul class="check-list">
+  <li><input type="checkbox" /> 能用白话解释 Context Window、压缩、Write/Select/Isolate、Prompt 装配</li>
+  <li><input type="checkbox" /> 能把三大长程策略映射到写入 / 选择 / 隔离</li>
+  <li><input type="checkbox" /> 能说清与第八章 Memory/RAG 的边界</li>
+  <li><input type="checkbox" /> 能画出 GSSC 并说明 Select 评分</li>
+  <li><input type="checkbox" /> 知道 reserve_ratio 与 Compress 触发时机</li>
+  <li><input type="checkbox" /> 能对比 NoteTool 与 MemoryTool 适用场景</li>
+  <li><input type="checkbox" /> 能列出 TerminalTool 四层安全</li>
+  <li><input type="checkbox" /> 能叙述代码库维护助手五步主循环</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="exercises" data-label="习题导读" data-group="9.7 总结自测">
+
+<p class="slide-sub">源文档「习题」· 开放题</p>
+<h2 class="slide-title">继续深入</h2>
+<ol>
+  <li>解释 context rot；对比「整库塞窗」vs JIT；举例系统提示过硬编码/过空泛。</li>
+  <li>分析 GSSC 某阶段失效的影响；思考截断 vs LLM 摘要的混合压缩。</li>
+  <li>扩展 Note 自动整理；为 Terminal 设计人机审批；画重构助手流程图。</li>
+  <li>三层信息如何分工防冗余；断点续传；任务依赖与 Note 集成。</li>
+  <li>设计渐进式披露场景与「探索引导」机制。</li>
+</ol>
+<div class="callout" data-label="完成">恭喜走完 Lab 09。用 ← → 复习薄弱页，或回到目录跳转。</div>
+
+</section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll(".slide"));
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+["flash91","flash92","flash93","flash94","flash95"].forEach(initFlash);
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+function bindStepper(rootId, texts) {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  function show(n) {
+    root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+    const panel = root.querySelector(".loop-panel");
+    panel.innerHTML = `<h4>${texts[n].t}</h4><p>${texts[n].p}</p>`;
+  }
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.addEventListener("click", () => show(i)));
+  show(0);
+}
+
+bindStepper("gsscFlow", [
+  { t: "Gather · 汇集", p: "从系统指令、Memory、RAG、最近对话、自定义包等多源收集候选 ContextPacket。外部源失败用 try/except 容错，不拖垮整条流水线。" },
+  { t: "Select · 选择", p: "系统指令先占位；其余按「相关性×权重 + 新近性×权重」打分，过滤低于 min_relevance 的包，再贪心装入剩余 token 预算。" },
+  { t: "Structure · 结构化", p: "按类型分区装配为固定骨架：[Role & Policies] → [Task] → [Evidence] → [Context] → [Output]，便于调试与 A/B。" },
+  { t: "Compress · 压缩", p: "若仍超 max_tokens：按分区尽量完整保留，再对末段截断并标注「内容已压缩」——保持结构完整性优先。" }
+]);
+
+bindStepper("longStrat", [
+  { t: "压缩整合 Compaction", p: "接近窗口上限时高保真总结，用摘要+少量近邻工件重启新窗口。先保召回、再抠精确；适合需要对话接力的长会话。" },
+  { t: "结构化笔记 Notes", p: "把关键状态写到上下文外（TODO、NOTES.md、blocker）。跨数十次工具调用与多次窗口重置仍能找回进度。" },
+  { t: "子代理 Sub-agent", p: "主代理规划综合；专长子代理在干净窗口深挖，只回传 1k–2k token 摘要。庞杂搜索留在子代理内，主代理专注整合。" }
+]);
+
+bindStepper("noteOps", [
+  { t: "create", p: "生成 note_id，写 YAML 头 + Markdown 正文，更新 notes_index.json。" },
+  { t: "read", p: "按 id 打开文件，解析前置元数据与正文。" },
+  { t: "update", p: "局部改 title/content/type/tags，刷新 updated_at 与索引。" },
+  { t: "search", p: "可按 type/tags 过滤，在标题与正文中关键词匹配，按更新时间排序。" },
+  { t: "list", p: "按类型/标签列出元数据，无需打开全文。" },
+  { t: "summary", p: "统计总量与各类型分布，便于进度鸟瞰。" },
+  { t: "delete", p: "删文件并清理索引条目。" }
+]);
+
+bindStepper("secLayers", [
+  { t: "① 命令白名单", p: "仅允许 ls/cat/grep/find/head/tail 等只读命令；rm 等立刻拒绝。" },
+  { t: "② 工作目录沙箱", p: "只能访问 workspace 及其子路径；禁止 /etc、禁止 .. 逃逸。" },
+  { t: "③ 超时控制", p: "默认 timeout（如 30s），防止卡死或资源耗尽。" },
+  { t: "④ 输出大小限制", p: "超过 max_output_size 截断并警告，避免内存爆炸。" }
+]);
+
+bindStepper("caseFlow", [
+  { t: "① 模式预处理", p: "explore/analyze/plan/auto：用 Terminal 拉结构、统计、TODO，或加载任务笔记。" },
+  { t: "② 检索笔记", p: "优先 blocker，再 search 相关笔记，转为带差异 relevance 的 ContextPacket。" },
+  { t: "③ GSSC 构建", p: "ContextBuilder 拼装系统指令 + 历史 + 笔记 + 预处理证据。" },
+  { t: "④ LLM 推理", p: "在优化后的上下文上生成回答。" },
+  { t: "⑤ 后处理落盘", p: "发现问题自动写 blocker；讨论计划写 action；更新对话历史与记忆。" }
+]);
+
+function updateBudget() {
+  const max = Number(document.getElementById("budMax").value);
+  const reserve = Number(document.getElementById("budReserve").value) / 100;
+  const evidence = Number(document.getElementById("budEv").value);
+  const context = Number(document.getElementById("budCtx").value);
+  const sysReserve = Math.floor(max * reserve);
+  const available = max - sysReserve;
+  const usedDyn = evidence + context;
+  const free = Math.max(0, available - usedDyn);
+  const overflow = Math.max(0, usedDyn - available);
+
+  document.getElementById("budMaxLabel").textContent = max;
+  document.getElementById("budResLabel").textContent = Math.round(reserve * 100) + "%";
+  document.getElementById("budEvLabel").textContent = evidence;
+  document.getElementById("budCtxLabel").textContent = context;
+
+  const sysPct = (sysReserve / max) * 100;
+  const evPct = (Math.min(evidence, available) / max) * 100;
+  let ctxAllowed = Math.max(0, available - evidence);
+  const ctxPct = (Math.min(context, ctxAllowed) / max) * 100;
+  const freePct = Math.max(0, 100 - sysPct - evPct - ctxPct);
+
+  document.getElementById("segSys").style.width = sysPct + "%";
+  document.getElementById("segEv").style.width = evPct + "%";
+  document.getElementById("segCtx").style.width = ctxPct + "%";
+  document.getElementById("segFree").style.width = freePct + "%";
+  document.getElementById("segSys").textContent = sysPct > 8 ? "SYSTEM " + sysReserve : "";
+  document.getElementById("segEv").textContent = evPct > 8 ? "EV " + Math.min(evidence, available) : "";
+  document.getElementById("segCtx").textContent = ctxPct > 8 ? "CTX " + Math.min(context, ctxAllowed) : "";
+  document.getElementById("segFree").textContent = freePct > 8 ? "FREE " + free : "";
+
+  const meta = document.getElementById("budMeta");
+  meta.innerHTML = `可用动态预算 = max − reserve = <strong>${available}</strong> tokens<br>` +
+    `动态占用 = Evidence + Context = <strong>${usedDyn}</strong> · 剩余空闲 ≈ <strong>${free}</strong>`;
+
+  const warn = document.getElementById("budWarn");
+  if (overflow > 0) {
+    warn.classList.add("show");
+    warn.textContent = `超限 ${overflow} tokens → Compress 触发：优先保住 Role/Task，截断末尾分区并标注「内容已压缩」。`;
+  } else {
+    warn.classList.remove("show");
+  }
+}
+["budMax","budReserve","budEv","budCtx"].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("input", updateBudget);
+});
+if (document.getElementById("budMax")) updateBudget();
+
+document.querySelectorAll(".fig img").forEach((img) => {
+  img.addEventListener("error", () => {
+    const fig = img.closest(".fig");
+    if (fig) fig.classList.add("offline");
+  });
+});
+
+goTo(0);
+</script>
+</body>
+</html>

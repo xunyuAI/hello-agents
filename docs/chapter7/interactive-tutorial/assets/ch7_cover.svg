@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <rect width="960" height="420" fill="#0a1520"/>
+  <defs>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="rgba(232,90,154,0.18)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e85a9a" stop-opacity="0.38"/>
+      <stop offset="100%" stop-color="#3da8b8" stop-opacity="0.12"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="420" fill="url(#g)"/>
+  <ellipse cx="760" cy="50" rx="300" ry="150" fill="url(#glow)"/>
+
+  <!-- Layer stack -->
+  <g font-family="Oxanium, sans-serif">
+    <rect x="72" y="56" width="520" height="52" fill="#0f1e2c" stroke="#e85a9a" stroke-width="1.5"/>
+    <text x="92" y="88" fill="#f078b0" font-size="15" letter-spacing="2">AGENTS  �  Simple / ReAct / Reflection / PlanSolve / FC</text>
+
+    <rect x="92" y="122" width="480" height="52" fill="#0f1e2c" stroke="#3da8b8" stroke-width="1.5"/>
+    <text x="112" y="154" fill="#5ed4e0" font-size="15" letter-spacing="2">TOOLS  �  Registry � Chain � Async � Builtin</text>
+
+    <rect x="112" y="188" width="440" height="52" fill="#0f1e2c" stroke="#e8a84a" stroke-width="1.5"/>
+    <text x="132" y="220" fill="#e8a84a" font-size="15" letter-spacing="2">CORE  �  Agent � LLM � Message � Config</text>
+
+    <rect x="132" y="254" width="400" height="52" fill="#0f1e2c" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="152" y="286" fill="#a78bfa" font-size="15" letter-spacing="2">OPENAI-COMPAT API  �  Cloud / VLLM / Ollama</text>
+  </g>
+
+  <!-- Side signal -->
+  <g font-family="Oxanium, sans-serif">
+    <circle cx="760" cy="200" r="78" fill="#152636" stroke="#e85a9a" stroke-width="2"/>
+    <text x="720" y="192" fill="#f078b0" font-size="13" letter-spacing="2">LAB 07</text>
+    <text x="708" y="218" fill="#e6ede9" font-size="18" letter-spacing="1">FRAMEWORK</text>
+    <text x="732" y="242" fill="#9aafb8" font-size="12">����</text>
+  </g>
+
+  <text x="72" y="360" fill="#e85a9a" font-family="Oxanium, sans-serif" font-size="14" letter-spacing="3">HELLO-AGENTS  �  BUILD YOUR OWN</text>
+  <text x="72" y="386" fill="#6d8490" font-family="Source Serif 4, Georgia, serif" font-size="13">B�& � i��w � �(0��</text>
+</svg>

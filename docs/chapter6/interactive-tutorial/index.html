@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第六章 · 框架开发实践 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 06 Signal
+   Same product line as Ch1–Ch4; sky-blue/cobalt primary signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(74, 159, 232, 0.16);
+  --line-strong: rgba(74, 159, 232, 0.38);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #4a9fe8;
+  --signal-bright: #7bc4f5;
+  --violet: #a78bfa;
+  --violet-dim: rgba(167, 139, 250, 0.14);
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(74, 159, 232, 0.14), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(61, 168, 184, 0.12), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--cyan), var(--amber));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(74, 159, 232, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(74, 159, 232, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(184, 240, 138, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(74,159,232,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(74, 159, 232, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps6 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps2 { grid-template-columns: repeat(2, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: var(--mint-dim);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: center; text-align: center;
+  transition: border-color 0.25s; user-select: none;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.15rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; font-size: 0.98rem; color: var(--paper); line-height: 1.55;
+}
+.flash-card.revealed .q { display: none; }
+.flash-card.revealed .a { display: block; }
+.flash-card.revealed { border-color: var(--cyan); background: rgba(61,168,184,0.1); }
+.flash-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 0.75rem; font-family: var(--font-display);
+  font-size: 0.72rem; color: var(--text-mute);
+}
+.flash-controls { display: flex; gap: 0.4rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); margin-bottom: 0.75rem; line-height: 1.4;
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.35rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224, 107, 90, 0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.65rem; padding: 0.7rem 0.85rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(74, 159, 232, 0.08); color: var(--paper);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.85rem;
+  color: var(--cyan-bright); margin: 0.5rem 0 1rem;
+}
+.check-list { list-style: none; margin: 1rem 0; padding: 0; }
+.check-list li {
+  display: flex; gap: 0.65rem; align-items: flex-start;
+  padding: 0.55rem 0.7rem; border: 1px solid var(--line);
+  margin-bottom: 0.4rem; background: var(--panel);
+  cursor: pointer; transition: all 0.2s;
+}
+.check-list li:hover { border-color: var(--line-strong); }
+.check-list li.done {
+  border-color: var(--mint); background: var(--mint-dim);
+}
+.check-list li.done .ck-text { color: var(--mint); text-decoration: line-through; opacity: 0.85; }
+.ck-box {
+  width: 18px; height: 18px; border: 1px solid var(--signal);
+  flex-shrink: 0; margin-top: 0.15rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: transparent;
+}
+.check-list li.done .ck-box {
+  background: var(--mint); border-color: var(--mint); color: var(--ink);
+}
+.ck-text { font-size: 0.9rem; color: var(--text-dim); }
+.cover { text-align: left; padding: 1rem 0 2rem; }
+.cover-badge {
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--signal); border: 1px solid var(--line-strong);
+  display: inline-block; padding: 0.3rem 0.7rem; margin-bottom: 1.25rem;
+}
+.cover h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1.1; margin-bottom: 0.75rem; max-width: 18ch;
+}
+.cover .tagline {
+  font-size: 1.1rem; color: var(--paper);
+  max-width: 36em; margin-bottom: 1.5rem;
+}
+.goals { display: grid; gap: 0.55rem; margin: 1.25rem 0 1.75rem; }
+.goal {
+  display: grid; grid-template-columns: auto 1fr; gap: 0.85rem;
+  align-items: start; padding: 0.85rem 1rem;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.goal-n {
+  font-family: var(--font-display); font-size: 1.2rem;
+  color: var(--cyan-bright); line-height: 1;
+}
+.goal p { margin: 0; font-size: 0.92rem; }
+.cover-img {
+  margin-top: 1.5rem; border: 1px solid var(--line-strong);
+  max-width: 100%; width: 100%; background: var(--panel);
+}
+.kbd-hint {
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.04em;
+}
+.kbd {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  border: 1px solid var(--line-strong); padding: 0.1rem 0.35rem;
+  color: var(--signal); background: var(--panel);
+}
+.kw-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem; margin: 1rem 0;
+}
+.kw {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.9rem 1rem;
+}
+.kw h4 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.kw p { margin: 0; font-size: 0.85rem; }
+.path-hint {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--cyan-bright); background: rgba(61, 168, 184, 0.08);
+  border: 1px dashed rgba(61, 168, 184, 0.35);
+  padding: 0.65rem 0.85rem; margin: 0.85rem 0;
+}
+.step-card {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.9rem 1rem; margin: 0.6rem 0;
+}
+.step-card h4 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.tag-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0; }
+.tag-pill {
+  font-family: var(--font-display); font-size: 0.68rem;
+  letter-spacing: 0.06em; padding: 0.25rem 0.55rem;
+  border: 1px solid var(--line-strong); color: var(--signal);
+  background: var(--mint-dim);
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0;
+    width: min(86vw, 300px); z-index: 40;
+    transform: translateX(-105%); transition: transform 0.3s ease;
+    box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3, .kw-grid { grid-template-columns: 1fr; }
+  .loop-stepper .steps, .loop-stepper .steps.steps5, .loop-stepper .steps.steps4, .loop-stepper .steps.steps3, .loop-stepper .steps.steps6, .loop-stepper .steps.steps2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 35;
+  }
+  .overlay.show { display: block; }
+}
+@media (max-width: 520px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+}
+
+
+
+.compare4 {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare4 .compare-col h3 { font-size: 0.85rem; }
+.fw-tag {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); margin-bottom: 0.35rem;
+}
+.role-row {
+  display: grid; grid-template-columns: 110px 1fr;
+  gap: 0.75rem; padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.45rem; align-items: start;
+}
+.role-row .rn {
+  font-family: var(--font-display); font-size: 0.82rem;
+  color: var(--signal-bright);
+}
+.role-row p { margin: 0; font-size: 0.88rem; }
+.matrix {
+  width: 100%; border-collapse: collapse; margin: 1rem 0;
+  font-size: 0.82rem;
+}
+.matrix th, .matrix td {
+  border: 1px solid var(--line-strong); padding: 0.55rem 0.65rem;
+  text-align: left; vertical-align: top;
+}
+.matrix th {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.06em; color: var(--signal-bright);
+  background: var(--panel-2);
+}
+.matrix td { color: var(--text-dim); background: var(--panel); }
+.graph-viz {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem;
+  margin: 1rem 0; font-family: var(--font-display); font-size: 0.78rem;
+}
+.graph-node {
+  border: 1px solid var(--signal); background: var(--panel-2);
+  padding: 0.45rem 0.7rem; color: var(--signal-bright);
+}
+.graph-arrow { color: var(--text-mute); }
+.graph-end {
+  border: 1px dashed var(--amber); color: var(--amber);
+  padding: 0.45rem 0.7rem;
+}
+@media (max-width: 900px) {
+  .compare4 { grid-template-columns: 1fr; }
+  .role-row { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 06</div>
+      <h1>框架开发实践</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta"><span>进度</span><span id="progressText">1 / 1</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">← → 翻页 · 工业蓝图实验室</div>
+  </aside>
+  <main class="stage">
+    <div class="topbar">
+      <button type="button" class="menu-btn" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button type="button" class="btn" id="btnPrev">上一页</button>
+        <button type="button" class="btn btn-primary" id="btnNext">下一页</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+
+<!--
+  COVERAGE CHECKLIST · 第六章扩写版
+  [x] 章首路径/目标/关键词/方法/误解
+  [x] 6.1.1 四价值分页 + 小结
+  [x] 6.1.2 四框架分述 + 表6.1 + 测验
+  [x] 6.2 AutoGen 全链路（架构/组件/Team/案例角色代码/优劣/model_info）
+  [x] 6.3 AgentScope 全链路（分层/Msg/MsgHub/狼人杀/优劣）
+  [x] 6.4 CAMEL 全链路（Role-Playing/Inception/电子书/四阶段/优劣）
+  [x] 6.5 LangGraph 全链路（State/Node/Edge/三步助手/优劣）
+  [x] 6.6 权衡 + 小结 + 习题 + 参考文献
+-->
+<section class="slide active" data-id="cover" data-label="封面 · 学习目标" data-group="开篇">
+
+<div class="cover">
+  <div class="cover-badge">CHAPTER 06 · FRAMEWORK LAB</div>
+  <h2>框架开发实践</h2>
+  <p class="tagline">第四章手搓范式、第五章低代码之后——本章进入「框架驱动」：用主流多智能体框架，规范、高效地搭可靠应用。</p>
+  <div class="goals">
+    <div class="goal"><div class="goal-n">01</div><p>说清为何需要框架：复用、解耦、状态、可观测</p></div>
+    <div class="goal"><div class="goal-n">02</div><p>对比 AutoGen / AgentScope / CAMEL / LangGraph 的定位与差异</p></div>
+    <div class="goal"><div class="goal-n">03</div><p>能按场景选型：群聊、消息驱动、角色扮演、图工作流</p></div>
+    <div class="goal"><div class="goal-n">04</div><p>理解「涌现协作」与「显式控制」的权衡，并预览下一章自建框架</p></div>
+  </div>
+  <img class="cover-img" src="assets/ch6_cover.svg" alt="Lab 06 四面框架信号图" />
+  <p class="kbd-hint">侧栏目录 · 键盘 ← → · 本教程 110+ 页详解（约原版 3 倍）</p>
+</div>
+
+</section>
+<section class="slide" data-id="intro-path" data-label="章首 · 三条路径" data-group="开篇">
+<p class="slide-sub">从哪里来</p>
+<h2 class="slide-title">手搓 → 低代码 → 框架：三条腿走路</h2>
+<p class="lead">本章不是再堆一个「神奇库」，而是学会用<strong>经过验证的规范</strong>，把通用苦活交给框架。</p>
+<div class="compare"><div class="compare-col a"><h3>第四章 · 原生范式</h3><ul><li>手写 ReAct / Plan-and-Solve / Reflection</li><li>目标：看懂 Agent Loop 内脏</li><li>短板：多项目复用成本高</li></ul></div><div class="compare-col b"><h3>第五章 · 低代码</h3><ul><li>Coze / Dify / n8n 可视化</li><li>目标：快验与业务编排</li><li>短板：深度定制受平台边界</li></ul></div></div>
+<div class="callout" data-label="第六章定位"><p>框架开发 = 代码可控 + 组件标准化。适合要工程化、多智能体协作、复杂工作流，又不想从零造轮子的阶段。</p></div>
+<div class="analogy">像学开车：第四章拆发动机，第五章坐网约车熟悉路线，第六章拿驾驶证。</div>
+</section>
+<section class="slide" data-id="intro-goal" data-label="章首 · 本章目标" data-group="开篇">
+<p class="slide-sub">读完你能做什么</p>
+<h2 class="slide-title">概览主流框架 + 四个完整实战</h2>
+<p class="lead">先选型对比，再对四框架各走一条完整案例链路。正文讲原理，完整项目在仓库 <code>code/</code>。</p>
+<ul><li>理解框架本质：封装主循环、状态、工具、日志等共性劳动</li><li>会读设计哲学：对话群聊 / 消息总线 / 角色扮演 / 图状态机</li><li>能做选型论证：涌现协作 vs 显式控制；原型 vs 生产工程化</li><li>对接下一章：学完框架用法后，第七章从零自建框架</li></ul>
+<div class="note"><strong>要点：</strong>所有演示源文件在 <code>code</code> 文件夹；本互动页聚焦原理、关键片段与选型判断。</div>
+</section>
+<section class="slide" data-id="keywords" data-label="四个框架关键词" data-group="开篇">
+<p class="slide-sub">先对齐词汇</p>
+<h2 class="slide-title">读本章前记住四句定位</h2>
+<p>点击卡片翻转：正面「一句话」，背面「核心抽象」。</p>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>AutoGen</h3><div class="en">Conversation</div><p>对话驱动协作</p><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>核心抽象</h3><p>AssistantAgent · UserProxy · Team / RoundRobin</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>AgentScope</h3><div class="en">Engineering</div><p>工程化多智能体平台</p><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>核心抽象</h3><p>Msg · MsgHub · Pipeline · 分布式 Runtime</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>CAMEL</h3><div class="en">Role-Play</div><p>角色扮演自主协作</p><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>核心抽象</h3><p>AI User / AI Assistant · Inception · RolePlaying</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>LangGraph</h3><div class="en">Graph</div><p>图状态机精确控流</p><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>核心抽象</h3><p>State · Node · Edge · Conditional Cycles</p></div>
+  </div></div>
+</div>
+<div class="note"><strong>要点：</strong>白话：前两个偏「多人怎么聊/传信」，CAMEL 偏「两人对手戏」，LangGraph 偏「流程图怎么绕圈」。</div>
+</section>
+<section class="slide" data-id="howto" data-label="学习方法建议" data-group="开篇">
+<p class="slide-sub">怎么学不迷路</p>
+<h2 class="slide-title">每框架抓三条：哲学 · 积木 · 案例</h2>
+<ul><li>哲学：它把协作抽象成什么？</li><li>积木：你真正要写的配置是什么？</li><li>案例：比特币团队、三国狼人杀、科普电子书、三步搜索问答</li><li>学完一节回表 6.1，用自己的话补「我何时会选它」</li><li>末尾习题 A/B/C 选型是检验是否真懂权衡</li></ul>
+<div class="analogy">别把四章都当成安装说明书硬背；当成四家厨具店：先看适合炒什么菜。</div>
+</section>
+<section class="slide" data-id="myth" data-label="三个常见误解" data-group="开篇">
+<p class="slide-sub">开篇纠偏</p>
+<h2 class="slide-title">先破除这些错觉</h2>
+<details class="expand-card" open><summary>误解 1：有了框架就不用懂第四章范式</summary><div class="expand-body"><p>错。框架把范式<strong>封装</strong>起来；不懂循环与工具调用，调不通时只会玄学改 Prompt。</p></div></details>
+<details class="expand-card"><summary>误解 2：四个框架有唯一赢家</summary><div class="expand-body"><p>错。群聊涌现、消息工程、双人角色戏、图控流——场景不同，最优解不同。</p></div></details>
+<details class="expand-card"><summary>误解 3：框架 = 低代码平台</summary><div class="expand-body"><p>框架仍是<strong>代码库</strong>：要写 Python、管依赖、部署服务。介于手搓与纯拖拽之间。</p></div></details>
+</section>
+<section class="slide" data-id="s61" data-label="6.1 节导读" data-group="6.1 框架思维">
+<p class="slide-sub">§ 6.1</p>
+<h2 class="slide-title">从手动实现到框架开发</h2>
+<p class="lead">教学脚本能跑通任务；多类型复杂应用很快撞墙。框架本质是一套<strong>经过验证的规范</strong>。</p>
+<details class="expand-card" open><summary>框架帮你省什么？</summary><div class="expand-body"><p>封装共有重复劳动：主循环、状态、工具、日志……你专注业务差异。</p></div></details>
+<details class="expand-card"><summary>和「再抄第四章代码」有何不同？</summary><div class="expand-body"><p>抄代码=粘贴债务。框架=统一接口+可替换组件+工程实践。</p></div></details>
+</section>
+<section class="slide" data-id="why-reuse" data-label="为何需要框架 · 复用" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.1 · 价值①</p>
+<h2 class="slide-title">提升代码复用与开发效率</h2>
+<p class="lead">好框架提供通用 Agent 基类/执行器，封装 Agent Loop。</p>
+<ul><li>ReAct、Plan-and-Solve 可基于标准组件快搭</li><li>避免每个项目重写「调模型→解析动作→调工具→写记忆」</li><li>团队共享约定，新人上手更快</li></ul>
+<div class="analogy">不必每次开店都自己造收银系统——用成熟收银框架，你只设计菜单。</div>
+</section>
+<section class="slide" data-id="why-decouple" data-label="为何需要框架 · 解耦" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.1 · 价值②</p>
+<h2 class="slide-title">核心组件解耦与可扩展</h2>
+<div class="arch-stack">
+  <div class="arch-block head">模型层<span class="sub">可换 OpenAI / Anthropic / 本地模型</span></div>
+  <div class="arch-block enc">工具层<span class="sub">标准化定义、注册、执行；加新工具不影响别处</span></div>
+  <div class="arch-block dec">记忆层<span class="sub">可换滑动窗口、摘要等策略</span></div>
+</div>
+<div class="note"><strong>要点：</strong>模块化 → 更换或升级任一组件变得简单。</div>
+</section>
+<section class="slide" data-id="why-state" data-label="为何需要框架 · 状态" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.1 · 价值③</p>
+<h2 class="slide-title">标准化复杂的状态管理</h2>
+<p class="lead">第四章 ReflectionAgent 的 Memory 只是开始；长时运行状态是巨大挑战。</p>
+<ul><li>上下文窗口限制：裁剪、摘要、分段</li><li>历史持久化：重启后恢复对话与任务进度</li><li>多轮跟踪：子目标、待办、工具结果如何一致挂在状态上</li><li>框架提供通用机制，不必每次重造</li></ul>
+<div class="callout" data-label="新手提醒"><p>「状态乱」是多智能体项目最常见翻车点之一。</p></div>
+</section>
+<section class="slide" data-id="why-obs" data-label="为何需要框架 · 可观测" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.1 · 价值④</p>
+<h2 class="slide-title">简化可观测性与调试</h2>
+<ul><li>Callbacks 挂在生命周期关键节点</li><li>典型：on_llm_start / on_tool_end / on_agent_finish</li><li>自动日志/上报 → 追踪完整运行轨迹</li><li>远比到处 print 更系统</li></ul>
+<div class="analogy">像飞机黑匣子：框架帮你预埋探针位。</div>
+</section>
+<section class="slide" data-id="why-summary" data-label="框架思维小结" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.1 收束</p>
+<h2 class="slide-title">从脚本到框架是思维跃迁</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>① 复用</h3><p>别每次重写 Loop</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>标准 Agent/执行器封装循环与工具调用。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>② 解耦</h3><p>模型/工具/记忆可换</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>关注点分离，扩展面可控。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>③ 状态</h3><p>长跑最头疼</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>窗口、持久化、多轮跟踪有通用解法。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>④ 观测</h3><p>别只靠 print</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>Callbacks 系统化记录决策链。</p></div>
+  </div></div>
+</div>
+</section>
+<section class="slide" data-id="eco-shift" data-label="新一代框架关注点" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.2 背景</p>
+<h2 class="slide-title">从通用 LLM 应用框架到多智能体前沿</h2>
+<div class="compare"><div class="compare-col a"><h3>第一代重心</h3><ul><li>链/检索/工具调用通用拼装</li><li>单 Agent 或简单编排</li><li>快速搭 LLM 应用</li></ul></div><div class="compare-col b"><h3>新一代重心</h3><ul><li>多智能体协作</li><li>复杂工作流控制</li><li>对话群聊 / 消息 / 图控流等路径</li></ul></div></div>
+<div class="note"><strong>要点：</strong>本章实战：AutoGen、AgentScope、CAMEL、LangGraph。</div>
+</section>
+<section class="slide" data-id="fw-autogen-brief" data-label="选型 · AutoGen" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.2 · AutoGen</p>
+<h2 class="slide-title">核心思想：通过对话实现协作</h2>
+<ul><li>可对话智能体组成群聊</li><li>定角色（Coder / PM / Tester）与交互规则</li><li>任务解决=自动化消息传递直至目标达成</li><li>适合多角色、流程感强、映射人类团队的场景</li></ul>
+<div class="callout" data-label="一句话"><p>把软件工程例会自动化。</p></div>
+</section>
+<section class="slide" data-id="fw-as-brief" data-label="选型 · AgentScope" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.2 · AgentScope</p>
+<h2 class="slide-title">易用性 + 工程化的多智能体平台</h2>
+<ul><li>友好接口：定义智能体、通信网络、生命周期</li><li>内置消息传递机制</li><li>支持分布式部署</li><li>适合大规模、长期稳定的生产向系统</li></ul>
+<div class="callout" data-label="一句话"><p>更像「智能体操作系统」。</p></div>
+</section>
+<section class="slide" data-id="fw-camel-brief" data-label="选型 · CAMEL" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.2 · CAMEL</p>
+<h2 class="slide-title">角色扮演（Role-Playing）协作</h2>
+<ul><li>为两个智能体设定角色与共同任务</li><li>依赖 Inception Prompting 引导</li><li>自主多轮、相互启发配合</li><li>极大降低对话流程设计复杂度</li></ul>
+<div class="callout" data-label="一句话"><p>轻架构、重提示。</p></div>
+</section>
+<section class="slide" data-id="fw-lg-brief" data-label="选型 · LangGraph" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.2 · LangGraph</p>
+<h2 class="slide-title">把执行流程建成图（Graph）</h2>
+<ul><li>节点=步骤（调 LLM、执行工具）</li><li>边=跳转；条件边实现分支与循环</li><li>链式大致单向；图原生可绕回</li><li>Reflection 类迭代修正更直观</li></ul>
+<div class="callout" data-label="一句话"><p>把 Agent 画成状态机流程图。</p></div>
+</section>
+<section class="slide" data-id="table61" data-label="表 6.1 四框架对比" data-group="6.1 框架思维">
+<p class="slide-sub">6.1.2 · 表 6.1</p>
+<h2 class="slide-title">四条技术路径，不是四个「谁更强」</h2>
+<div class="compare4">
+  <div class="compare-col a"><div class="fw-tag">对话群聊</div><h3>AutoGen</h3><ul><li>角色+规则</li><li>消息自动传递</li></ul></div>
+  <div class="compare-col b"><div class="fw-tag">工程平台</div><h3>AgentScope</h3><ul><li>消息网络</li><li>大规模/分布式</li></ul></div>
+  <div class="compare-col c"><div class="fw-tag">角色扮演</div><h3>CAMEL</h3><ul><li>双专家</li><li>Inception 引导</li></ul></div>
+  <div class="compare-col"><div class="fw-tag" style="color:var(--amber)">图工作流</div><h3 style="color:var(--amber)">LangGraph</h3><ul><li>节点/边</li><li>原生循环</li></ul></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/6-figures/01.png" alt="表6.1" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线降级 · 表 6.1</strong><br/>AutoGen=对话；AgentScope=消息工程；CAMEL=角色扮演；LangGraph=图控流。</div>
+  <div class="fig-cap">表 6.1 四种智能体框架对比</div>
+</div>
+<div class="note"><strong>要点：</strong>完整项目在仓库 <code>code/</code>。</div>
+</section>
+<section class="slide" data-id="quiz61a" data-label="检测 · 6.1（上）" data-group="6.1 框架思维">
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">框架思维检测 · A</h2>
+<div class="quiz-score" id="score-q61a"></div>
+<div class="quiz-item" data-quiz="q61a" data-answer="1">
+<h4>1. 使用智能体框架最核心的动机是？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">彻底消灭写代码</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">封装共性劳动，专注业务逻辑与可靠性</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只用低代码</button>
+<div class="quiz-explain">框架提供规范与组件，减少重复造轮子。</div>
+</div>
+<div class="quiz-item" data-quiz="q61a" data-answer="2">
+<h4>2. 「把执行流程建成图，节点可循环」更贴近？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">CAMEL</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">AutoGen</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">LangGraph</button>
+<div class="quiz-explain">LangGraph 用 State/Node/Edge。</div>
+</div>
+</section>
+<section class="slide" data-id="quiz61b" data-label="检测 · 6.1（下）" data-group="6.1 框架思维">
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">框架思维检测 · B</h2>
+<div class="quiz-score" id="score-q61b"></div>
+<div class="quiz-item" data-quiz="q61b" data-answer="0">
+<h4>1. AgentScope 更突出的标签是？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">工程化 / 消息驱动 / 分布式友好</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">只做双人角色扮演</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">纯可视化零代码</button>
+<div class="quiz-explain">强调易用性与工业级能力。</div>
+</div>
+<div class="quiz-item" data-quiz="q61b" data-answer="1">
+<h4>2. CAMEL 降低流程设计复杂度的关键技术是？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">强制手写状态机</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">Inception Prompting</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只用同步阻塞</button>
+<div class="quiz-explain">开局植入角色、目标与沟通协议。</div>
+</div>
+</section>
+<section class="slide" data-id="s62" data-label="6.2 节导读" data-group="6.2 AutoGen">
+<p class="slide-sub">§ 6.2</p>
+<h2 class="slide-title">框架一：AutoGen —— 对话驱动协作</h2>
+<p class="lead">复杂任务 → 多角色智能体之间的<strong>自动化对话</strong>。教材以 <code>0.7.4</code> 为例：组合式架构。</p>
+<div class="analogy">像开圆桌会：定座位、发言顺序与散会口令；人设靠 System Message，Team 负责递话筒。</div>
+</section>
+<section class="slide" data-id="ag-philosophy" data-label="AutoGen 设计哲学" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2 开篇</p>
+<h2 class="slide-title">以对话驱动协作</h2>
+<ul><li>根植于「可对话」智能体组成的系统</li><li>开发者关注：角色是谁、职责是什么、如何交接</li><li>框架关注：消息如何传递、何时轮到谁、何时终止</li><li>0.7.4：更灵活的组合式设计</li></ul>
+<div class="note"><strong>要点：</strong>先理解核心构成与对话机制，再进入软件开发团队案例。</div>
+</section>
+<section class="slide" data-id="ag-v074" data-label="0.7.4 架构革新" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.1</p>
+<h2 class="slide-title">为何说 0.7.4 是重要节点</h2>
+<p class="lead">并非简单功能叠加，而是对整体架构的重新思考。</p>
+<div class="compare"><div class="compare-col a"><h3>演进方向</h3><ul><li>清晰分层</li><li>异步优先（async/await）</li><li>组合式组件</li></ul></div><div class="compare-col b"><h3>带来的收益</h3><ul><li>职责清晰、耦合降低</li><li>等 LLM 时可干别的事</li><li>按需组装 Agent / Team</li></ul></div></div>
+</section>
+<section class="slide" data-id="ag-layers" data-label="分层：core 与 agentchat" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.1 ·（1）框架结构</p>
+<h2 class="slide-title">autogen-core + autogen-agentchat</h2>
+<div class="arch-stack">
+  <div class="arch-block head">autogen-agentchat<span class="sub">高级对话接口</span></div>
+  <div class="arch-block enc">autogen-core<span class="sub">模型交互、消息传递底座</span></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/6-figures/02.png" alt="图6.1" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线降级 · 图 6.1</strong><br/>上层 agentchat，下层 core；全链路异步。</div>
+  <div class="fig-cap">图 6.1 AutoGen 架构图</div>
+</div>
+<div class="note"><strong>要点：</strong>分层使职责明确，降低耦合，便于扩展。</div>
+</section>
+<section class="slide" data-id="ag-async" data-label="异步优先为何重要" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.1 ·（1）异步</p>
+<h2 class="slide-title">多智能体场景下的并发现实</h2>
+<ul><li>网络请求（调 LLM API）是主要耗时操作</li><li>同步阻塞：等 A 时整条线程干等</li><li>异步：等待 A 时可推进 B、C</li><li>入口常见：asyncio.run(...) + await</li></ul>
+<pre class="code-block">result = await Console(team_chat.run_stream(task=task))
+# asyncio.run(run_software_development_team())</pre>
+</section>
+<section class="slide" data-id="ag-assistant" data-label="AssistantAgent 详解" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.1 ·（2）</p>
+<h2 class="slide-title">助理智能体：任务的主要解决者</h2>
+<ul><li>核心封装 LLM</li><li>根据对话历史生成计划、文章、代码</li><li>通过不同 System Message 赋予不同「专家」角色</li><li>同一组件类型，不同提示 = 不同专家</li></ul>
+<div class="callout" data-label="设计意图"><p>思考侧：推理、规划、生成——尽量由 Assistant 完成。</p></div>
+</section>
+<section class="slide" data-id="ag-userproxy" data-label="UserProxyAgent 详解" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.1 ·（2）</p>
+<h2 class="slide-title">用户代理：代言人 + 执行器</h2>
+<div class="compare"><div class="compare-col a"><h3>作为代言人</h3><ul><li>代表人类用户</li><li>发起任务、传达意图</li><li>可在关键节点介入</li></ul></div><div class="compare-col b"><h3>作为执行器</h3><ul><li>可配置执行代码</li><li>可调用工具</li><li>把结果反馈给其它智能体</li></ul></div></div>
+<div class="note"><strong>要点：</strong>区分「思考」（Assistant）与「行动/人在环」（UserProxy）。测完常发 TERMINATE。</div>
+</section>
+<section class="slide" data-id="ag-team-evo" data-label="从 GroupChatManager 到 Team" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.1 ·（3）</p>
+<h2 class="slide-title">多 Agent 协调机制的演进</h2>
+<ul><li>早期：GroupChatManager</li><li>新架构：更灵活的 Team / 群聊</li><li>代表：RoundRobinGroupChat（轮询群聊）</li><li>按预定义顺序依次发言——适合流程固定任务</li></ul>
+<div class="analogy">产品经理 → 工程师 → 审查员：流水线站位，话筒按圈传递。</div>
+</section>
+<section class="slide" data-id="ag-rr-steps" data-label="RoundRobin 五步工作流" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.1 · 工作流</p>
+<h2 class="slide-title">轮询群聊如何跑起来</h2>
+<div class="loop-stepper" id="agRound">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showAgRound(0)">① 组队</button>
+    <button type="button" class="step-btn" onclick="showAgRound(1)">② 激活</button>
+    <button type="button" class="step-btn" onclick="showAgRound(2)">③ 响应</button>
+    <button type="button" class="step-btn" onclick="showAgRound(3)">④ 接力</button>
+    <button type="button" class="step-btn" onclick="showAgRound(4)">⑤ 终止</button>
+  </div>
+  <div class="loop-panel" id="agRoundPanel"></div>
+</div>
+<div class="note"><strong>要点：</strong>定义角色与发言顺序后，协作可由群聊机制自主驱动。</div>
+</section>
+<section class="slide" data-id="ag-case-goal" data-label="案例业务目标" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.2 ·（1）</p>
+<h2 class="slide-title">实时显示比特币当前价格的 Web 应用</h2>
+<ul><li>覆盖：需求→选型→编码→审查→测试</li><li>检验 AutoGen 自动化协作的理想场景</li><li>技术：Streamlit 简洁 Web</li><li>功能：实时价、24h 涨跌、刷新、错误处理与加载态</li></ul>
+<div class="callout" data-label="为什么选它"><p>链路完整、目标清晰，便于观察四角色交接。</p></div>
+</section>
+<section class="slide" data-id="ag-roles-overview" data-label="四角色总览" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.2 ·（2）</p>
+<h2 class="slide-title">智能体团队角色划分</h2>
+<p class="lead">角色划分是关键一步：大任务 → 领域专家子任务。</p>
+<div class="role-row"><div class="rn">ProductManager</div><p>模糊需求 → 可执行开发计划</p></div>
+<div class="role-row"><div class="rn">Engineer</div><p>按计划编写应用代码</p></div>
+<div class="role-row"><div class="rn">CodeReviewer</div><p>审查质量、可读性、健壮性与安全</p></div>
+<div class="role-row"><div class="rn">UserProxy</div><p>发起任务，执行并验证交付</p></div>
+</section>
+<section class="slide" data-id="ag-role-pm" data-label="角色 · 产品经理" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.3 · System Message</p>
+<h2 class="slide-title">ProductManager 的行为准则</h2>
+<ul><li>需求分析：核心功能与边界</li><li>技术规划：清晰实现路径</li><li>风险评估：技术风险与体验问题</li><li>输出结构：需求理解→模块划分→选型→优先级→验收标准</li><li>引导下一棒：「请工程师开始实现」</li></ul>
+<div class="note"><strong>要点：</strong>系统消息定职责、输出结构与交接话术——多智能体提示工程关键。</div>
+</section>
+<section class="slide" data-id="ag-role-eng" data-label="角色 · 工程师" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.3 · System Message</p>
+<h2 class="slide-title">Engineer 聚焦技术实现</h2>
+<ul><li>专长：Python、Web（Streamlit/Flask/Django）、API、错误处理</li><li>流程：分析→选方案→完整代码→注释→边界情况</li><li>交付：完整可运行代码</li><li>引导下一棒：「请代码审查员检查」</li></ul>
+<pre class="code-block">return AssistantAgent(
+    name=&quot;Engineer&quot;,
+    model_client=model_client,
+    system_message=system_message,
+)</pre>
+</section>
+<section class="slide" data-id="ag-role-rev" data-label="角色 · 代码审查员" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.3 · System Message</p>
+<h2 class="slide-title">CodeReviewer 守质量关</h2>
+<ul><li>审查：可读性/可维护性/性能、安全性、最佳实践、异常处理</li><li>流程：读懂→查规范→找问题→给建议→评估整体</li><li>完成后：「代码审查完成，请用户代理测试」</li></ul>
+<div class="callout" data-label="设计意图"><p>交付前加质量关卡，避免「能跑但很脆」。</p></div>
+</section>
+<section class="slide" data-id="ag-role-proxy" data-label="角色 · 用户代理" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.3 · UserProxy</p>
+<h2 class="slide-title">不靠 LLM 聊天，靠代理职责收束流程</h2>
+<ul><li>代表用户提出需求</li><li>执行最终代码 / 验证功能</li><li>提供反馈</li><li>完成后回复 TERMINATE，正常结束协作</li></ul>
+<pre class="code-block">UserProxyAgent(
+  name=&quot;UserProxy&quot;,
+  description=&quot;...完成测试后请回复 TERMINATE。&quot;
+)</pre>
+</section>
+<section class="slide" data-id="ag-model-client" data-label="模型客户端配置" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.3 ·（1）</p>
+<h2 class="slide-title">OpenAIChatCompletionClient</h2>
+<p class="lead">可对接任何兼容 OpenAI API 规范的服务。</p>
+<pre class="code-block">def create_openai_model_client():
+    return OpenAIChatCompletionClient(
+        model=os.getenv(&quot;LLM_MODEL_ID&quot;, &quot;gpt-4o&quot;),
+        api_key=os.getenv(&quot;LLM_API_KEY&quot;),
+        base_url=os.getenv(&quot;LLM_BASE_URL&quot;, &quot;https://api.openai.com/v1&quot;)
+    )</pre>
+<div class="note"><strong>要点：</strong>环境变量管密钥与地址：灵活、安全。含 Azure、Ollama 等。</div>
+</section>
+<section class="slide" data-id="ag-sysmsg-why" data-label="为何 System Message 如此关键" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.3 ·（2）</p>
+<h2 class="slide-title">行为准则 + 专业知识库 + 交接协议</h2>
+<ul><li>规定角色、职责、工作流程</li><li>规定与其它智能体交互方式</li><li>用独立函数封装每个角色——可维护、可复用</li><li>精心设计的系统消息是高效协作的关键</li></ul>
+<div class="analogy">没有好的岗位说明书，圆桌会就会变成各说各话。</div>
+</section>
+<section class="slide" data-id="ag-team-code" data-label="定义团队与终止条件" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.3 ·（3）</p>
+<h2 class="slide-title">RoundRobinGroupChat 关键参数</h2>
+<pre class="code-block">team_chat = RoundRobinGroupChat(
+    participants=[product_manager, engineer, code_reviewer, user_proxy],
+    termination_condition=TextMentionTermination(&quot;TERMINATE&quot;),
+    max_turns=20,
+)</pre>
+<ul><li>participants 顺序 = 发言次序</li><li>TERMINATE：通常由 UserProxy 测完后发出</li><li>max_turns：防死循环安全阀</li></ul>
+</section>
+<section class="slide" data-id="ag-run" data-label="异步启动与任务描述" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.3 ·（4）</p>
+<h2 class="slide-title">run_stream + Console + asyncio</h2>
+<pre class="code-block">task = &quot;&quot;&quot;我们需要开发一个比特币价格显示应用...
+请团队协作完成这个任务，从需求分析到最终实现。&quot;&quot;&quot;
+result = await Console(team_chat.run_stream(task=task))</pre>
+<ul><li>task 作为初始消息；PM 作为第一参与者先接球</li><li>Console 流式打印对话过程</li><li>主入口：asyncio.run(...)</li></ul>
+</section>
+<section class="slide" data-id="ag-flow" data-label="预期协作流水线" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.3 ·（5）</p>
+<h2 class="slide-title">从 User 到 TERMINATE 的完整闭环</h2>
+<div class="loop-stepper" id="agFlow">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showAgFlow(0)">User</button>
+    <button type="button" class="step-btn" onclick="showAgFlow(1)">PM</button>
+    <button type="button" class="step-btn" onclick="showAgFlow(2)">Engineer</button>
+    <button type="button" class="step-btn" onclick="showAgFlow(3)">Reviewer</button>
+    <button type="button" class="step-btn" onclick="showAgFlow(4)">Proxy→END</button>
+  </div>
+  <div class="loop-panel" id="agFlowPanel"></div>
+</div>
+<div class="callout" data-label="框架优势一览"><p>自然对话协作 · 角色专业化 · 流程自动管理 · 完整开发闭环</p></div>
+</section>
+<section class="slide" data-id="ag-pros" data-label="AutoGen 优势" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.4 ·（1）</p>
+<h2 class="slide-title">客观看优势</h2>
+<ul><li>无需先画复杂状态机：流程自然映射为多角色对话</li><li>更贴近人类团队协作，降低建模门槛</li><li>精力聚焦「谁」与「做什么」</li><li>System Message 高度专业化、可复用</li><li>RoundRobin 清晰可预测；UserProxy 支持 Human-in-the-loop</li></ul>
+</section>
+<section class="slide" data-id="ag-cons" data-label="AutoGen 局限" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.4 ·（2）</p>
+<h2 class="slide-title">客观看挑战</h2>
+<ul><li>LLM 对话不确定 → 可能偏题、意外分支、循环</li><li>调试棘手：没有清晰堆栈，只有长对话历史</li><li>「对话式调试」难题</li><li>缓解：质量监控、动态回退、超时与轮次硬限制</li></ul>
+<div class="note"><strong>要点：</strong>顺序化流程能降低混乱，但不能消灭生成不确定性。</div>
+</section>
+<section class="slide" data-id="ag-model-info" data-label="非 OpenAI 模型配置" data-group="6.2 AutoGen">
+<p class="slide-sub">6.2.4 ·（3）</p>
+<h2 class="slide-title">DeepSeek 等需传入 model_info</h2>
+<pre class="code-block">model_client = OpenAIChatCompletionClient(
+    model=&quot;deepseek-chat&quot;,
+    api_key=os.getenv(&quot;DEEPSEEK_API_KEY&quot;),
+    base_url=&quot;https://api.deepseek.com/v1&quot;,
+    model_info={
+        &quot;function_calling&quot;: True, &quot;max_tokens&quot;: 4096,
+        &quot;context_length&quot;: 32768, &quot;vision&quot;: False,
+        &quot;json_output&quot;: True, &quot;family&quot;: &quot;deepseek&quot;,
+        &quot;structured_output&quot;: True,
+    }
+)</pre>
+<div class="note"><strong>要点：</strong>model_info 告诉框架该模型的能力边界。</div>
+</section>
+<section class="slide" data-id="quiz62a" data-label="检测 · AutoGen（上）" data-group="6.2 AutoGen">
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">AutoGen 检测 · A</h2>
+<div class="quiz-score" id="score-q62a"></div>
+<div class="quiz-item" data-quiz="q62a" data-answer="1">
+<h4>1. UserProxyAgent 的独特之处？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">只负责写代码，从不执行</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">既代表人发起意图，又可执行工具/代码并反馈</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">就是另一个 AssistantAgent</button>
+<div class="quiz-explain">桥接「人」与「执行」，常发 TERMINATE。</div>
+</div>
+<div class="quiz-item" data-quiz="q62a" data-answer="0">
+<h4>2. participants 列表顺序表示？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">智能体发言的先后次序</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">模型温度从高到低</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">无关紧要的展示顺序</button>
+<div class="quiz-explain">顺序化协调依赖列表次序。</div>
+</div>
+</section>
+<section class="slide" data-id="quiz62b" data-label="检测 · AutoGen（下）" data-group="6.2 AutoGen">
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">AutoGen 检测 · B</h2>
+<div class="quiz-score" id="score-q62b"></div>
+<div class="quiz-item" data-quiz="q62b" data-answer="1">
+<h4>1. System Message 写「请工程师开始实现」主要作用？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">装饰文案</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">显式引导对话转向下一角色</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">提高采样温度</button>
+<div class="quiz-explain">交接话术让职责切换更稳定。</div>
+</div>
+<div class="quiz-item" data-quiz="q62b" data-answer="1">
+<h4>2. max_turns 的主要工程意义？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">提高模型智商</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">防止无限循环、控制资源消耗</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">替换 TERMINATE</button>
+<div class="quiz-explain">安全阀；与终止条件互补。</div>
+</div>
+</section>
+<section class="slide" data-id="s63" data-label="6.3 节导读" data-group="6.3 AgentScope">
+<p class="slide-sub">§ 6.3</p>
+<h2 class="slide-title">框架二：AgentScope —— 工程化优先</h2>
+<p class="lead">AutoGen 是「以对话驱动协作」；AgentScope 是<strong>工程化优先的多智能体平台</strong>。</p>
+<div class="compare"><div class="compare-col a"><h3>AutoGen 气质</h3><ul><li>对话驱动</li><li>角色与群聊规则</li><li>灵活协作</li></ul></div><div class="compare-col b"><h3>AgentScope 气质</h3><ul><li>消息驱动</li><li>组合式+工业实践</li><li>并发、分布式、容错、可观测</li></ul></div></div>
+</section>
+<section class="slide" data-id="as-os" data-label="智能体操作系统隐喻" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.1 开篇</p>
+<h2 class="slide-title">从开发、测试到部署的全生命周期</h2>
+<p class="lead">阿里达摩院出品，面向大规模、高可靠性多智能体应用。</p>
+<ul><li>直观易用的编程接口</li><li>内置分布式部署、容错恢复、可观测性</li><li>适合长期稳定运行的生产环境</li><li>组合式架构 + 消息驱动：奠定并发与分布式能力</li></ul>
+<div class="analogy">AutoGen 像对话工作室；AgentScope 更像带消息总线与运维面板的 OS。</div>
+</section>
+<section class="slide" data-id="as-layer1" data-label="分层 · 基础组件" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.1 ·（1）底层</p>
+<h2 class="slide-title">Foundational Components</h2>
+<div class="arch-stack">
+  <div class="arch-block">Message<span class="sub">统一消息：文本到多模态</span></div>
+  <div class="arch-block">Memory<span class="sub">短期与长期记忆</span></div>
+  <div class="arch-block">Model API<span class="sub">抽象不同 LLM 调用</span></div>
+  <div class="arch-block">Tool<span class="sub">封装与外部世界交互</span></div>
+</div>
+<div class="note"><strong>要点：</strong>这些是整个框架的核心构建块。</div>
+</section>
+<section class="slide" data-id="as-layer2" data-label="分层 · Agent 基建与协作" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.1 ·（1）中上层</p>
+<h2 class="slide-title">Infrastructure → Cooperation → Deploy</h2>
+<div class="arch-stack">
+  <div class="arch-block head">Deployment &amp; Development<span class="sub">Runtime · Studio</span></div>
+  <div class="arch-block enc">Multi-Agent Cooperation<span class="sub">MsgHub · Pipeline</span></div>
+  <div class="arch-block dec">Agent-level Infrastructure<span class="sub">预置 Agent · ReAct · 钩子 · 并行工具</span></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/6-figures/03.png" alt="图6.2" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线降级 · 图 6.2</strong><br/>基础组件 → Agent 基建 → 协作 → 部署。</div>
+  <div class="fig-cap">图 6.2 AgentScope 架构图</div>
+</div>
+</section>
+<section class="slide" data-id="as-msg-struct" data-label="Msg 标准结构" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.1 ·（2）</p>
+<h2 class="slide-title">交互单位是消息，不是硬函数调用</h2>
+<pre class="code-block">message = Msg(
+    name=&quot;Alice&quot;,
+    content=&quot;Hello, Bob!&quot;,
+    role=&quot;user&quot;,
+    metadata={&quot;timestamp&quot;: &quot;...&quot;, &quot;message_type&quot;: &quot;text&quot;, &quot;priority&quot;: &quot;normal&quot;}
+)</pre>
+<div class="note"><strong>要点：</strong>所有智能体交互抽象为消息的发送与接收。</div>
+</section>
+<section class="slide" data-id="as-msg-benefits" data-label="消息驱动四大收益" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.1 ·（2）</p>
+<h2 class="slide-title">为什么把 Msg 当基础单元</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>异步解耦</h3><p>发送方不必干等</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>时间解耦，适合高并发。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>位置透明</h3><p>本地或远程无所谓</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>消息系统自动路由。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>可观测</h3><p>条条可追踪</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>记录、回放、分析调试简化。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>可靠性</h3><p>持久化与重试</p><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><p>故障后仍可追求最终一致性。</p></div>
+  </div></div>
+</div>
+</section>
+<section class="slide" data-id="as-agentbase" data-label="AgentBase 生命周期" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.1 ·（3）</p>
+<h2 class="slide-title">你主要写 reply</h2>
+<pre class="code-block">class CustomAgent(AgentBase):
+    def reply(self, x: Msg) -&gt; Msg:
+        response = self.model(x.content)
+        return Msg(name=self.name, content=response, role=&quot;assistant&quot;)
+    def observe(self, x: Msg) -&gt; None:
+        self.memory.add(x)  # 可选</pre>
+<div class="note"><strong>要点：</strong>分离内部逻辑与外部通信：在 reply 里定义「思考和回应」。</div>
+</section>
+<section class="slide" data-id="as-msghub" data-label="MsgHub 消息中心" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.1 ·（4）</p>
+<h2 class="slide-title">消息驱动架构的中枢</h2>
+<ul><li>灵活路由：点对点、广播、组播</li><li>消息持久化：SQLite、MongoDB 等，支持状态恢复</li><li>原生分布式：跨进程/服务器经 RPC 透明通信</li><li>高并发高可靠场景比纯对话驱动更具工程优势</li></ul>
+<div class="callout" data-label="适应成本"><p>要求理解并适应消息驱动的异步编程范式。</p></div>
+</section>
+<section class="slide" data-id="as-game-intro" data-label="三国狼人杀案例导读" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.2</p>
+<h2 class="slide-title">实时协作 × 角色扮演 × 策略博弈</h2>
+<ul><li>刘备、关羽、诸葛亮等进入狼人杀</li><li>既完成阵营任务，又体现人物性格</li><li>演示消息驱动在实时协作中的威力</li><li>覆盖夜晚协商、白天辩论、投票、查验</li></ul>
+</section>
+<section class="slide" data-id="as-game-layers" data-label="游戏三层架构" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.2 ·（1）</p>
+<h2 class="slide-title">分层解耦映射框架组件</h2>
+<div class="arch-stack">
+  <div class="arch-block enc">游戏控制层<span class="sub">ThreeKingdomsWerewolfGame：状态、昼夜、胜负</span></div>
+  <div class="arch-block dec">智能体交互层<span class="sub">MsgHub：密谈与辩论</span></div>
+  <div class="arch-block head">角色建模层<span class="sub">DialogAgent + 提示词：游戏角色+三国人格</span></div>
+</div>
+<div class="analogy">传统爱用中心状态机；这里用「在什么频道、用什么模式交换消息」描述流程。</div>
+</section>
+<section class="slide" data-id="as-wolf-phase" data-label="MsgHub 狼人阶段" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.2 ·（2）</p>
+<h2 class="slide-title">临时私密频道 + 结构化投票</h2>
+<div class="loop-stepper" id="asWolf">
+  <div class="steps steps4">
+    <button type="button" class="step-btn on" onclick="showAsWolf(0)">开频道</button>
+    <button type="button" class="step-btn" onclick="showAsWolf(1)">讨论</button>
+    <button type="button" class="step-btn" onclick="showAsWolf(2)">关广播</button>
+    <button type="button" class="step-btn" onclick="showAsWolf(3)">fanout 投票</button>
+  </div>
+  <div class="loop-panel" id="asWolfPanel"></div>
+</div>
+<pre class="code-block">async with MsgHub(self.werewolves, enable_auto_broadcast=True, announcement=...) as hub:
+  # 讨论...
+  hub.set_auto_broadcast(False)
+  kill_votes = await fanout_pipeline(..., structured_model=WerewolfKillModelCN)</pre>
+</section>
+<section class="slide" data-id="as-struct" data-label="结构化输出约束规则" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.2 ·（3）</p>
+<h2 class="slide-title">用 Schema 把游戏规则写成校验</h2>
+<ul><li>DiscussionModelCN：是否达成一致、信心1–10、关键证据</li><li>WitchActionModelCN：解药/毒药/目标</li><li>保证格式一致性 + 规则自动化约束</li><li>女巫不能乱用药、预言家每晚限一人——靠字段验证</li></ul>
+<div class="note"><strong>要点：</strong>比纯 Prompt「请遵守规则」更硬、更稳。</div>
+</section>
+<section class="slide" data-id="as-dual-role" data-label="双重角色建模" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.2 ·（4）</p>
+<h2 class="slide-title">游戏功能角色 × 文化人格角色</h2>
+<pre class="code-block">def get_role_prompt(role: str, character: str) -&gt; str:
+    base = f&quot;你是{character}，在这场三国狼人杀中扮演{role}。&quot;
+    # + 规则（只对话推理、按 JSON）+ 阵营规则
+    # +「以{character}的性格说话和行动」</pre>
+<ul><li>同一狼人位：曹操偏狡猾，张飞偏冲动</li><li>提示词工程融合两层身份</li><li>禁止乱调外部工具，强制结构化回复</li></ul>
+</section>
+<section class="slide" data-id="as-fanout" data-label="并发投票与容错" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.2 ·（5）</p>
+<h2 class="slide-title">fanout_pipeline + try/except 默认响应</h2>
+<pre class="code-block">vote_msgs = await fanout_pipeline(
+    self.alive_players,
+    await self.moderator.announce(&quot;请投票...&quot;),
+    structured_model=get_vote_model_cn(self.alive_players),
+    enable_gather=False,
+)</pre>
+<ul><li>并行扇出收集——模拟「同时投票」</li><li>单 Agent 异常时给默认结构化响应，整局继续</li><li>工程意义：局部失败 ≠ 全局崩溃</li></ul>
+</section>
+<section class="slide" data-id="as-log" data-label="运行日志走读要点" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.2 ·（6）</p>
+<h2 class="slide-title">夜晚密谈 → 查验 → 女巫 → 白天辩论</h2>
+<ul><li>主持人公告推进阶段（睁眼/闭眼）</li><li>狼人频道内策略辩论后统一击杀目标</li><li>预言家点对点查验；女巫救/毒</li><li>白天全员广播 + 投票——同一消息范式，不同路由模式</li></ul>
+<div class="note"><strong>要点：</strong>读日志时对照：广播、组播还是点对点？结构化字段是否生效？</div>
+</section>
+<section class="slide" data-id="as-proscons" data-label="AgentScope 优劣" data-group="6.3 AgentScope">
+<p class="slide-sub">6.3.3</p>
+<h2 class="slide-title">强大，但可能「杀鸡用牛刀」</h2>
+<div class="compare"><div class="compare-col a"><h3>优势</h3><ul><li>复杂流程映射为并发异步消息事件</li><li>结构化输出提升稳定可预测</li><li>原生并发 + 单点失败可容错</li></ul></div><div class="compare-col b"><h3>局限</h3><ul><li>要懂异步、分布式</li><li>简单对话易过度工程化</li><li>生态相对较新</li></ul></div></div>
+<div class="note"><strong>要点：</strong>生产级大规模高可靠 → AgentScope；快速原型 → 可先选更轻框架。</div>
+</section>
+<section class="slide" data-id="quiz63a" data-label="检测 · AgentScope（上）" data-group="6.3 AgentScope">
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">AgentScope 检测 · A</h2>
+<div class="quiz-score" id="score-q63a"></div>
+<div class="quiz-item" data-quiz="q63a" data-answer="2">
+<h4>1. 消息驱动相对函数调用的收益不包括？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">异步解耦与高并发</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">位置透明与可观测</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">保证 LLM 永远不胡说</button>
+<div class="quiz-explain">架构不消灭幻觉。</div>
+</div>
+<div class="quiz-item" data-quiz="q63a" data-answer="0">
+<h4>2. 狼人阶段用 MsgHub 动态建频道，主要是为了？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">仅狼人可见的临时协作上下文</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">替换掉所有 Prompt</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">强制同步阻塞</button>
+<div class="quiz-explain">私密频道 + 模式切换是消息驱动典范。</div>
+</div>
+</section>
+<section class="slide" data-id="quiz63b" data-label="检测 · AgentScope（下）" data-group="6.3 AgentScope">
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">AgentScope 检测 · B</h2>
+<div class="quiz-score" id="score-q63b"></div>
+<div class="quiz-item" data-quiz="q63b" data-answer="1">
+<h4>1. 结构化输出在狼人杀中的核心价值？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">让日志更好看</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">把游戏规则变成字段校验与自动约束</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">提高显卡利用率</button>
+<div class="quiz-explain">格式一致 + 规则硬约束。</div>
+</div>
+<div class="quiz-item" data-quiz="q63b" data-answer="1">
+<h4>2. fanout_pipeline 更贴近？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">严格串行一人说完另一人再说</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">同时收集多方决策（如同时投票）</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只允许两个智能体对话</button>
+<div class="quiz-explain">并行扇出收集。</div>
+</div>
+</section>
+<section class="slide" data-id="s64" data-label="6.4 节导读" data-group="6.4 CAMEL">
+<p class="slide-sub">§ 6.4</p>
+<h2 class="slide-title">框架三：CAMEL —— 轻架构、重提示</h2>
+<p class="lead">最初目标：最少人类干预下，让两个智能体通过角色扮演自主协作。</p>
+<div class="note"><strong>要点：</strong>不拼功能大全，拼「引导性提示」激发深度对话。</div>
+</section>
+<section class="slide" data-id="camel-roleplay" data-label="角色扮演基石" data-group="6.4 CAMEL">
+<p class="slide-sub">6.4.1 ·（1）</p>
+<h2 class="slide-title">AI User × AI Assistant</h2>
+<div class="compare"><div class="compare-col a"><h3>AI User（推动者）</h3><ul><li>提出需求</li><li>下达指令</li><li>构思任务步骤</li></ul></div><div class="compare-col b"><h3>AI Assistant（执行者）</h3><ul><li>按指令执行</li><li>提供解决方案</li><li>产出内容/代码</li></ul></div></div>
+<details class="expand-card" open><summary>股票工具例子</summary><div class="expand-body"><p><strong>AI 用户</strong>＝资深交易员；<strong>AI 助理</strong>＝优秀 Python 程序员。跨领域专家对话，完成单方难独立完成的任务。</p></div></details>
+</section>
+<section class="slide" data-id="camel-inception" data-label="引导性提示拆解" data-group="6.4 CAMEL">
+<p class="slide-sub">6.4.1 ·（2）</p>
+<h2 class="slide-title">Inception Prompting：开局植入行动纲领</h2>
+<ul><li>明确自身角色</li><li>告知协作者角色</li><li>定义共同目标</li><li>行为约束与沟通协议（一次一步、完成标志等）</li></ul>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/6-figures/04.png" alt="图6.3" onerror="this.closest('.fig').classList.add('offline')" />
+  <div class="fig-fallback"><strong>离线降级 · 图 6.3</strong><br/>引导性提示约束双智能体推进任务。</div>
+  <div class="fig-cap">图 6.3 CAMEL 协作示意</div>
+</div>
+</section>
+<section class="slide" data-id="camel-book-scene" data-label="电子书案例设定" data-group="6.4 CAMEL">
+<p class="slide-sub">6.4.2 ·（1）</p>
+<h2 class="slide-title">心理学家 × 作家 →《拖延症心理学》</h2>
+<div class="role-row"><div class="rn">心理学家</div><p>理论基础与实证研究</p></div>
+<div class="role-row"><div class="rn">作家</div><p>叙述与可读性；学术→大众文字</p></div>
+<div class="note"><strong>要点：</strong>两专家各发挥所长，协作完成复杂创作。</div>
+</section>
+<section class="slide" data-id="camel-task-prompt" data-label="task_prompt 任务说明书" data-group="6.4 CAMEL">
+<p class="slide-sub">6.4.2 ·（2）</p>
+<h2 class="slide-title">共同目标写清楚</h2>
+<p class="lead">task_prompt 不仅是目标，也会被用来生成引导性提示。</p>
+<pre class="code-block">task_prompt = &quot;&quot;&quot;
+创作一本关于&quot;拖延症心理学&quot;的短篇电子书...
+1. 科学严谨  2. 通俗易懂  3. 实用建议与案例
+4. 8000-10000字  5. 引言+核心章节+总结
+&quot;&quot;&quot;</pre>
+<div class="note"><strong>要点：</strong>教材示例可用 ModelFactory 创建 Qwen（百炼）等后端。</div>
+</section>
+<section class="slide" data-id="camel-roleplaying" data-label="初始化 RolePlaying" data-group="6.4 CAMEL">
+<p class="slide-sub">6.4.2 ·（3）</p>
+<h2 class="slide-title">构建双智能体协作「社会」</h2>
+<pre class="code-block">role_play_session = RolePlaying(
+    assistant_role_name=&quot;心理学家&quot;,
+    user_role_name=&quot;作家&quot;,
+    task_prompt=task_prompt,
+    model=model,
+    with_task_specify=False,
+)</pre>
+<ul><li>约定：user=推动者/需求方；assistant=执行者/方案方</li><li>因此作家→user_role；心理学家→assistant_role</li><li>RolePlaying 封装复杂提示工程</li></ul>
+</section>
+<section class="slide" data-id="camel-loop" data-label="step 循环与终止" data-group="6.4 CAMEL">
+<p class="slide-sub">6.4.2 ·（4）</p>
+<h2 class="slide-title">init_chat → while step → CAMEL_TASK_DONE</h2>
+<pre class="code-block">input_msg = role_play_session.init_chat()
+while n &lt; chat_turn_limit:
+    assistant_response, user_response = role_play_session.step(input_msg)
+    if &quot;&lt;CAMEL_TASK_DONE&gt;&quot; in ...:
+        break
+    input_msg = assistant_response.msg</pre>
+<ul><li>init_chat() 自动开场</li><li>每轮：作家提需求、心理学家给内容</li><li>上一轮助理输出=下一轮输入</li><li>终止：轮次上限或 CAMEL_TASK_DONE</li></ul>
+</section>
+<section class="slide" data-id="camel-phases" data-label="四阶段协作走读" data-group="6.4 CAMEL">
+<p class="slide-sub">6.4.2 ·（5）</p>
+<h2 class="slide-title">不是乱聊，是结构化创作流水线</h2>
+<div class="loop-stepper" id="camelPh">
+  <div class="steps steps4">
+    <button type="button" class="step-btn on" onclick="showCamelPh(0)">① 对齐框架</button>
+    <button type="button" class="step-btn" onclick="showCamelPh(1)">② 知识转译</button>
+    <button type="button" class="step-btn" onclick="showCamelPh(2)">③ 迭代打磨</button>
+    <button type="button" class="step-btn" onclick="showCamelPh(3)">④ 总结收束</button>
+  </div>
+  <div class="loop-panel" id="camelPhPanel"></div>
+</div>
+<div class="note"><strong>要点：</strong>观察 Instruction / Solution / Next request 模式。</div>
+</section>
+<section class="slide" data-id="camel-sample" data-label="对话片段怎么读" data-group="6.4 CAMEL">
+<p class="slide-sub">6.4.2 · 样例</p>
+<h2 class="slide-title">作家下 Instruction，心理学家给 Solution</h2>
+<ul><li>作家：请为「引言」写 400–600 字草稿…</li><li>心理学家：给出科学定义与可读段落…</li><li>作家：请把草稿修订为 450–550 字…</li><li>循环推进各章：成因、动机、习惯干预、案例、总结</li></ul>
+<div class="callout" data-label="学习观察点"><p>是否守住角色边界？转译时科学性有没有丢？何时出现完成标志？</p></div>
+</section>
+<section class="slide" data-id="camel-pros" data-label="CAMEL 优势与生态" data-group="6.4 CAMEL">
+<p class="slide-sub">6.4.3 ·（1）</p>
+<h2 class="slide-title">轻架构如何依然强大</h2>
+<ul><li>精心设计的初始提示即可实现高质量协作</li><li>自然涌现往往比硬编码工作流更灵活</li><li>生态：多模态、工具库、多模型后端</li><li>与 LangChain、CrewAI、AutoGen 等互操作</li></ul>
+<div class="note"><strong>要点：</strong>GitHub 上的 CAMEL 已远不止简单双智能体 demo。</div>
+</section>
+<section class="slide" data-id="camel-cons" data-label="CAMEL 主要局限" data-group="6.4 CAMEL">
+<p class="slide-sub">6.4.3 ·（2）</p>
+<h2 class="slide-title">吃提示功力，规模有边界</h2>
+<ul><li>提示依赖：设计门槛高；效果差难定位；不同 LLM 理解有差异</li><li>规模限制：缺 AutoGen 级路由；无 AgentScope 级分布式；多方分歧缺仲裁</li><li>场景边界：严流程→LangGraph；高并发→AgentScope；多方决策→AutoGen</li></ul>
+<div class="callout" data-label="总评"><p>把系统工程转化为人际协作模式——优雅，但要认清适用面。</p></div>
+</section>
+<section class="slide" data-id="quiz64a" data-label="检测 · CAMEL（上）" data-group="6.4 CAMEL">
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">CAMEL 检测 · A</h2>
+<div class="quiz-score" id="score-q64a"></div>
+<div class="quiz-item" data-quiz="q64a" data-answer="1">
+<h4>1. Inception Prompting 的作用更接近？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">运行时动态改模型权重</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">开局植入角色、目标与沟通协议</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只负责画架构图</button>
+<div class="quiz-explain">少监督仍能推进任务的关键。</div>
+</div>
+<div class="quiz-item" data-quiz="q64a" data-answer="0">
+<h4>2. 电子书案例里作家放在 user_role 是因为？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">user 是推动者/需求方</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">user 不能说话</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">user 必须是人类真人</button>
+<div class="quiz-explain">约定 user 推动、assistant 执行。</div>
+</div>
+</section>
+<section class="slide" data-id="quiz64b" data-label="检测 · CAMEL（下）" data-group="6.4 CAMEL">
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">CAMEL 检测 · B</h2>
+<div class="quiz-score" id="score-q64b"></div>
+<div class="quiz-item" data-quiz="q64b" data-answer="1">
+<h4>1. 下一轮 input_msg 通常取自？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">随机噪声</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">助理上一轮输出消息</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">永远是最初的 task_prompt</button>
+<div class="quiz-explain">assistant_response.msg 成为下一轮输入。</div>
+</div>
+<div class="quiz-item" data-quiz="q64b" data-answer="1">
+<h4>2. CAMEL 相对不擅长的场景？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">双专家深度创作</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">需要精确步骤与可审计分支的严流程</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">少代码激发角色对话</button>
+<div class="quiz-explain">严流程更适合 LangGraph。</div>
+</div>
+</section>
+<section class="slide" data-id="s65" data-label="6.5 节导读" data-group="6.5 LangGraph">
+<p class="slide-sub">§ 6.5</p>
+<h2 class="slide-title">框架四：LangGraph —— 把 Agent 画成图</h2>
+<p class="lead">将执行流程建模为<strong>状态机</strong>并以<strong>有向图</strong>表示。</p>
+<div class="note"><strong>要点：</strong>节点=计算步骤；边=跳转；天然支持循环 → 迭代/反思/自我修正更直观。</div>
+</section>
+<section class="slide" data-id="lg-vs-chat" data-label="图范式 vs 对话范式" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.1 开篇</p>
+<h2 class="slide-title">革命点：链式单向 vs 图可绕回</h2>
+<div class="compare"><div class="compare-col a"><h3>对话式框架</h3><ul><li>定角色与目标，行为从对话涌现</li><li>灵活、贴近人际协作</li><li>调试常面对长历史</li></ul></div><div class="compare-col b"><h3>LangGraph</h3><ul><li>显式定义每步与跳转</li><li>可控、可预测、可审计</li><li>适合高可靠生产流程</li></ul></div></div>
+</section>
+<section class="slide" data-id="lg-state" data-label="积木① State" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.1</p>
+<h2 class="slide-title">全局状态：共享 TypedDict</h2>
+<pre class="code-block">class AgentState(TypedDict):
+    messages: List[str]
+    current_task: str
+    final_answer: str
+    # ... 任何需要追踪的字段</pre>
+<div class="note"><strong>要点：</strong>可含对话历史、中间结果、迭代次数——状态是工作流的持久上下文。</div>
+</section>
+<section class="slide" data-id="lg-node" data-label="积木② Node" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.1</p>
+<h2 class="slide-title">节点：状态 → 更新后的状态</h2>
+<pre class="code-block">def planner_node(state: AgentState) -&gt; AgentState:
+    plan = f&quot;为任务 &#x27;{state[&#x27;current_task&#x27;]}&#x27; 生成的计划...&quot;
+    state[&quot;messages&quot;].append(plan)
+    return state
+
+def executor_node(state: AgentState) -&gt; AgentState:
+    result = f&quot;执行计划 &#x27;{state[&#x27;messages&#x27;][-1]}&#x27; 的结果...&quot;
+    state[&quot;messages&quot;].append(result)
+    return state</pre>
+<div class="note"><strong>要点：</strong>节点是干活单元：规划者、执行者、搜索者……</div>
+</section>
+<section class="slide" data-id="lg-edge" data-label="积木③ Edge" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.1</p>
+<h2 class="slide-title">常规边与条件边</h2>
+<p class="lead">最强能力在<strong>条件边</strong>。</p>
+<pre class="code-block">def should_continue(state: AgentState) -&gt; str:
+    if len(state[&quot;messages&quot;]) &lt; 3:
+        return &quot;continue_to_planner&quot;
+    state[&quot;final_answer&quot;] = state[&quot;messages&quot;][-1]
+    return &quot;end_workflow&quot;
+
+workflow.add_conditional_edges(
+    &quot;executor&quot;, should_continue,
+    {&quot;continue_to_planner&quot;: &quot;planner&quot;, &quot;end_workflow&quot;: END},
+)</pre>
+<div class="note"><strong>要点：</strong>条件边用函数看状态再路由——实现循环与分支的关键。</div>
+</section>
+<section class="slide" data-id="lg-assemble" data-label="组装并编译图" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.1</p>
+<h2 class="slide-title">StateGraph：搭积木 → compile → stream</h2>
+<pre class="code-block">workflow = StateGraph(AgentState)
+workflow.add_node(&quot;planner&quot;, planner_node)
+workflow.add_node(&quot;executor&quot;, executor_node)
+workflow.set_entry_point(&quot;planner&quot;)
+workflow.add_edge(&quot;planner&quot;, &quot;executor&quot;)
+# + conditional edges ...
+app = workflow.compile()
+for event in app.stream({&quot;current_task&quot;: &quot;...&quot;, &quot;messages&quot;: []}):
+    print(event)</pre>
+<div class="callout" data-label="心智模型"><p>先定状态图式，再挂节点，最后用边说清跳转，然后编译运行。</p></div>
+</section>
+<section class="slide" data-id="lg-case-overview" data-label="三步问答助手总览" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.2</p>
+<h2 class="slide-title">Understand → Search → Answer</h2>
+<div class="graph-viz">
+  <span class="graph-node">START</span><span class="graph-arrow">→</span>
+  <span class="graph-node">understand</span><span class="graph-arrow">→</span>
+  <span class="graph-node">search</span><span class="graph-arrow">→</span>
+  <span class="graph-node">answer</span><span class="graph-arrow">→</span>
+  <span class="graph-end">END</span>
+</div>
+<div class="note"><strong>要点：</strong>四步：定义状态 → 创建节点 → 构建图 → 运行应用。</div>
+</section>
+<section class="slide" data-id="lg-searchstate" data-label="SearchState 字段设计" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.2 ·（1）</p>
+<h2 class="slide-title">为何同时保留 user_query 与 search_query</h2>
+<pre class="code-block">class SearchState(TypedDict):
+    messages: Annotated[list, add_messages]
+    user_query: str
+    search_query: str
+    search_results: str
+    final_answer: str
+    step: str</pre>
+<div class="note"><strong>要点：</strong>自然语言问题 ≠ 最佳检索词。拆字段提升搜索质量。</div>
+</section>
+<section class="slide" data-id="lg-init" data-label="初始化 LLM 与 Tavily" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.2 · 准备</p>
+<h2 class="slide-title">环境变量 + ChatOpenAI + TavilyClient</h2>
+<pre class="code-block">load_dotenv()
+llm = ChatOpenAI(
+    model=os.getenv(&quot;LLM_MODEL_ID&quot;, &quot;gpt-4o-mini&quot;),
+    api_key=os.getenv(&quot;LLM_API_KEY&quot;),
+    base_url=os.getenv(&quot;LLM_BASE_URL&quot;, &quot;https://api.openai.com/v1&quot;),
+    temperature=0.7,
+)
+tavily_client = TavilyClient(api_key=os.getenv(&quot;TAVILY_API_KEY&quot;))</pre>
+<div class="note"><strong>要点：</strong>同一 llm 驱动所有节点；Tavily 负责真实联网搜索。</div>
+</section>
+<section class="slide" data-id="lg-nodes-walk" data-label="三节点职责走读" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.2 ·（2）</p>
+<h2 class="slide-title">理解 / 搜索 / 回答</h2>
+<div class="loop-stepper" id="lgSteps">
+  <div class="steps steps4">
+    <button type="button" class="step-btn on" onclick="showLg(0)">状态</button>
+    <button type="button" class="step-btn" onclick="showLg(1)">理解节点</button>
+    <button type="button" class="step-btn" onclick="showLg(2)">搜索节点</button>
+    <button type="button" class="step-btn" onclick="showLg(3)">回答节点</button>
+  </div>
+  <div class="loop-panel" id="lgPanel"></div>
+</div>
+<details class="expand-card" open><summary>容错要点</summary><div class="expand-body"><p>搜索失败时 step=search_failed。回答节点检查 step：失败则 LLM 知识回退，成功则综合搜索结果。</p></div></details>
+</section>
+<section class="slide" data-id="lg-build-run" data-label="构建线性图与运行" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.2 ·（4）（5）</p>
+<h2 class="slide-title">START→…→END + checkpointer + 多轮交互</h2>
+<pre class="code-block">workflow.add_edge(START, &quot;understand&quot;)
+workflow.add_edge(&quot;understand&quot;, &quot;search&quot;)
+workflow.add_edge(&quot;search&quot;, &quot;answer&quot;)
+workflow.add_edge(&quot;answer&quot;, END)
+app = workflow.compile(checkpointer=InMemorySaver())</pre>
+<ul><li>案例：「明天去北京，天气怎么样？有合适景点吗」</li><li>终端可见：理解→搜索词→Tavily→最终回答</li><li>可持续交互（quit 退出）</li></ul>
+</section>
+<section class="slide" data-id="lg-pros" data-label="LangGraph 优势" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.3 ·（1）</p>
+<h2 class="slide-title">可控、可循环、可插人审</h2>
+<ul><li>显式流程图 → 高度可控、可预测、可审计</li><li>对生产级可靠性与合规追溯至关重要</li><li>条件边轻松构建反思-修正与失败回退</li><li>节点即函数 → 模块化；插入人类审核节点很直接</li></ul>
+</section>
+<section class="slide" data-id="lg-cons" data-label="LangGraph 局限" data-group="6.5 LangGraph">
+<p class="slide-sub">6.5.3 ·（2）</p>
+<h2 class="slide-title">样板更多，涌现更少</h2>
+<ul><li>前期样板代码多：要想 how，而不只是 what</li><li>简单任务可能显得繁琐</li><li>缺少开放式「社会性涌现」惊喜</li><li>调试需全局理解：节点逻辑 / 状态异变 / 边条件</li></ul>
+<div class="note"><strong>要点：</strong>与对话框架对比时，这是可控性换来的代价。</div>
+</section>
+<section class="slide" data-id="quiz65a" data-label="检测 · LangGraph（上）" data-group="6.5 LangGraph">
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">LangGraph 检测 · A</h2>
+<div class="quiz-score" id="score-q65a"></div>
+<div class="quiz-item" data-quiz="q65a" data-answer="2">
+<h4>1. 实现「搜索失败则换策略」最贴切？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">只靠加长 System Message</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">RoundRobin 多说几轮</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">状态字段 + 节点内分支（或条件边）</button>
+<div class="quiz-explain">案例用 step 标记失败。</div>
+</div>
+<div class="quiz-item" data-quiz="q65a" data-answer="0">
+<h4>2. 同时保留 user_query 与 search_query 的意图？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">先理解意图，再优化成搜索关键词</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">浪费字段</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只为打印好看</button>
+<div class="quiz-explain">自然语言 ≠ 最佳检索词。</div>
+</div>
+</section>
+<section class="slide" data-id="quiz65b" data-label="检测 · LangGraph（下）" data-group="6.5 LangGraph">
+<p class="slide-sub">自测</p>
+<h2 class="slide-title">LangGraph 检测 · B</h2>
+<div class="quiz-score" id="score-q65b"></div>
+<div class="quiz-item" data-quiz="q65b" data-answer="1">
+<h4>1. 条件边返回的字符串必须与什么对齐？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">任意诗句</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">add_conditional_edges 时的路由映射键</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">System Message 标题</button>
+<div class="quiz-explain">返回值是路由键。</div>
+</div>
+<div class="quiz-item" data-quiz="q65b" data-answer="1">
+<h4>2. LangGraph 相对不强调的能力？</h4>
+<button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">显式循环与可审计流程</button>
+<button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">开放式多角色社会性涌现协作</button>
+<button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">节点级模块化</button>
+<div class="quiz-explain">涌现协作更常见于 AutoGen/CAMEL。</div>
+</div>
+</section>
+<section class="slide" data-id="tradeoff" data-label="设计权衡双轴" data-group="小结与自测">
+<p class="slide-sub">6.6 核心提炼</p>
+<h2 class="slide-title">涌现协作 × 显式控制 × 工程化</h2>
+<table class="matrix">
+  <thead><tr><th>框架</th><th>协作隐喻</th><th>控制感</th><th>更适合</th></tr></thead>
+  <tbody>
+    <tr><td>AutoGen</td><td>圆桌群聊</td><td>中</td><td>多角色流程化协作</td></tr>
+    <tr><td>AgentScope</td><td>消息总线 OS</td><td>中高</td><td>高并发、分布式生产</td></tr>
+    <tr><td>CAMEL</td><td>双专家对手戏</td><td>低码高提示</td><td>深度创作/研究</td></tr>
+    <tr><td>LangGraph</td><td>流程图/状态机</td><td>高</td><td>可审计、可循环、严流程</td></tr>
+  </tbody>
+</table>
+<div class="callout" data-label="记住"><p>没有唯一赢家。先问：要涌现还是可控？要原型还是生产？要几人协作还是严流程？</p></div>
+</section>
+<section class="slide" data-id="emerge-vs-control" data-label="涌现 vs 显式控制" data-group="小结与自测">
+<p class="slide-sub">6.6 深挖</p>
+<h2 class="slide-title">两种设计哲学</h2>
+<div class="compare"><div class="compare-col a"><h3>涌现式协作</h3><ul><li>定义角色与目标</li><li>行为从简单规则中涌现</li><li>贴近人类交互</li><li>有时难预测调试</li><li>代表：AutoGen、CAMEL</li></ul></div><div class="compare-col b"><h3>显式控制</h3><ul><li>明确每步与跳转</li><li>牺牲部分涌现惊喜</li><li>换来可靠性与可观测</li><li>代表：LangGraph</li></ul></div></div>
+<div class="note"><strong>要点：</strong>AgentScope 揭示第二轴：工程化——从「能运行」到「能稳定服务」。</div>
+</section>
+<section class="slide" data-id="summary" data-label="6.6 本章小结" data-group="小结与自测">
+<p class="slide-sub">§ 6.6</p>
+<h2 class="slide-title">四种哲学，同一光谱</h2>
+<ul><li><strong>AutoGen</strong>：群聊抽象，「以对话驱动协作」</li><li><strong>AgentScope</strong>：工业健壮与扩展，「能稳定服务」</li><li><strong>CAMEL</strong>：轻量角色扮演 + 引导提示，少码深协作</li><li><strong>LangGraph</strong>：显式图结构，循环与精确控制</li></ul>
+<p>理解设计权衡，你不只是工具用户，更能判断框架取舍。下一章：从零构建自己的智能体框架。</p>
+</section>
+<section class="slide" data-id="flash-all" data-label="闪卡复习" data-group="小结与自测">
+<p class="slide-sub">快速回忆</p>
+<h2 class="slide-title">框架关键词闪卡</h2>
+<div class="flash-wrap" id="flash1" data-cards='[
+  {"q":"框架相对手写脚本的本质？","a":"提供验证过的规范：封装共性（循环/状态/工具/日志），让你专注业务。"},
+  {"q":"AutoGen 一句话？","a":"以对话驱动协作：多角色群聊 + System Message + Team 协调。"},
+  {"q":"AgentScope 一句话？","a":"消息驱动的工程化多智能体平台：MsgHub、Pipeline、分布式与容错。"},
+  {"q":"CAMEL 一句话？","a":"角色扮演 + 引导性提示，双专家自主深度协作。"},
+  {"q":"LangGraph 一句话？","a":"State/Node/Edge 图状态机，条件边支持循环与精确控流。"},
+  {"q":"涌现协作 vs 显式控制？","a":"前者定角色目标让行为涌现（AutoGen/CAMEL）；后者逐步定义跳转（LangGraph）；工程化是另一轴（AgentScope）。"}
+]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta">
+    <span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button type="button" class="btn" onclick="moveFlash('flash1',-1)">上一张</button>
+      <button type="button" class="btn" onclick="moveFlash('flash1',1)">下一张</button>
+    </div>
+  </div>
+</div>
+</section>
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="小结与自测">
+<p class="slide-sub">学完打卡</p>
+<h2 class="slide-title">第六章掌握度清单</h2>
+<ul class="check-list" id="checklist">
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能说出框架四价值：复用、解耦、状态、可观测</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能用一句话区分 AutoGen / AgentScope / CAMEL / LangGraph</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能复述 AutoGen：Assistant vs UserProxy、RoundRobin、TERMINATE、model_info</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">理解 AgentScope：Msg、MsgHub、结构化输出、fanout、三层游戏架构</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">理解 CAMEL：RolePlaying、Inception、四阶段创作、CAMEL_TASK_DONE</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能画出 LangGraph：State/Node/Edge 与 Understand→Search→Answer</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能用「涌现 vs 显式控制 + 工程化」做选型论证</span></li>
+</ul>
+</section>
+<section class="slide" data-id="ex12" data-label="习题 1–2 导读" data-group="小结与自测">
+<p class="slide-sub">习题</p>
+<h2 class="slide-title">对比权衡 + AutoGen 扩展</h2>
+<details class="expand-card" open><summary>1 · 双框架三维对比 + 涌现/显式</summary><div class="expand-body"><p>任选两框架，从协作模式、控制方式、适用场景深入比；用自己的话解释两种设计哲学。</p></div></details>
+<details class="expand-card"><summary>2 · AutoGen 扩展（建议动手）</summary><div class="expand-body"><ul><li>动态回退：工程→产品重新审核</li><li>新增 QA 角色 System Message</li><li>对话质量监控思路</li></ul></div></details>
+</section>
+<section class="slide" data-id="ex34" data-label="习题 3–4 导读" data-group="小结与自测">
+<p class="slide-sub">习题</p>
+<h2 class="slide-title">AgentScope 深入 + CAMEL 冲突</h2>
+<details class="expand-card" open><summary>3 · AgentScope</summary><div class="expand-body"><ul><li>消息驱动优势场景</li><li>设计「猎人」结构化模型</li><li>分布式下顺序与一致性</li></ul></div></details>
+<details class="expand-card"><summary>4 · CAMEL</summary><div class="expand-body"><ul><li>TASK_DONE 意见分歧时的仲裁</li><li>查阅 workforce 与 AutoGen 群聊差异</li></ul></div></details>
+</section>
+<section class="slide" data-id="ex56" data-label="习题 5–6 导读" data-group="小结与自测">
+<p class="slide-sub">习题</p>
+<h2 class="slide-title">LangGraph 反思环 + 选型实战</h2>
+<details class="expand-card" open><summary>5 · LangGraph</summary><div class="expand-body"><ul><li>画三步图</li><li>答案过短则重搜/重生成的条件边</li><li>设计代码生成-测试-修复环</li></ul></div></details>
+<details class="expand-card"><summary>6 · 选型 A/B/C</summary><div class="expand-body"><ul>
+<li><strong>A</strong> 高并发客服 7×24 → 倾向 AgentScope</li>
+<li><strong>B</strong> 双专家论文写作 → 倾向 CAMEL</li>
+<li><strong>C</strong> 金融风控严流程可审计 → 倾向 LangGraph</li>
+</ul></div></details>
+</section>
+<section class="slide" data-id="refs" data-label="参考文献与下一章" data-group="小结与自测">
+<p class="slide-sub">收束</p>
+<h2 class="slide-title">站在框架肩上，下一步自建</h2>
+<ul><li>[1] AutoGen — Wu et al., COLM 2024</li><li>[2] AgentScope — Gao et al., arXiv:2402.14034</li><li>[3] CAMEL — Li et al., NeurIPS 2023</li><li>[4] LangGraph — <a href="https://github.com/langchain-ai/langgraph" target="_blank" rel="noopener">github.com/langchain-ai/langgraph</a></li><li>[5] AutoGen UserProxyAgent 文档</li></ul>
+<div class="callout" data-label="下一章预告"><p>第七章将从零构建属于你自己的智能体框架。</p></div>
+<p class="kbd-hint">恭喜完成本章互动教程。可用侧栏回看任意小节。</p>
+</section>
+</div>
+  </main>
+</div>
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  progressFill.style.width = (((idx + 1) / slides.length) * 100) + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  flashState[id] = { cards: JSON.parse(wrap.dataset.cards), i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+initFlash("flash1");
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+const agRoundTexts = [
+  { t: "① 创建 RoundRobinGroupChat", p: "把产品经理、工程师、审查员、用户代理等按业务顺序加入 participants。" },
+  { t: "② 任务开始 · 按序激活", p: "群聊按预设顺序依次点名；第一人先收到初始 task。" },
+  { t: "③ 被点名者响应", p: "智能体读取对话上下文，按 System Message 生成回复。" },
+  { t: "④ 写入历史 · 传下一人", p: "新消息进入历史，激活下一角色——圆桌接力。" },
+  { t: "⑤ 终止", p: "出现 TERMINATE 或达到 max_turns 后结束，避免无限烧 Token。" }
+];
+function showAgRound(n) {
+  document.querySelectorAll("#agRound .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("agRoundPanel").innerHTML = `<h4>${agRoundTexts[n].t}</h4><p>${agRoundTexts[n].p}</p>`;
+}
+showAgRound(0);
+const agFlowTexts = [
+  { t: "User 提出任务", p: "比特币价格应用：实时价、24h 涨跌、刷新；Streamlit；错误处理与加载态。" },
+  { t: "ProductManager", p: "需求分析、模块划分、技术选型、优先级、验收标准 →「请工程师开始实现」。" },
+  { t: "Engineer", p: "技术方案 + 完整可运行代码 →「请代码审查员检查」。" },
+  { t: "CodeReviewer", p: "质量/安全/规范审查与修改建议 →「请用户代理测试」。" },
+  { t: "UserProxy → TERMINATE", p: "验证交付；人工输入 TERMINATE 正常收束。" }
+];
+function showAgFlow(n) {
+  document.querySelectorAll("#agFlow .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("agFlowPanel").innerHTML = `<h4>${agFlowTexts[n].t}</h4><p>${agFlowTexts[n].p}</p>`;
+}
+showAgFlow(0);
+const asWolfTexts = [
+  { t: "开狼人专属 MsgHub", p: "async with MsgHub(werewolves, enable_auto_broadcast=True, announcement=主持人开场)。" },
+  { t: "讨论轮", p: "对每只狼调用结构化 DiscussionModel，在私密频道交换策略。" },
+  { t: "关闭自动广播", p: "set_auto_broadcast(False)，进入独立决策收集。" },
+  { t: "fanout 击杀投票", p: "fanout_pipeline + WerewolfKillModelCN 并行收集击杀目标。" }
+];
+function showAsWolf(n) {
+  document.querySelectorAll("#asWolf .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("asWolfPanel").innerHTML = `<h4>${asWolfTexts[n].t}</h4><p>${asWolfTexts[n].p}</p>`;
+}
+showAsWolf(0);
+const camelPhTexts = [
+  { t: "① 约 1–5 轮 · 框架对齐", p: "作家提章节结构；心理学家补学术模块，对产出达成共识。" },
+  { t: "② 约 6–20 轮 · 知识转译", p: "心理学家供硬核概念与实证；作家译成比喻与生活案例。" },
+  { t: "③ 约 21–25 轮 · 质量打磨", p: "作家盯流畅与读者体验；心理学家做事实核查。" },
+  { t: "④ 收尾升华", p: "协作总结实用建议与回顾；出现 <CAMEL_TASK_DONE> 或达轮次上限结束。" }
+];
+function showCamelPh(n) {
+  document.querySelectorAll("#camelPh .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("camelPhPanel").innerHTML = `<h4>${camelPhTexts[n].t}</h4><p>${camelPhTexts[n].p}</p>`;
+}
+showCamelPh(0);
+const lgTexts = [
+  { t: "SearchState", p: "messages、user_query、search_query、search_results、final_answer、step——节点间持久上下文。" },
+  { t: "understand_query_node", p: "读最后一条用户消息；LLM 输出「理解+搜索词」；写入状态，step=understood。" },
+  { t: "tavily_search_node", p: "用 search_query 调 Tavily；成功写 search_results；失败 step=search_failed。" },
+  { t: "generate_answer_node", p: "若 search_failed → 知识回退；否则综合搜索结果生成 final_answer。" }
+];
+function showLg(n) {
+  document.querySelectorAll("#lgSteps .step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+  document.getElementById("lgPanel").innerHTML = `<h4>${lgTexts[n].t}</h4><p>${lgTexts[n].p}</p>`;
+}
+showLg(0);
+goTo(0);
+</script>
+</body>
+</html>

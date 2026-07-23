@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第十二章 · 智能体性能评估 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+
+/* Aesthetic: Industrial Blueprint Laboratory · Lab 12 Scoreboard Azure */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(77, 163, 255, 0.14);
+  --line-strong: rgba(77, 163, 255, 0.36);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #4da3ff;
+  --signal-bright: #7cbcff;
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(77, 163, 255, 0.18), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(61, 168, 184, 0.10), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--cyan), var(--amber));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(77, 163, 255, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(77, 163, 255, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(124, 188, 255, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(77,163,255,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(77, 163, 255, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.cover-hero {
+  margin: 1rem 0 1.4rem; border: 1px solid var(--line-strong);
+  background: var(--panel); overflow: hidden;
+}
+.cover-hero img { width: 100%; height: auto; display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: rgba(77,163,255,0.12);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.arch-block.base { border-left: 3px solid var(--mint); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  transition: border-color 0.2s;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.05rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; margin-top: 1rem; color: var(--paper);
+  border-top: 1px solid var(--line); padding-top: 1rem; font-size: 0.95rem;
+}
+.flash-card.revealed .a { display: block; }
+.flash-idx {
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-mute); margin-bottom: 0.75rem; letter-spacing: 0.06em;
+}
+.flash-nav { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  margin-bottom: 0.75rem; color: var(--text);
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.4rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224,107,90,0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.75rem; padding: 0.75rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(77,163,255,0.08); color: var(--text-dim);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.78rem;
+  color: var(--cyan-bright); margin-top: 0.5rem;
+}
+.check-list { list-style: none; margin: 1rem 0; }
+.check-list li {
+  display: flex; align-items: flex-start; gap: 0.65rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--line);
+  color: var(--text-dim); font-size: 0.92rem;
+}
+.check-list input {
+  margin-top: 0.25rem; accent-color: var(--signal);
+  width: 18px; height: 18px; flex-shrink: 0;
+}
+.goal-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.goal-card {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; position: relative;
+}
+.goal-card .tag {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.goal-card h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+.goal-card p { font-size: 0.85rem; margin: 0; }
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 40;
+}
+.overlay.show { display: block; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: min(86vw, 300px);
+    z-index: 50; transform: translateX(-105%); transition: transform 0.3s;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3 { grid-template-columns: 1fr; }
+  .loop-stepper .steps,
+  .loop-stepper .steps.steps5,
+  .loop-stepper .steps.steps3,
+  .loop-stepper .steps.steps4 { grid-template-columns: repeat(2, 1fr); }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+}
+
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 12</div>
+      <h1>第十二章 · 智能体性能评估</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>进度</span>
+        <span id="progressText">1 / 1</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">AZURE SIGNAL · ← → 翻页</div>
+  </aside>
+
+  <main class="stage">
+    <div class="topbar">
+      <button class="menu-btn" type="button" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button class="btn" id="btnPrev" type="button">← 上一页</button>
+        <button class="btn btn-primary" id="btnNext" type="button">下一页 →</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+
+<!--
+  COVERAGE CHECKLIST (源文档 · 第十二章 智能体性能评估.md)
+  [x] 开篇：为何评估 · 安装 0.2.7 · 术语 · 模块树
+  [x] 12.1 三大挑战 · 主流基准 · HelloAgents 三线架构 · 图12.1
+  [x] 12.2 BFCL：四类别 · 数据集 · AST · 指标 · 三种用法 · 官方集成 · 组件 · 优化
+  [x] 12.3 GAIA：级别 · QEM · 指标 · 受限数据 · Tool · 提交 · 实现
+  [x] 12.4 数据质量：Judge · Win Rate · AIME 生成 · 人工 UI · 完整流水线
+  [x] 12.5 总结 · 自测 · 习题导读
+-->
+
+<section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
+
+<p class="slide-sub">Lab 12 · Industrial Blueprint</p>
+<h2 class="slide-title">第十二章 · 智能体性能评估</h2>
+<p class="lead">搭好了范式、工具、记忆与训练之后，还缺一块硬底座：如何客观衡量智能体「到底好不好」？本章构建 HelloAgents 评估体系。</p>
+<div class="cover-hero"><img src="assets/ch12_cover.svg" alt="Lab 12 Evaluation Scoreboard"/></div>
+<div class="note"><strong>本章交付物：</strong>BFCL 工具调用评估 · GAIA 通用助手评估 · AIME 数据生成质量（LLM Judge / Win Rate / 人工验证）。</div>
+
+</section>
+
+<section class="slide" data-id="goals" data-label="本章地图" data-group="开篇">
+
+<p class="slide-sub">12.1 → 12.5 · 基准到实践</p>
+<h2 class="slide-title">本章地图</h2>
+<div class="goal-grid">
+  <div class="goal-card"><div class="tag">12.1</div><h3>评估基础</h3><p>为何评估、主流基准、三大挑战、HelloAgents 评估架构。</p></div>
+  <div class="goal-card"><div class="tag">12.2</div><h3>BFCL</h3><p>四类工具调用、AST 匹配、一键评估与官方排行榜对齐。</p></div>
+  <div class="goal-card"><div class="tag">12.3</div><h3>GAIA</h3><p>三级真实世界任务、准精确匹配、提交 leaderboard。</p></div>
+  <div class="goal-card"><div class="tag">12.4–12.5</div><h3>数据质量 + 总结</h3><p>LLM Judge / Win Rate / 人工验证；扩展方向与习题。</p></div>
+</div>
+<div class="callout" data-label="学习目标">学完后你应能：解释评估三大挑战；对比 BFCL 与 GAIA；跑通 BFCLEvaluationTool / GAIAEvaluationTool；设计数据生成质量流水线。</div>
+
+</section>
+
+<section class="slide" data-id="install" data-label="环境安装" data-group="开篇">
+
+<p class="slide-sub">hello-agents[evaluation]==0.2.7</p>
+<h2 class="slide-title">环境准备</h2>
+<div class="code-block">pip install "hello-agents[evaluation]==0.2.7"
+export HF_TOKEN="your_huggingface_token"   # GAIA 受限数据集
+# bfcl-eval 与主依赖 numpy 冲突时：
+pip install "numpy==1.26.4" bfcl-eval</div>
+<div class="arch-stack">
+  <div class="arch-block enc">evaluation/benchmarks/bfcl <span class="sub">Dataset · Evaluator · AST Matcher · Metrics</span></div>
+  <div class="arch-block head">evaluation/benchmarks/gaia <span class="sub">Dataset · Quasi Exact Match · Metrics</span></div>
+  <div class="arch-block dec">evaluation/benchmarks/data_generation <span class="sub">LLM Judge · Win Rate · AIME</span></div>
+  <div class="arch-block base">tools/builtin <span class="sub">BFCLEvaluationTool · GAIAEvaluationTool · LLMJudgeTool · WinRateTool</span></div>
+</div>
+<div class="note"><strong>提示：</strong>评估会消耗 API 调用，建议先用 <code>max_samples=5</code> 冒烟，再扩大规模。</div>
+
+</section>
+
+<section class="slide" data-id="terms" data-label="新手术语" data-group="开篇">
+
+<p class="slide-sub">贯穿全章 · 建议收藏</p>
+<h2 class="slide-title">先把词说人话</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>Benchmark</h3><span class="en">评估基准</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>统一的「考卷 + 评分标准」。大家用同一套题，分数才好横向对比。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>AST Match</h3><span class="en">抽象语法树匹配</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>不比字符串字面，而比函数调用的「结构树」——参数顺序不同、等价表达式仍可判对。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>Quasi Exact Match</h3><span class="en">准精确匹配</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>先归一化（去冠词、去 $、排序列表），再精确比对。适合答案格式多样的开放问答。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>LLM Judge / Win Rate</h3><span class="en">模型评委 / 胜率</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>用 LLM 打多维绝对分；或成对对比生成题 vs 真题，算胜率。接近 50% 说明质量相当。</p></div>
+  </div></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="why-eval" data-label="为何需要评估" data-group="12.1 评估基础">
+
+<p class="slide-sub">12.1.1 · 从能跑到可度量</p>
+<h2 class="slide-title">为何需要智能体评估</h2>
+<p>SimpleAgent 能搜索、能回答——但换了提示词或模型后，你怎么知道<strong>真的变好了</strong>？上线前如何证明可靠？</p>
+<div class="compare3">
+  <div class="compare-col a"><h3>能力确认</h3><ul><li>是否具备预期能力</li><li>发现薄弱场景</li></ul></div>
+  <div class="compare-col b"><h3>方案对比</h3><ul><li>量化不同设计优劣</li><li>用数字说话</li></ul></div>
+  <div class="compare-col c"><h3>对外证明</h3><ul><li>对用户/客户可解释</li><li>对齐排行榜标准</li></ul></div>
+</div>
+<div class="analogy">软件测试像「断言返回 200」；智能体评估更像「作文评分」——同一题可有多种正确写法，还要看语义与结构。</div>
+
+</section>
+
+<section class="slide" data-id="challenges" data-label="三大挑战" data-group="12.1 评估基础">
+
+<p class="slide-sub">12.1.1 · 与传统测试不同</p>
+<h2 class="slide-title">智能体评估的三大挑战</h2>
+<details class="expand-card"><summary>① 输出不确定性</summary><div class="expand-body"><p>同一问题可有多个正确答案，很难用简单对错判断。解决思路：语义匹配、AST、归一化、LLM Judge。</p></div></details>
+<details class="expand-card"><summary>② 评估标准多样性</summary><div class="expand-body"><p>工具调用看函数签名；问答看语义；协作看通信效率。解决思路：按任务选基准与指标族。</p></div></details>
+<details class="expand-card"><summary>③ 评估成本高昂</summary><div class="expand-body"><p>每次评估大量 API 调用。解决思路：小样本冒烟 → 中等规模 → 全量；分层评估策略。</p></div></details>
+<div class="callout" data-label="应对">学术界/工业界用标准化 Benchmark：统一数据集 + 指标 + 评分方法，保证可比性。</div>
+
+</section>
+
+<section class="slide" data-id="benchmarks" data-label="主流基准概览" data-group="12.1 评估基础">
+
+<p class="slide-sub">12.1.2 · 工具 / 通用 / 协作</p>
+<h2 class="slide-title">主流评估基准</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>工具调用</h3><ul><li><strong>BFCL</strong>：1120+ 样本，AST</li><li>ToolBench：16k+ API</li><li>API-Bank：53 API</li></ul></div>
+  <div class="compare-col b"><h3>通用能力</h3><ul><li><strong>GAIA</strong>：466 题，L1–3</li><li>AgentBench：8 领域</li><li>WebArena：网页交互</li></ul></div>
+  <div class="compare-col c"><h3>多智能体</h3><ul><li>ChatEval</li><li>SOTOPIA</li><li>自定义协作场景</li></ul></div>
+</div>
+<p><strong>常用指标族：</strong>准确性（Accuracy / EM / F1）· 效率（时延 / Token）· 鲁棒性（错误率 / 恢复）· 协作（通信效率 / 完成度）。</p>
+
+</section>
+
+<section class="slide" data-id="ha-arch" data-label="HelloAgents 评估体系" data-group="12.1 评估基础">
+
+<p class="slide-sub">12.1.3 · 三场景覆盖</p>
+<h2 class="slide-title">本章聚焦三条评估线</h2>
+<div class="arch-stack">
+  <div class="arch-block enc">BFCL <span class="sub">工具调用准确性 · 数据集适中、指标清晰、社区活跃</span></div>
+  <div class="arch-block head">GAIA <span class="sub">通用问题解决 · 任务真实、难度分级、综合能力</span></div>
+  <div class="arch-block dec">数据生成质量 <span class="sub">LLM Judge · Win Rate · 人工验证 · AIME 风格题</span></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/12-figures/12-1.png" alt="评估体系架构"/>
+  <div class="fig-fallback">数据层 Dataset → 评估层 Evaluator → 指标层 Metrics；再封装为 Tool。</div>
+  <p class="fig-cap">图 12.1 HelloAgents 评估体系架构</p>
+</div>
+
+</section>
+
+<section class="slide" data-id="flash121" data-label="闪卡 · 12.1" data-group="12.1 评估基础">
+<div class="flash-wrap" id="flash121" data-cards='[{"q":"Benchmark 解决什么问题？","a":"提供统一数据集、指标与评分，让不同智能体可横向对比。"},{"q":"三大评估挑战是什么？","a":"输出不确定、标准多样、成本高昂。"},{"q":"本章三条评估线？","a":"BFCL（工具调用）、GAIA（通用能力）、数据生成质量（LLM Judge/Win Rate/人工）。"},{"q":"准确性指标举两例","a":"Accuracy、Exact Match、F1 Score。"}]'>
+  <div class="flash-idx">1 / N</div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash121',-1)">← 上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash121',1)">下一张 →</button>
+  </div>
+</div></section>
+
+<section class="slide" data-id="quiz121" data-label="检测 · 12.1" data-group="12.1 评估基础">
+<p class="slide-sub">快速自检</p><h2 class="slide-title">12.1 选择题</h2><div class="quiz-item" data-quiz="q121" data-answer="1">
+  <h4>与传统单元测试相比，智能体评估最大的不同是？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">输出确定、断言即可</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">输出不确定且标准多样、成本更高</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">完全不需要数据集</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">只能人工评分</button>
+  <div class="quiz-explain">智能体答案多样、任务标准不一，且常依赖多次 LLM 调用。</div>
+</div><div class="quiz-item" data-quiz="q121" data-answer="1">
+  <h4>HelloAgents 本章优先落地的工具调用基准是？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">WebArena</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">BFCL</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">SOTOPIA</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">MMLU</button>
+  <div class="quiz-explain">BFCL 规模适中、AST 指标清晰，适合教学与实践。</div>
+</div><p class="quiz-score" id="score-q121"></p>
+</section>
+
+<section class="slide" data-id="bfcl-intro" data-label="BFCL 是什么" data-group="12.2 BFCL">
+
+<p class="slide-sub">12.2.1 · Berkeley Function Calling</p>
+<h2 class="slide-title">工具调用能力评估</h2>
+<p>智能体要完成：理解需求 → 选工具 → 填参数 → 处理多函数/并行/无关场景。</p>
+<div class="loop-stepper" id="bfclCats">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">Simple</button>
+    <button class="step-btn" type="button">Multiple</button>
+    <button class="step-btn" type="button">Parallel</button>
+    <button class="step-btn" type="button">Irrelevance</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/12-figures/12-2.png" alt="BFCL 流程"/>
+  <div class="fig-fallback">加载数据 → 跑 Agent → 解析 AST → AST 匹配 → 汇总准确率。</div>
+  <p class="fig-cap">图 12.2 BFCL 评估流程</p>
+</div>
+
+</section>
+
+<section class="slide" data-id="bfcl-data" data-label="数据集结构" data-group="12.2 BFCL">
+
+<p class="slide-sub">12.2.1 · JSON 样本字段</p>
+<h2 class="slide-title">BFCL 样本长什么样</h2>
+<div class="code-block">{
+  "id": "simple_001",
+  "question": "What's the weather like in Beijing today?",
+  "function": [{ "name": "get_weather", "parameters": { ... } }],
+  "ground_truth": [{ "name": "get_weather", "arguments": { "location": "Beijing" } }]
+}</div>
+<ul>
+  <li><code>question</code>：自然语言请求</li>
+  <li><code>function</code>：可用函数签名与描述</li>
+  <li><code>ground_truth</code>：期望的函数调用</li>
+</ul>
+<div class="note"><strong>获取：</strong>推荐 clone Gorilla 仓库的 <code>bfcl_eval/data/</code>；再用 <code>BFCLDataset</code> 合并 ground truth。</div>
+
+</section>
+
+<section class="slide" data-id="ast-match" data-label="AST 匹配" data-group="12.2 BFCL">
+
+<p class="slide-sub">12.2.1 · 核心算法</p>
+<h2 class="slide-title">为什么不用字符串全等？</h2>
+<p>AST 匹配：把函数调用解析成语法树，比较<strong>结构与语义等价</strong>。</p>
+<div class="compare">
+  <div class="compare-col a"><h3>算匹配成功</h3><ul><li>参数顺序不同</li><li><code>2+3</code> ≡ <code>5</code></li><li>引号风格不同</li></ul></div>
+  <div class="compare-col b"><h3>算匹配失败</h3><ul><li>函数名错误</li><li>参数值错误</li><li>多函数数量不对</li></ul></div>
+</div>
+<div class="code-block"># 顺序不同 → ✅
+get_weather(city="Beijing", unit="celsius")
+get_weather(unit="celsius", city="Beijing")
+
+# 函数名错 → ❌
+get_temperature(...) vs get_weather(...)</div>
+
+</section>
+
+<section class="slide" data-id="bfcl-metrics" data-label="BFCL 指标" data-group="12.2 BFCL">
+
+<p class="slide-sub">12.2.1 · Accuracy 族</p>
+<h2 class="slide-title">如何读 BFCL 分数</h2>
+<ul>
+  <li><strong>Accuracy / AST Match Rate</strong>：匹配成功样本占比</li>
+  <li><strong>Category-wise Accuracy</strong>：simple / multiple / parallel… 各自准确率</li>
+  <li><strong>Weighted Accuracy</strong>：按类别难度加权</li>
+  <li><strong>Error Rate</strong>：1 − Accuracy</li>
+</ul>
+<div class="code-block">simple=0.95, multiple=0.82, parallel=0.68
+weighted = (0.95+0.82+0.68)/3 ≈ 0.817</div>
+<div class="callout" data-label="读数">1.0 全对；0.8 表示约 80% 样本正确。先看总体，再拆类别找薄弱点。</div>
+
+</section>
+
+<section class="slide" data-id="bfcl-load" data-label="加载数据集" data-group="12.2 BFCL">
+
+<p class="slide-sub">12.2.2 · 本地优先</p>
+<h2 class="slide-title">获取并加载 BFCL</h2>
+<div class="code-block">git clone https://github.com/ShishirPatil/gorilla.git temp_gorilla
+# 数据在 berkeley-function-call-leaderboard/bfcl_eval/data/
+
+from hello_agents.evaluation import BFCLDataset
+dataset = BFCLDataset(
+    bfcl_data_dir="./temp_gorilla/.../bfcl_eval/data",
+    category="simple_python"
+)
+data = dataset.load()
+print(len(data), len(dataset.ground_truth))</div>
+<p>类别示例：<code>simple_python</code>、<code>multiple</code>、<code>parallel</code>、<code>irrelevance</code>… 可用 <code>get_available_categories()</code> 列出。</p>
+
+</section>
+
+<section class="slide" data-id="bfcl-three" data-label="三种用法" data-group="12.2 BFCL">
+
+<p class="slide-sub">12.2.3 · 从快到灵活</p>
+<h2 class="slide-title">HelloAgents 里怎么跑 BFCL</h2>
+<details class="expand-card" open><summary>方式 1：BFCLEvaluationTool（推荐）</summary><div class="expand-body">
+<div class="code-block">from hello_agents.tools import BFCLEvaluationTool
+results = BFCLEvaluationTool().run(
+    agent=agent, category="simple_python", max_samples=5
+)
+print(results["overall_accuracy"])</div>
+<p>自动：评估 → 导出官方格式 → 跑官方 CLI → 生成 Markdown 报告。</p>
+</div></details>
+<details class="expand-card"><summary>方式 2：命令行脚本</summary><div class="expand-body">
+<div class="code-block">python chapter12/04_run_bfcl_evaluation.py \
+  --category simple_python --samples 10 --model-name "Qwen/Qwen3-8B"</div>
+</div></details>
+<details class="expand-card"><summary>方式 3：Dataset + Evaluator</summary><div class="expand-body">
+<p>适合自定义流程：自行 <code>evaluate</code>、<code>export_to_bfcl_format</code>。</p>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="bfcl-official" data-label="官方评估集成" data-group="12.2 BFCL">
+
+<p class="slide-sub">12.2.4 · 对齐排行榜</p>
+<h2 class="slide-title">四步官方对齐流程</h2>
+<div class="loop-stepper" id="bfclOfficial">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">① 加载</button>
+    <button class="step-btn" type="button">② 预测</button>
+    <button class="step-btn" type="button">③ 导出</button>
+    <button class="step-btn" type="button">④ 官方评</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/12-figures/12-3.png" alt="官方集成"/>
+  <div class="fig-fallback">HelloAgents 预测 → JSONL 导出 → bfcl evaluate → 报告。</div>
+  <p class="fig-cap">图 12.3 HelloAgents 载入 BFCL 评估</p>
+</div>
+<div class="note">默认 <code>run_official_eval=True</code>；也可关掉后手动 <code>bfcl evaluate</code>。</div>
+
+</section>
+
+<section class="slide" data-id="bfcl-components" data-label="核心组件" data-group="12.2 BFCL">
+
+<p class="slide-sub">12.2.5 · Dataset / Evaluator / Metrics / Tool</p>
+<h2 class="slide-title">实现拆解</h2>
+<div class="arch-stack">
+  <div class="arch-block enc">BFCLDataset <span class="sub">本地优先，否则 HuggingFace；合并 ground truth</span></div>
+  <div class="arch-block head">BFCLEvaluator <span class="sub">构 Prompt → agent.run → 提取函数调用 → AST 对比</span></div>
+  <div class="arch-block dec">BFCLMetrics <span class="sub">accuracy / 参数准确率 / 分类统计</span></div>
+  <div class="arch-block base">BFCLEvaluationTool <span class="sub">继承 Tool，一键编排 + 报告</span></div>
+</div>
+<p>提取函数调用需兼容 JSON、代码块、纯文本多种格式——这是工程关键点。</p>
+
+</section>
+
+<section class="slide" data-id="bfcl-opt" data-label="扩展与优化" data-group="12.2 BFCL">
+
+<p class="slide-sub">12.2.6 · 从能评到高分</p>
+<h2 class="slide-title">提升 BFCL 分数的实践</h2>
+<ul>
+  <li><strong>局限：</strong>SimpleAgent 自定义 <code>[TOOL_CALL:...]</code> 不如原生 Function Calling 稳。</li>
+  <li><strong>渐进式：</strong>5 样本 → 50 → 全量（门槛如 accuracy&gt;0.8）。</li>
+  <li><strong>多类别：</strong>依次测 simple / multiple / parallel / irrelevance。</li>
+  <li><strong>对比评估：</strong>默认提示词 vs 优化提示词。</li>
+  <li><strong>上榜：</strong>准备结果文件 + 模型说明，按 Gorilla CONTRIBUTING 提 PR。</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="flash122" data-label="闪卡 · 12.2" data-group="12.2 BFCL">
+<div class="flash-wrap" id="flash122" data-cards='[{"q":"BFCL 四个类别？","a":"Simple、Multiple、Parallel、Irrelevance。"},{"q":"AST 匹配允许什么？","a":"参数顺序不同、等价表达式、不同引号风格；函数名必须精确。"},{"q":"推荐评估入口？","a":"BFCLEvaluationTool().run(...) 一键完成评估与官方对齐。"},{"q":"Accuracy 公式直觉？","a":"AST_Match 成功样本数 / N。"}]'>
+  <div class="flash-idx">1 / N</div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash122',-1)">← 上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash122',1)">下一张 →</button>
+  </div>
+</div>
+</section>
+
+<section class="slide" data-id="quiz122" data-label="检测 · 12.2" data-group="12.2 BFCL">
+<p class="slide-sub">快速自检</p><h2 class="slide-title">12.2 选择题</h2><div class="quiz-item" data-quiz="q122" data-answer="1">
+  <h4>下列哪组调用在 AST 匹配下应判为成功？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">函数名不同但参数相同</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">参数顺序不同但键值集合相同</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">城市名写错</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">少传一个 required 参数</button>
+  <div class="quiz-explain">AST 忽略参数顺序，要求函数名与参数语义等价。</div>
+</div><div class="quiz-item" data-quiz="q122" data-answer="1">
+  <h4>Irrelevance 类别主要测什么？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">并行调用速度</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">是否应判断无需调用函数</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">多语言翻译</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">网页浏览</button>
+  <div class="quiz-explain">Irrelevance 关注「该不该调用工具」的判断。</div>
+</div><p class="quiz-score" id="score-q122"></p>
+</section>
+
+<section class="slide" data-id="gaia-intro" data-label="GAIA 是什么" data-group="12.3 GAIA">
+
+<p class="slide-sub">12.3.1 · General AI Assistants</p>
+<h2 class="slide-title">通用 AI 助手能力评估</h2>
+<p>与 BFCL「专测工具调用」不同，GAIA 考<strong>真实世界综合题</strong>：多步推理、知识、多模态、浏览、文件处理。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/12-figures/12-table-3.png" alt="难度级别"/>
+  <div class="fig-fallback">Level 1 较简单一步推理；Level 2 多步；Level 3 复杂综合。共约 466 题。</div>
+  <p class="fig-cap">表 12.3 GAIA 难度级别分布</p>
+</div>
+<div class="analogy">BFCL 像「考驾照科目二专项」；GAIA 像「城市综合路考」——要会看路、查导航、算油费。</div>
+
+</section>
+
+<section class="slide" data-id="qem" data-label="准精确匹配" data-group="12.3 GAIA">
+
+<p class="slide-sub">12.3.1 · Quasi Exact Match</p>
+<h2 class="slide-title">先归一化，再精确比</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>数字</h3><ul><li><code>$1,234.56</code> → <code>1234.56</code></li><li>去单位与千分位</li></ul></div>
+  <div class="compare-col b"><h3>字符串</h3><ul><li>小写、去 the/a/an</li><li>去多余空格与末尾标点</li></ul></div>
+  <div class="compare-col c"><h3>列表</h3><ul><li>拆分 → 归一化 → 排序</li><li><code>Paris, London, Berlin</code> → 字母序</li></ul></div>
+</div>
+<p>匹配函数：归一化后相等则为 1，否则 0。</p>
+
+</section>
+
+<section class="slide" data-id="gaia-metrics" data-label="GAIA 指标" data-group="12.3 GAIA">
+
+<p class="slide-sub">12.3.1 · 读懂衰减</p>
+<h2 class="slide-title">Exact Match 与难度下降率</h2>
+<ul>
+  <li><strong>Exact Match Rate</strong>：准精确匹配成功比例</li>
+  <li><strong>Level-wise Accuracy</strong>：L1 / L2 / L3 各自准确率</li>
+  <li><strong>Drop Rate</strong>：(Acc_ℓ − Acc_ℓ+1) / Acc_ℓ —— 难度升高时掉多少</li>
+  <li><strong>Avg Steps</strong>：正确样本平均推理步数</li>
+</ul>
+<div class="code-block"># 示例：整体 70%；L1=100%, L2=67%, L3=50%
+Drop 1→2 = 33%；Drop 2→3 = 25%</div>
+<div class="note">下降率越大，说明复杂任务能力衰减越明显——这是找能力边界的好信号。</div>
+
+</section>
+
+<section class="slide" data-id="gaia-data" data-label="获取 GAIA 数据" data-group="12.3 GAIA">
+
+<p class="slide-sub">12.3.2 · Gated Dataset</p>
+<h2 class="slide-title">申请权限 → HF_TOKEN → 下载</h2>
+<ol>
+  <li>在 HuggingFace 申请 <code>gaia-benchmark/GAIA</code> 访问</li>
+  <li><code>.env</code> 写入 <code>HF_TOKEN=hf_...</code></li>
+  <li><code>GAIADataset(level=1, split="validation").load()</code> 自动缓存到 <code>./data/gaia/</code></li>
+</ol>
+<div class="code-block"># validation ≈ 165 题；级别分布约 L1:53 / L2:62 / L3:50
+stats = dataset.get_statistics()</div>
+<div class="callout" data-label="重要">未申请权限会下载失败。首次含图片/PDF 等附件，体积不小。</div>
+
+</section>
+
+<section class="slide" data-id="gaia-tool" data-label="一键评估" data-group="12.3 GAIA">
+
+<p class="slide-sub">12.3.3 · GAIAEvaluationTool</p>
+<h2 class="slide-title">必须使用官方 System Prompt</h2>
+<div class="code-block">agent = SimpleAgent(
+    name="TestAgent", llm=llm,
+    system_prompt=GAIA_SYSTEM_PROMPT  # 要求 FINAL ANSWER: [...]
+)
+results = GAIAEvaluationTool().run(
+    agent=agent, level=1, max_samples=5,
+    export_results=True, generate_report=True
+)</div>
+<p>输出：JSONL（可提交）· SUBMISSION_GUIDE · Markdown 报告。</p>
+<div class="note"><strong>预期：</strong>SimpleAgent 无强工具时 Level 1 也可能不高——演示流程正常，要提分需搜索/计算等工具。</div>
+
+</section>
+
+<section class="slide" data-id="gaia-submit" data-label="提交排行榜" data-group="12.3 GAIA">
+
+<p class="slide-sub">12.3.4 · HuggingFace Space</p>
+<h2 class="slide-title">从 JSONL 到 Leaderboard</h2>
+<div class="code-block">{"task_id":"xxx","model_answer":"答案","reasoning_trace":"推理"}</div>
+<ol>
+  <li>打开自动生成的 <code>SUBMISSION_GUIDE_*.md</code></li>
+  <li>访问 <code>huggingface.co/spaces/gaia-benchmark/leaderboard</code></li>
+  <li>按表单上传结果并填写模型信息</li>
+</ol>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/12-figures/12-4.png" alt="提交界面"/>
+  <div class="fig-fallback">在 HF Space 填写模型信息并上传 JSONL。</div>
+  <p class="fig-cap">图 12.4 GAIA 提交示意</p>
+</div>
+
+</section>
+
+<section class="slide" data-id="gaia-impl" data-label="GAIA 组件实现" data-group="12.3 GAIA">
+
+<p class="slide-sub">12.3.5 · 多模态 Dataset + 归一化</p>
+<h2 class="slide-title">实现要点</h2>
+<ul>
+  <li><strong>GAIADataset</strong>：snapshot_download；按 Level 过滤；保留附件路径</li>
+  <li><strong>_extract_answer</strong>：优先匹配 <code>FINAL ANSWER:</code></li>
+  <li><strong>_normalize_answer</strong>：数字/字符串/列表三套规则</li>
+  <li><strong>export_to_gaia_format</strong>：JSONL 一行一任务</li>
+  <li><strong>generate_report</strong>：概览、分级指标、样本表、建议</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="flash123" data-label="闪卡 · 12.3" data-group="12.3 GAIA">
+<div class="flash-wrap" id="flash123" data-cards='[{"q":"GAIA 与 BFCL 的核心差异？","a":"BFCL 专测函数调用；GAIA 测真实世界综合能力（多步/工具/文件/浏览）。"},{"q":"准精确匹配关键一步？","a":"先按类型归一化，再做精确相等比较。"},{"q":"答案输出格式要求？","a":"以 FINAL ANSWER: [答案] 结束；数字勿加千分位与单位。"},{"q":"Drop Rate 含义？","a":"难度升高时准确率相对下降比例，反映能力衰减。"}]'>
+  <div class="flash-idx">1 / N</div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash123',-1)">← 上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash123',1)">下一张 →</button>
+  </div>
+</div>
+</section>
+
+<section class="slide" data-id="quiz123" data-label="检测 · 12.3" data-group="12.3 GAIA">
+<p class="slide-sub">快速自检</p><h2 class="slide-title">12.3 选择题</h2><div class="quiz-item" data-quiz="q123" data-answer="1">
+  <h4>GAIA 是受限数据集，使用前需要？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">只需 pip install</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">在 HuggingFace 申请访问并配置 HF_TOKEN</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">购买商业许可证</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">关闭网络离线用</button>
+  <div class="quiz-explain">Gated Dataset 必须申请权限并提供 Token。</div>
+</div><div class="quiz-item" data-quiz="q123" data-answer="1">
+  <h4>下列归一化正确的是？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">"The Apple." → "the apple."</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">"$1,000" → "1000"</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">列表保持原始顺序不排序</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">保留百分号 %</button>
+  <div class="quiz-explain">数字去掉 $ 与千分位；列表需排序；字符串去冠词与标点。</div>
+</div><p class="quiz-score" id="score-q123"></p>
+</section>
+
+<section class="slide" data-id="data-overview" data-label="数据生成质量" data-group="12.4 数据质量">
+
+<p class="slide-sub">12.4 · AIME 风格题</p>
+<h2 class="slide-title">为何评估「生成的数据」</h2>
+<p>训练/测试数据质量决定上限。以 AIME（答案 0–999 整数、多步推理）为例，三条互补方法：</p>
+<div class="compare3">
+  <div class="compare-col a"><h3>LLM Judge</h3><p>四维绝对分：正确/清晰/难度/完整</p></div>
+  <div class="compare-col b"><h3>Win Rate</h3><p>生成题 vs 真题成对对比</p></div>
+  <div class="compare-col c"><h3>人工验证</h3><p>Gradio 界面打分与状态标注</p></div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/12-figures/12-5.png" alt="数据评估流程"/>
+  <div class="fig-fallback">生成 → LLM Judge → Win Rate → 综合报告 →（可选）人工验证。</div>
+  <p class="fig-cap">图 12.5 数据生成质量评估流程</p>
+</div>
+
+</section>
+
+<section class="slide" data-id="llm-judge" data-label="LLM Judge" data-group="12.4 数据质量">
+
+<p class="slide-sub">12.4.1 / 12.4.4 · 多维打分</p>
+<h2 class="slide-title">用模型当评委</h2>
+<ul>
+  <li>正确性 · 清晰度 · 难度匹配 · 完整性（各 1–5）</li>
+  <li><strong>Average Score</strong>：四维均值再对样本平均</li>
+  <li><strong>Pass Rate</strong>：均分 ≥ 3.5 的比例</li>
+  <li><strong>Excellent Rate</strong>：均分 ≥ 4.5 的比例</li>
+</ul>
+<div class="code-block">LLMJudgeTool(llm).run({
+  "generated_data_path": "...",
+  "reference_year": 2025,
+  "judge_model": "gpt-4o"
+})</div>
+<div class="note">优势：快、一致、可给改进建议；风险：风格偏见、对长度敏感——故需 Win Rate / 人工互补。</div>
+
+</section>
+
+<section class="slide" data-id="win-rate" data-label="Win Rate" data-group="12.4 数据质量">
+
+<p class="slide-sub">12.4.1 / 12.4.5 · 相对比较</p>
+<h2 class="slide-title">生成题 vs 真题谁更好</h2>
+<div class="loop-stepper" id="winFlow">
+  <div class="steps steps3">
+    <button class="step-btn" type="button">配对</button>
+    <button class="step-btn" type="button">LLM 裁决</button>
+    <button class="step-btn" type="button">统计</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<p>Win + Loss + Tie = 100%。<strong>理想 Win Rate ≈ 50%</strong>（质量接近真题）。显著偏低需优化生成策略。</p>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/12-figures/12-6.png" alt="Win Rate 流程"/>
+  <div class="fig-fallback">抽取生成题与 AIME 真题配对 → 比较严谨性/清晰度/难度/完整性 → 汇总胜率。</div>
+  <p class="fig-cap">图 12.6 Win Rate 评估流程</p>
+</div>
+
+</section>
+
+<section class="slide" data-id="aime-gen" data-label="AIME 生成器" data-group="12.4 数据质量">
+
+<p class="slide-sub">12.4.2–12.4.3 · 架构与生成</p>
+<h2 class="slide-title">AIMEGenerator 要点</h2>
+<ul>
+  <li>参考 <code>TianHongZXY/aime-1983-2025</code>（900+ 真题）随机样例</li>
+  <li>英文生成：与真题一致、评估公平、避免翻译误差</li>
+  <li>输出 JSON：problem / answer(0–999) / solution / topic</li>
+  <li>批量：tqdm + API 延迟；LaTeX 反斜杠需转义修复</li>
+  <li>评估对照：<code>math-ai/aime25</code>（AIME 2025）</li>
+</ul>
+<div class="code-block">generator.generate_and_save(num_problems=30, output_dir="...")</div>
+
+</section>
+
+<section class="slide" data-id="human-ui" data-label="人工验证 UI" data-group="12.4 数据质量">
+
+<p class="slide-sub">12.4.6 · Gradio</p>
+<h2 class="slide-title">数学答案仍需人把关</h2>
+<div class="code-block">python data_generation/human_verification_ui.py \
+  data_generation/generated_data/aime_generated_XXXXXX.json
+# http://127.0.0.1:7860</div>
+<ol>
+  <li>读题 / 答案 / 解答</li>
+  <li>四维 1–5 分</li>
+  <li>状态：approved / rejected / needs_revision</li>
+  <li>评论可选；结果存 <code>*_verifications.json</code></li>
+</ol>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/12-figures/12-7.png" alt="人工验证"/>
+  <div class="fig-fallback">左侧题目与解答，右侧滑块评分与状态单选。</div>
+  <p class="fig-cap">图 12.7 AIME 人工验证页面</p>
+</div>
+
+</section>
+
+<section class="slide" data-id="pipeline" data-label="完整评估流程" data-group="12.4 数据质量">
+
+<p class="slide-sub">12.4.7–12.4.8 · 一键串联</p>
+<h2 class="slide-title">run_complete_evaluation</h2>
+<div class="loop-stepper" id="fullPipe">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">① 生成</button>
+    <button class="step-btn" type="button">② Judge</button>
+    <button class="step-btn" type="button">③ WinRate</button>
+    <button class="step-btn" type="button">④ 综合报告</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="code-block">python data_generation/run_complete_evaluation.py 30 3.0
+# 建议质量门槛：Judge 均分≥4.0 · WinRate≥45% · 通过率≥80% · 人工≥90%</div>
+
+</section>
+
+<section class="slide" data-id="flash124" data-label="闪卡 · 12.4" data-group="12.4 数据质量">
+<div class="flash-wrap" id="flash124" data-cards='[{"q":"三种数据质量方法如何分工？","a":"LLM Judge 绝对分；Win Rate 相对比真题；人工验证最终把关（尤其答案）。"},{"q":"Win Rate 理想值？","a":"约 50%，表示生成质量接近真题。"},{"q":"Pass Rate 阈值？","a":"题目四维均分 ≥ 3.5 计为通过。"},{"q":"为何英文生成 AIME？","a":"与真题一致、评估公平、国际化、避免翻译误差。"}]'>
+  <div class="flash-idx">1 / N</div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash124',-1)">← 上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash124',1)">下一张 →</button>
+  </div>
+</div>
+</section>
+
+<section class="slide" data-id="quiz124" data-label="检测 · 12.4" data-group="12.4 数据质量">
+<p class="slide-sub">快速自检</p><h2 class="slide-title">12.4 选择题</h2><div class="quiz-item" data-quiz="q124" data-answer="1">
+  <h4>若 Win Rate 仅 20%，通常说明？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">评估程序写错了一定</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">生成质量整体弱于真题，需优化策略</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">必须立刻提交排行榜</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">应关掉人工验证</button>
+  <div class="quiz-explain">显著低于 50% 表示相对真题劣势明显。</div>
+</div><div class="quiz-item" data-quiz="q124" data-answer="1">
+  <h4>LaTeX 写入 JSON 时常见坑是？</h4>
+  <button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">字体太大</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">未转义的反斜杠导致 JSON 解析失败</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">必须用中文</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">不能存 answer 字段</button>
+  <div class="quiz-explain">需把 \frac 等非法转义修成合法 JSON 字符串。</div>
+</div><p class="quiz-score" id="score-q124"></p>
+</section>
+
+<section class="slide" data-id="summary" data-label="本章总结" data-group="12.5 总结自测">
+
+<p class="slide-sub">12.5 · 三层体系回顾</p>
+<h2 class="slide-title">你已经搭好评估底座</h2>
+<div class="arch-stack">
+  <div class="arch-block enc">工具调用 · BFCL <span class="sub">AST 匹配 · 四类别 · 官方对齐</span></div>
+  <div class="arch-block head">通用能力 · GAIA <span class="sub">准精确匹配 · L1–3 · JSONL 提交</span></div>
+  <div class="arch-block dec">数据质量 · AIME <span class="sub">Judge · Win Rate · Gradio 人工</span></div>
+</div>
+<p><strong>六大技术要点：</strong>模块化三层 · Tool 封装 · AST · 多模态 · LLM Judge · Win Rate。</p>
+<p><strong>扩展：</strong>新基准 / 自定义指标 / CI 门禁 / 更多数据类型与多模型评审团。</p>
+
+</section>
+
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="12.5 总结自测">
+
+<p class="slide-sub">勾选即掌握</p>
+<h2 class="slide-title">离开本章前自检</h2>
+<ul class="check-list">
+  <li><input type="checkbox"/> 能说明评估三大挑战与 Benchmark 价值</li>
+  <li><input type="checkbox"/> 能对比 BFCL vs GAIA 的测点与匹配算法</li>
+  <li><input type="checkbox"/> 会用 BFCLEvaluationTool 跑小样本并读准确率</li>
+  <li><input type="checkbox"/> 知道 GAIA 需 HF 权限与 FINAL ANSWER 格式</li>
+  <li><input type="checkbox"/> 能解释 LLM Judge 四维与 Win Rate≈50% 含义</li>
+  <li><input type="checkbox"/> 知道如何启动人工验证并保存结果</li>
+  <li><input type="checkbox"/> 能设计「小样本→中等→全量」分层评估</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="exercises" data-label="习题导读" data-group="12.5 总结自测">
+
+<p class="slide-sub">源文档「习题」· 开放题</p>
+<h2 class="slide-title">继续深入</h2>
+<ol>
+  <li>对比 BFCL/GAIA；为智能客服设计四维指标；回应三大挑战。</li>
+  <li>分析 AST 误判；为四类别设计边界样本；扩展顺序/效率/错误报告。</li>
+  <li>分析 Level 差异与 Level4 设想；改进答案匹配；做领域自定义集。</li>
+  <li>LLM Judge 偏见；为代码/创意/文档设计评分标准；多评委聚合。</li>
+  <li>分层评估策略；持续评估与告警；面向开发/产品/用户的报告。</li>
+</ol>
+<div class="callout" data-label="完成">恭喜走完 Lab 12。评估让智能体「可度量、可改进、可证明」——下一章进入实际项目应用。</div>
+
+</section>
+
+
+    </div>
+  </main>
+</div>
+
+<script>
+
+const slides = Array.from(document.querySelectorAll(".slide"));
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+["flash121","flash122","flash123","flash124"].forEach(initFlash);
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+function bindStepper(rootId, texts) {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  function show(n) {
+    root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+    const panel = root.querySelector(".loop-panel");
+    panel.innerHTML = `<h4>${texts[n].t}</h4><p>${texts[n].p}</p>`;
+  }
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.addEventListener("click", () => show(i)));
+  show(0);
+}
+
+bindStepper("bfclCats", [
+  { t: "Simple", p: "单函数调用：从自然语言抽出参数，正确选择并调用一个工具。" },
+  { t: "Multiple", p: "多函数：需要规划调用序列，覆盖多个工具。" },
+  { t: "Parallel", p: "并行：识别可同时发起的多个调用（集合匹配，顺序可不同）。" },
+  { t: "Irrelevance", p: "无关：判断何时不该调用工具——拒绝乱调。" }
+]);
+
+bindStepper("bfclOfficial", [
+  { t: "① 加载数据", p: "从 BFCL v4 目录加载测试集与 possible_answer。" },
+  { t: "② HelloAgents 预测", p: "对每个样本构 Prompt，调用智能体，提取函数调用。" },
+  { t: "③ 导出 JSONL", p: "写入 evaluation_results/bfcl_official/，复制到 result/{model}/。" },
+  { t: "④ 官方评估", p: "bfcl evaluate --partial-eval，分数与排行榜算法一致。" }
+]);
+
+bindStepper("winFlow", [
+  { t: "配对", p: "从生成集与 AIME 2025 真题中抽样组成 (A 生成, B 真题) 对。" },
+  { t: "LLM 裁决", p: "按严谨性、清晰度、难度、完整性输出 winner=A/B/Tie 与理由。" },
+  { t: "统计", p: "汇总 Win / Loss / Tie Rate；解读与 50% 的差距。" }
+]);
+
+bindStepper("fullPipe", [
+  { t: "① 生成题目", p: "AIMEGenerator 批量生成，带延迟与进度条，写出 JSON。" },
+  { t: "② LLM Judge", p: "四维打分，导出 JSON + Markdown，算均分/通过率/优秀率。" },
+  { t: "③ Win Rate", p: "与 AIME 2025 成对对比，写出胜率报告。" },
+  { t: "④ 综合报告", p: "合并主题分布与两类指标，给出结论与人工验证下一步。" }
+]);
+
+document.querySelectorAll(".fig img").forEach((img) => {
+  img.addEventListener("error", () => {
+    const fig = img.closest(".fig");
+    if (fig) fig.classList.add("offline");
+  });
+});
+
+goTo(0);
+
+</script>
+</body>
+</html>

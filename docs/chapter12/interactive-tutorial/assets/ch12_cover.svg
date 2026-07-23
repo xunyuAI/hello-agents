@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <rect width="960" height="420" fill="#0a1520"/>
+  <defs>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="rgba(77,163,255,0.16)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4da3ff" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#3da8b8" stop-opacity="0.12"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="420" fill="url(#g)"/>
+  <ellipse cx="740" cy="60" rx="320" ry="160" fill="url(#glow)"/>
+
+  <!-- Scoreboard bars -->
+  <g font-family="Oxanium, sans-serif">
+    <text x="64" y="56" fill="#7cbcff" font-size="12" letter-spacing="3">EVALUATION SCOREBOARD</text>
+
+    <rect x="64" y="78" width="520" height="36" fill="#152636" stroke="rgba(77,163,255,0.35)"/>
+    <rect x="64" y="78" width="468" height="36" fill="rgba(77,163,255,0.55)"/>
+    <text x="76" y="101" fill="#0a1520" font-size="13" font-weight="600">BFCL  AST MATCH  90%</text>
+
+    <rect x="64" y="128" width="520" height="36" fill="#152636" stroke="rgba(61,168,184,0.35)"/>
+    <rect x="64" y="128" width="364" height="36" fill="rgba(61,168,184,0.5)"/>
+    <text x="76" y="151" fill="#e6ede9" font-size="13">GAIA  QUASI-EM  70%</text>
+
+    <rect x="64" y="178" width="520" height="36" fill="#152636" stroke="rgba(232,168,74,0.35)"/>
+    <rect x="64" y="178" width="234" height="36" fill="rgba(232,168,74,0.45)"/>
+    <text x="76" y="201" fill="#e6ede9" font-size="13">WIN RATE  45%</text>
+
+    <rect x="64" y="228" width="520" height="36" fill="#152636" stroke="rgba(107,200,154,0.35)"/>
+    <rect x="64" y="228" width="436" height="36" fill="rgba(107,200,154,0.45)"/>
+    <text x="76" y="251" fill="#0a1520" font-size="13" font-weight="600">LLM JUDGE  4.2 / 5</text>
+  </g>
+
+  <!-- Three pillars -->
+  <g font-family="Oxanium, sans-serif">
+    <rect x="64" y="290" width="150" height="58" fill="#0f1e2c" stroke="#4da3ff" stroke-width="1.5"/>
+    <text x="96" y="325" fill="#7cbcff" font-size="14" letter-spacing="2">BFCL</text>
+
+    <rect x="234" y="290" width="150" height="58" fill="#0f1e2c" stroke="#3da8b8" stroke-width="1.5"/>
+    <text x="268" y="325" fill="#5ed4e0" font-size="14" letter-spacing="2">GAIA</text>
+
+    <rect x="404" y="290" width="180" height="58" fill="#0f1e2c" stroke="#6bc89a" stroke-width="1.5"/>
+    <text x="430" y="325" fill="#6bc89a" font-size="14" letter-spacing="1">DATA QUALITY</text>
+  </g>
+
+  <g font-family="Oxanium, sans-serif">
+    <circle cx="780" cy="210" r="78" fill="#152636" stroke="#4da3ff" stroke-width="2"/>
+    <text x="744" y="200" fill="#7cbcff" font-size="13" letter-spacing="2">LAB 12</text>
+    <text x="728" y="226" fill="#e6ede9" font-size="16" letter-spacing="1">EVAL</text>
+    <text x="718" y="248" fill="#9aafb8" font-size="12">BENCHMARK</text>
+  </g>
+
+  <text x="64" y="390" fill="#4da3ff" font-family="Oxanium, sans-serif" font-size="13" letter-spacing="2">HELLO-AGENTS  ·  AGENT PERFORMANCE EVALUATION</text>
+</svg>

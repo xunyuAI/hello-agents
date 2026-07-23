@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <rect width="960" height="420" fill="#0a1520"/>
+  <defs>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="rgba(74,159,232,0.22)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4a9fe8" stop-opacity="0.36"/>
+      <stop offset="100%" stop-color="#3da8b8" stop-opacity="0.14"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="420" fill="url(#g)"/>
+  <ellipse cx="740" cy="60" rx="280" ry="140" fill="url(#glow)"/>
+
+  <g font-family="Oxanium, sans-serif">
+    <!-- AutoGen -->
+    <rect x="48" y="72" width="200" height="220" fill="#0f1e2c" stroke="#4a9fe8" stroke-width="1.5"/>
+    <text x="64" y="100" fill="#4a9fe8" font-size="12" letter-spacing="2">AUTOGEN</text>
+    <circle cx="100" cy="160" r="20" fill="#152636" stroke="#7bc4f5"/>
+    <circle cx="196" cy="160" r="20" fill="#152636" stroke="#7bc4f5"/>
+    <circle cx="100" cy="230" r="20" fill="#152636" stroke="#a78bfa"/>
+    <circle cx="196" cy="230" r="20" fill="#152636" stroke="#a78bfa"/>
+    <path d="M118 160h56M100 180v30M196 180v30M118 230h56" stroke="#4a9fe8" stroke-width="1.2" opacity="0.7"/>
+    <text x="72" y="310" fill="#9aafb8" font-size="12">�ݤJ</text>
+
+    <!-- AgentScope -->
+    <rect x="268" y="72" width="200" height="220" fill="#0f1e2c" stroke="#3da8b8" stroke-width="1.5"/>
+    <text x="284" y="100" fill="#5ed4e0" font-size="12" letter-spacing="2">AGENTSCOPE</text>
+    <rect x="298" y="130" width="140" height="28" fill="#152636" stroke="#5ed4e0"/>
+    <text x="330" y="149" fill="#e6ede9" font-size="11">MsgHub</text>
+    <path d="M368 158v24" stroke="#5ed4e0" stroke-width="1.5"/>
+    <rect x="298" y="182" width="64" height="36" fill="#152636" stroke="#4a9fe8"/>
+    <rect x="374" y="182" width="64" height="36" fill="#152636" stroke="#4a9fe8"/>
+    <path d="M368 218v20" stroke="#5ed4e0" stroke-width="1.5"/>
+    <rect x="318" y="238" width="100" height="28" fill="#152636" stroke="#e8a84a"/>
+    <text x="338" y="257" fill="#e6ede9" font-size="11">Pipeline</text>
+    <text x="300" y="310" fill="#9aafb8" font-size="12">�o�</text>
+
+    <!-- CAMEL -->
+    <rect x="488" y="72" width="200" height="220" fill="#0f1e2c" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="504" y="100" fill="#a78bfa" font-size="12" letter-spacing="2">CAMEL</text>
+    <rect x="518" y="140" width="70" height="90" fill="#152636" stroke="#a78bfa"/>
+    <text x="528" y="190" fill="#e6ede9" font-size="11">User</text>
+    <rect x="608" y="140" width="70" height="90" fill="#152636" stroke="#7bc4f5"/>
+    <text x="612" y="190" fill="#e6ede9" font-size="11">Assist</text>
+    <path d="M588 185h20" stroke="#e8a84a" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="528" y="310" fill="#9aafb8" font-size="12">�rn</text>
+
+    <!-- LangGraph -->
+    <rect x="708" y="72" width="200" height="220" fill="#0f1e2c" stroke="#e8a84a" stroke-width="1.5"/>
+    <text x="724" y="100" fill="#e8a84a" font-size="12" letter-spacing="2">LANGGRAPH</text>
+    <rect x="738" y="130" width="72" height="32" fill="#152636" stroke="#4a9fe8"/>
+    <text x="748" y="151" fill="#e6ede9" font-size="11">Node A</text>
+    <path d="M774 162v22" stroke="#e8a84a" stroke-width="1.5"/>
+    <rect x="738" y="184" width="72" height="32" fill="#152636" stroke="#4a9fe8"/>
+    <text x="748" y="205" fill="#e6ede9" font-size="11">Node B</text>
+    <path d="M810 200h40" stroke="#e8a84a" stroke-width="1.5"/>
+    <path d="M850 200v-50h-40" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <rect x="806" y="236" width="72" height="28" fill="#152636" stroke="#e8a84a" stroke-dasharray="3 2"/>
+    <text x="824" y="255" fill="#e8a84a" font-size="11">END</text>
+    <text x="742" y="310" fill="#9aafb8" font-size="12">��:</text>
+  </g>
+
+  <text x="48" y="380" fill="#4a9fe8" font-family="Oxanium, sans-serif" font-size="14" letter-spacing="3">LAB 06 � FRAMEWORK PRACTICE</text>
+  <text x="48" y="402" fill="#6d8490" font-family="Source Serif 4, Georgia, serif" font-size="13">��O\ � >�6 � �</text>
+</svg>

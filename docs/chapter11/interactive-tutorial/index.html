@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第十一章 · Agentic-RL · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 11 Signal
+   Same product line as Ch1–Ch10; emerald / reward-green primary signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(52, 211, 153, 0.14);
+  --line-strong: rgba(52, 211, 153, 0.36);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #34d399;
+  --signal-bright: #6ee7b7;
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(52, 211, 153, 0.18), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(232, 168, 74, 0.10), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--amber), var(--cyan));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(52, 211, 153, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(52, 211, 153, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(244, 165, 116, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(52,211,153,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(52, 211, 153, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.cover-hero {
+  margin: 1rem 0 1.4rem; border: 1px solid var(--line-strong);
+  background: var(--panel); overflow: hidden;
+}
+.cover-hero img { width: 100%; height: auto; display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps7 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: rgba(52,211,153,0.12);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.arch-block.base { border-left: 3px solid var(--mint); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  transition: border-color 0.2s;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.05rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; margin-top: 1rem; color: var(--paper);
+  border-top: 1px solid var(--line); padding-top: 1rem; font-size: 0.95rem;
+}
+.flash-card.revealed .a { display: block; }
+.flash-idx {
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-mute); margin-bottom: 0.75rem; letter-spacing: 0.06em;
+}
+.flash-nav { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  margin-bottom: 0.75rem; color: var(--text);
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.4rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224,107,90,0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.75rem; padding: 0.75rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(52,211,153,0.08); color: var(--text-dim);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.78rem;
+  color: var(--cyan-bright); margin-top: 0.5rem;
+}
+.check-list { list-style: none; margin: 1rem 0; }
+.check-list li {
+  display: flex; align-items: flex-start; gap: 0.65rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--line);
+  color: var(--text-dim); font-size: 0.92rem;
+}
+.check-list input {
+  margin-top: 0.25rem; accent-color: var(--signal);
+  width: 18px; height: 18px; flex-shrink: 0;
+}
+.goal-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.goal-card {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; position: relative;
+}
+.goal-card .tag {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.goal-card h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+.goal-card p { font-size: 0.85rem; margin: 0; }
+.budget-lab {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1.15rem; margin: 1.2rem 0;
+}
+.budget-lab label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.08em; color: var(--text-mute);
+  display: block; margin-bottom: 0.35rem; text-transform: uppercase;
+}
+.budget-lab input[type="range"] {
+  width: 100%; accent-color: var(--signal); margin-bottom: 0.85rem;
+}
+.budget-bar {
+  display: flex; height: 36px; border: 1px solid var(--line-strong);
+  overflow: hidden; margin: 0.75rem 0;
+  font-family: var(--font-display); font-size: 0.65rem;
+}
+.budget-seg {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink); font-weight: 600; transition: width 0.3s ease;
+  overflow: hidden; white-space: nowrap;
+}
+.budget-seg.sys { background: var(--signal); }
+.budget-seg.ev { background: var(--cyan); }
+.budget-seg.ctx { background: var(--amber); }
+.budget-seg.free { background: var(--panel-2); color: var(--text-mute); }
+.budget-meta {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  color: var(--text-dim); line-height: 1.6;
+}
+.budget-warn {
+  margin-top: 0.65rem; padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--amber); background: var(--amber-dim);
+  font-size: 0.88rem; color: var(--paper); display: none;
+}
+.budget-warn.show { display: block; }
+.template-map {
+  display: grid; gap: 0.35rem; margin: 1rem 0;
+  font-family: var(--font-mono); font-size: 0.8rem;
+}
+.template-map div {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 0.55rem 0.85rem; color: var(--text-dim);
+}
+.template-map div strong { color: var(--signal-bright); font-weight: 500; }
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 40;
+}
+.overlay.show { display: block; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: min(86vw, 300px);
+    z-index: 50; transform: translateX(-105%); transition: transform 0.3s;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3 { grid-template-columns: 1fr; }
+  .loop-stepper .steps,
+  .loop-stepper .steps.steps5,
+  .loop-stepper .steps.steps3,
+  .loop-stepper .steps.steps4,
+  .loop-stepper .steps.steps7 { grid-template-columns: repeat(2, 1fr); }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+}
+
+table.kv { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.88rem; }
+table.kv th, table.kv td { border:1px solid var(--line); padding:0.55rem 0.75rem; text-align:left; color:var(--text-dim); }
+table.kv th { font-family:var(--font-display); font-size:0.75rem; letter-spacing:0.06em; color:var(--signal-bright); background:var(--panel); }
+.loop-stepper .steps.steps6 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width:860px) {
+  .loop-stepper .steps.steps6 { grid-template-columns: repeat(2, 1fr); }
+}
+
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 11</div>
+      <h1>第十一章 · Agentic-RL</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>进度</span>
+        <span id="progressText">1 / 1</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">EMERALD SIGNAL · ← → 翻页</div>
+  </aside>
+
+  <main class="stage">
+    <div class="topbar">
+      <button class="menu-btn" type="button" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button class="btn" id="btnPrev" type="button">← 上一页</button>
+        <button class="btn btn-primary" id="btnNext" type="button">下一页 →</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+
+<!--
+  COVERAGE CHECKLIST (源文档对照 · 第十一章 Agentic-RL.md)
+  [x] 11.1 从 RL 到 Agentic RL · LLM 全景 · PBRFT vs Agentic · 六大能力 · 四层架构 · 快速上手
+  [x] 11.2 GSM8K · 三种格式 · 奖励三件套 · 组合与自定义
+  [x] 11.3 为何 SFT · LoRA · SFT 实战与评估
+  [x] 11.4 PPO→GRPO · 公式 · 参数 · 训练循环
+  [x] 11.5 指标 · evaluate · 错误分析闭环
+  [x] 11.6 Pipeline · 超参 · 分布式 · 部署
+  [x] 11.8 总结 · 自测 · 习题导读
+  注：原文无 11.7
+-->
+<section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
+
+<p class="slide-sub">Lab 11 · Industrial Blueprint</p>
+<h2 class="slide-title">第十一章 · Agentic-RL</h2>
+<p class="lead">智能体范式与通信协议都有了——如何让模型在多步任务里<strong>自己变强</strong>？本章把强化学习接到 HelloAgents：SFT 打底、GRPO 拔高、奖励引导、评估部署。</p>
+<div class="cover-hero"><img src="assets/ch11_cover.svg" alt="Lab 11 Agentic RL 流水线"/></div>
+<div class="note"><strong>本章交付物：</strong><code>RLTrainingTool</code> · GSM8K 数据与奖励 · SFT/LoRA · GRPO · 评估闭环 · 端到端 Pipeline。</div>
+
+</section>
+
+<section class="slide" data-id="goals" data-label="本章地图" data-group="开篇">
+
+<p class="slide-sub">学习目标</p>
+<h2 class="slide-title">你将带走什么</h2>
+<div class="goal-grid">
+  <div class="goal-card"><div class="tag">概念</div><h3>Agentic RL ≠ 单轮 RLHF</h3><p>多步状态、工具行动、累积回报——从对话助手进化为自主智能体。</p></div>
+  <div class="goal-card"><div class="tag">数据</div><h3>GSM8K 三种格式</h3><p>原始 / SFT / RL；明白为何 RL 只给 ground_truth。</p></div>
+  <div class="goal-card"><div class="tag">奖励</div><h3>Accuracy · Length · Step</h3><p>会设计、组合、防 reward hacking。</p></div>
+  <div class="goal-card"><div class="tag">训练</div><h3>SFT → GRPO</h3><p>LoRA 高效微调；组内相对策略优化。</p></div>
+  <div class="goal-card"><div class="tag">评估</div><h3>指标 + 错误分析</h3><p>Accuracy@K、格式正确率、难度分层。</p></div>
+  <div class="goal-card"><div class="tag">工程</div><h3>Pipeline · 分布式 · 部署</h3><p>从 config.json 跑通到 FastAPI。</p></div>
+</div>
+<div class="callout" data-label="建议节奏">先通读概念（11.1）→ 跑小样本 SFT/GRPO → 再啃奖励与评估。原文无 11.7，11.6 后直接 11.8 总结。</div>
+
+</section>
+
+<section class="slide" data-id="why" data-label="为什么需要 Agentic RL" data-group="开篇">
+
+<p class="slide-sub">11.1 · 问题驱动</p>
+<h2 class="slide-title">三个绕不开的问题</h2>
+<p>前面章节已实现多种智能体范式与通信协议。任务一复杂，你会自然问：</p>
+<ol>
+  <li>如何让智能体具备<strong>更强推理</strong>？</li>
+  <li>如何让智能体<strong>更好地使用工具</strong>？</li>
+  <li>如何让智能体能够<strong>自我改进</strong>？</li>
+</ol>
+<p class="analogy">监督学习像「照着标准答案抄」——抄得再像，也很难超越题解本。强化学习像「做题后对答案」——同一题尝试多条路径，奖励正确路径。</p>
+<div class="callout" data-label="一句话">Agentic RL：把 LLM 当作可学习策略，嵌进感知–决策–执行循环，用奖励优化多步任务表现。</div>
+
+</section>
+
+<section class="slide" data-id="rl-map" data-label="RL 映射数学智能体" data-group="11.1 理念">
+
+<p class="slide-sub">11.1.1 · 从强化学习到 Agentic RL</p>
+<h2 class="slide-title">鸭子生蛋题：五元组怎么套</h2>
+<p>经典题：每天 16 蛋，早餐吃 3，烤松饼用 4，剩蛋卖 $2——日入多少？需两步：剩余 9，收入 18。</p>
+<table class="kv">
+  <tr><th>RL 概念</th><th>映射</th></tr>
+  <tr><td>智能体</td><td>基于 LLM 的推理系统</td></tr>
+  <tr><td>环境</td><td>数学问题 + 验证系统</td></tr>
+  <tr><td>状态</td><td>问题描述 + 已有推理步骤</td></tr>
+  <tr><td>行动</td><td>生成下一步推理或最终答案</td></tr>
+  <tr><td>奖励</td><td>答案正确 +1，错误 0</td></tr>
+</table>
+<details class="expand-card"><summary>监督学习的三个局限</summary>
+<div class="expand-body"><ul>
+  <li><strong>数据天花板</strong>：只能模仿标注，难超越人类题解。</li>
+  <li><strong>无探索</strong>：被动学给定路径，不会试错。</li>
+  <li><strong>难优化长期目标</strong>：多步中间过程缺少精确监督信号。</li>
+</ul></div></details>
+
+</section>
+
+<section class="slide" data-id="pretrain" data-label="预训练全景" data-group="11.1 理念">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-1.png" alt="图 11.1 LLM 训练全景图" loading="lazy" />
+  <div class="fig-cap">图 11.1 LLM 训练全景图</div>
+  <div class="fig-fallback"><strong>预训练</strong>：海量文本 + 下一词预测。<br><strong>后训练</strong>：SFT → 奖励建模 → RL。</div>
+</div>
+
+<p class="slide-sub">11.1.2 · LLM 训练全景</p>
+<h2 class="slide-title">预训练：学会「下一个词」</h2>
+<p>目标是学语言规律与世界知识。任务是<strong>因果语言建模</strong>（Next Token Prediction）：</p>
+<div class="code-block">L_pretrain = - Σ log P(x_t | x_1…x_{t-1}; θ)</div>
+<ul>
+  <li>数据：TB 级文本；无监督/自监督</li>
+  <li>学到：语法、语义、事实、基础推理</li>
+  <li>局限：只会续写，不懂「听从指令 / 有帮助无害诚实」</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="posttrain" data-label="后训练三步" data-group="11.1 理念">
+
+<p class="slide-sub">11.1.2 · SFT → RM → RL</p>
+<h2 class="slide-title">从语言模型到对话助手</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>① SFT</h3>
+    <ul><li>(prompt, completion) 对</li><li>L = -Σ log P(y|x)</li><li>学格式与基本能力</li><li>数据少、见效快</li></ul>
+  </div>
+  <div class="compare-col b"><h3>② 奖励建模 RM</h3>
+    <ul><li>chosen vs rejected</li><li>学人类偏好分数 r_φ</li><li>L = -E[log σ(r_w−r_l)]</li></ul>
+  </div>
+  <div class="compare-col c"><h3>③ RL 微调</h3>
+    <ul><li>经典：PPO</li><li>J = E[r] − β KL(π||π_ref)</li><li>最大化奖励且不漂太远</li></ul>
+  </div>
+</div>
+<details class="expand-card"><summary>RLHF vs RLAIF</summary>
+<div class="expand-body">
+<p><strong>RLHF</strong>：人类标注偏好，贵。<strong>RLAIF</strong>：用强 AI 打分排序，成本大幅下降，效果可接近甚至超过 RLHF。</p>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="pbrft" data-label="PBRFT vs Agentic RL" data-group="11.1 理念">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-table-1.png" alt="表 11.1 PBRFT 与 Agentic RL 对比" loading="lazy" />
+  <div class="fig-cap">表 11.1 PBRFT 与 Agentic RL 对比</div>
+  <div class="fig-fallback">状态：单 prompt vs 含历史观察；行动：纯文本 vs 文本+工具；奖励：单步 vs 累积折扣回报。</div>
+</div>
+
+<p class="slide-sub">11.1.3 · 范式分水岭</p>
+<h2 class="slide-title">单轮偏好优化 → 多步序贯决策</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>PBRFT</h3>
+    <ul><li>T=1，s₀=prompt</li><li>行动：生成整段回答 y</li>
+    <li>R = r_φ(s₀, y)</li><li>思维：「更好的单个回答」</li></ul>
+  </div>
+  <div class="compare-col b"><h3>Agentic RL</h3>
+    <ul><li>T≫1，s_t=(prompt, o₁…o_t)</li><li>行动：思考 / 工具 / 环境操作</li>
+    <li>R = Σ γᵗ r(s_t, a_t)</li><li>思维：「完成复杂任务」</li></ul>
+  </div>
+</div>
+<p class="note"><strong>例子</strong>：分析 GitHub 仓库——调 API(+0.1)→读代码(+0.1)→分析(+0.2)→写报告(+0.6)=累计 1.0。</p>
+
+</section>
+
+<section class="slide" data-id="six" data-label="六大核心能力" data-group="11.1 理念">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-2.png" alt="图 11.2 Agentic RL 的六大核心能力" loading="lazy" />
+  <div class="fig-cap">图 11.2 Agentic RL 的六大核心能力</div>
+  <div class="fig-fallback">推理 · 工具使用 · 记忆 · 规划 · 自我改进 · 感知</div>
+</div>
+
+<p class="slide-sub">11.1.3 · 能力清单</p>
+<h2 class="slide-title">Agentic RL 要强化什么</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>推理</h3><div class="en">Reasoning</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>试错学推理策略；奖励常为答案对错。超越死记 CoT 示例。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>工具使用</h3><div class="en">Tool Use</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>何时用、用哪个、如何组合；行动空间含 think + tool。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>记忆</h3><div class="en">Memory</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>学记什么、何时更新/遗忘——超越静态 RAG。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>规划</h3><div class="en">Planning</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>动态行动序列；愿为长期目标「绕路」收集信息。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>自我改进</h3><div class="en">Self-Improve</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>识别错误、分析失败、调整策略。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>感知</h3><div class="en">Perception</div><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><p>多模态与视觉工具/规划，理解并操作视觉世界。</p></div>
+  </div></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="arch" data-label="四层架构" data-group="11.1 理念">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-3.png" alt="图 11.3 HelloAgents Agentic RL 架构" loading="lazy" />
+  <div class="fig-cap">图 11.3 HelloAgents Agentic RL 架构</div>
+  <div class="fig-fallback">数据集层 → 奖励函数层 → 训练器层 → 统一接口层</div>
+</div>
+
+<p class="slide-sub">11.1.4 · 技术选型</p>
+<h2 class="slide-title">TRL + Qwen3-0.6B + 四层设计</h2>
+<div class="arch-stack">
+  <div class="arch-block enc">统一接口层 · <code>RLTrainingTool</code>
+    <div class="sub">action: train | load_dataset | create_reward | evaluate</div></div>
+  <div class="arch-block dec">训练器层 · <code>SFTTrainerWrapper</code> / <code>GRPOTrainerWrapper</code>
+    <div class="sub">含 LoRA 支持</div></div>
+  <div class="arch-block head">奖励函数层 · Accuracy / LengthPenalty / Step · create_*_reward()
+    <div class="sub">定义「什么是好行为」</div></div>
+  <div class="arch-block base">数据集层 · GSM8KDataset · create_sft_dataset() · create_rl_dataset()
+    <div class="sub">加载与格式转换</div></div>
+</div>
+<p class="note"><strong>为何 0.6B？</strong>普通 GPU 可训、开源、够做教学与流程验证。</p>
+
+</section>
+
+<section class="slide" data-id="quick" data-label="快速上手" data-group="11.1 理念">
+
+<p class="slide-sub">11.1.5 · 30 秒心智模型</p>
+<h2 class="slide-title">RLTrainingTool 四步体验</h2>
+<div class="code-block">pip install "hello-agents[rl]==0.2.5"
+# 或：cd HelloAgents && pip install -e ".[rl]"</div>
+<div class="code-block">from hello_agents.tools import RLTrainingTool
+import json
+rl = RLTrainingTool()
+
+# 1) 小样本 SFT
+sft = json.loads(rl.run({
+  "action": "train", "algorithm": "sft",
+  "model_name": "Qwen/Qwen3-0.6B",
+  "output_dir": "./models/quick_test_sft",
+  "max_samples": 10, "num_epochs": 1,
+  "batch_size": 2, "use_lora": True
+}))
+# 2) 小样本 GRPO（batch_size 须能被 num_generations 整除）
+# 3) action="evaluate" 看 accuracy / average_reward</div>
+<div class="callout" data-label="易错">快速 demo 准确率低很正常。复制书中代码时注意全角逗号需改半角。</div>
+
+</section>
+
+<section class="slide" data-id="flash91" data-label="闪卡 · 11.1" data-group="11.1 理念">
+<p class="slide-sub">巩固</p><h2 class="slide-title">闪卡 · 理念与架构</h2><div class="flash-wrap" id="flash91" data-cards='[{"q": "Agentic RL 一句话定义？", "a": "把 LLM 当策略，嵌进多步交互循环，用强化学习优化长期任务回报。"}, {"q": "PBRFT 与 Agentic RL 最大差别？", "a": "单步回答质量 vs 多步状态演化 + 工具行动 + 累积奖励。"}, {"q": "后训练三步叫什么？", "a": "SFT → 奖励建模(RM) → 强化学习微调(PPO/GRPO 等)。"}, {"q": "HelloAgents 四层自下而上？", "a": "数据集 → 奖励函数 → 训练器(SFT/GRPO) → RLTrainingTool 统一接口。"}]'>
+<div class="flash-idx"></div>
+<div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+<div class="flash-nav">
+<button class="btn" type="button" onclick="moveFlash('flash91',-1)">← 上一张</button>
+<button class="btn" type="button" onclick="moveFlash('flash91',1)">下一张 →</button>
+</div></div>
+</section>
+
+<section class="slide" data-id="quiz91" data-label="检测 · 11.1" data-group="11.1 理念">
+<p class="slide-sub">自测</p><h2 class="slide-title">检测 · 理念</h2><div class="quiz-item" data-quiz="q91" data-answer="1">
+  <h4>下列哪项最符合 Agentic RL？</h4>
+<button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">只优化单轮回答的流畅度</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">多步交互中最大化累积折扣奖励</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">仅用下一词预测做预训练</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">完全不需要奖励信号</button>
+  <div class="quiz-explain">Agentic RL 优化轨迹回报，而非单次回答打分。</div>
+</div>
+<div class="quiz-item" data-quiz="q91" data-answer="1">
+  <h4>HelloAgents 统一训练入口是？</h4>
+<button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">ContextBuilder</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">RLTrainingTool</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">NoteTool</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">MemoryTool</button>
+  <div class="quiz-explain">四种 action：train / load_dataset / create_reward / evaluate。</div>
+</div>
+<div class="quiz-score" id="score-q91"></div>
+</section>
+
+<section class="slide" data-id="gsm8k" data-label="GSM8K 数据集" data-group="11.2 数据与奖励">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-table-2.png" alt="表 11.2 GSM8K 数据集统计" loading="lazy" />
+  <div class="fig-cap">表 11.2 GSM8K 数据集统计</div>
+  <div class="fig-fallback">训练 7473 · 测试 1319 · 2–8 年级 · 需 2–8 步推理</div>
+</div>
+
+<p class="slide-sub">11.2.1 · 为何选数学推理</p>
+<h2 class="slide-title">有标准答案 → 自动验分</h2>
+<ul>
+  <li>答案可自动评估，无需昂贵人工偏好标注</li>
+  <li>天然多步推理场景</li>
+  <li>推理能力可迁移到其他领域</li>
+</ul>
+<div class="code-block">答案标记：中间计算 &lt;&lt;48/2=24&gt;&gt;
+最终答案 #### 72</div>
+<p class="analogy">开放问答难客观打分；数学题对错分明，是 RL 的「干净奖励实验室」。</p>
+
+</section>
+
+<section class="slide" data-id="formats" data-label="三种数据格式" data-group="11.2 数据与奖励">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-4.png" alt="图 11.4 GSM8K 数据格式转换" loading="lazy" />
+  <div class="fig-cap">图 11.4 GSM8K 数据格式转换</div>
+  <div class="fig-fallback">原始 → SFT(prompt+completion) → RL(prompt+ground_truth)</div>
+</div>
+
+<p class="slide-sub">表 11.3 · 格式用途</p>
+<h2 class="slide-title">SFT 学过程，RL 只给答案</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>原始</h3><ul><li>question + answer</li><li>含解题步骤</li><li>人类阅读</li></ul></div>
+  <div class="compare-col b"><h3>SFT</h3><ul><li>prompt + completion</li><li>完整推理过程</li><li>学格式与模仿</li></ul></div>
+  <div class="compare-col c"><h3>RL</h3><ul><li>prompt + ground_truth</li><li>仅最终答案</li><li>逼模型自己探索</li></ul></div>
+</div>
+<div class="code-block"># RL —— 勿把解题过程泄漏进 ground_truth
+{"prompt": "&lt;|im_start|&gt;user\n...&lt;|im_end|&gt;\n&lt;|im_start|&gt;assistant\n",
+ "ground_truth": "72"}</div>
+
+</section>
+
+<section class="slide" data-id="loaddata" data-label="加载与转换 API" data-group="11.2 数据与奖励">
+
+<p class="slide-sub">11.2.1 / 11.2.3</p>
+<h2 class="slide-title">load_dataset · format_math_dataset</h2>
+<div class="code-block">rl.run({"action": "load_dataset", "format": "sft", "max_samples": 5})
+rl.run({"action": "load_dataset", "format": "rl",  "max_samples": 5})
+
+from hello_agents.rl import format_math_dataset
+ds = format_math_dataset(raw, format_type="rl", model_name="Qwen/Qwen3-0.6B")
+rl.register_dataset("my_math", ds)
+rl.register_reward_function("my_math", my_reward)  # 建议同名</div>
+<details class="expand-card"><summary>自定义字段要求</summary>
+<div class="expand-body">
+<p><strong>SFT</strong>：prompt、completion（可选 text）。<br>
+<strong>RL</strong>：question、prompt、ground_truth、full_answer。</p>
+</div></details>
+
+</section>
+
+<section class="slide" data-id="reward-principles" data-label="奖励设计原则" data-group="11.2 数据与奖励">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-5.png" alt="图 11.5 奖励函数设计" loading="lazy" />
+  <div class="fig-cap">图 11.5 奖励函数设计</div>
+  <div class="fig-fallback">AccuracyReward · LengthPenaltyReward · StepReward · 可组合</div>
+</div>
+
+<p class="slide-sub">11.2.2 · 核心</p>
+<h2 class="slide-title">奖励定义「什么是好」</h2>
+<p>目标：最大化累积回报 J(θ)=E[Σ γᵗ r]。数学任务可简化为 r(q,a)=f(a,a*)。</p>
+<ul>
+  <li><strong>好奖励</strong>：成功标准清晰、有梯度信号、方差可控、可组合</li>
+  <li><strong>坏奖励</strong>：过于稀疏、可被欺骗、目标互相打架、方差爆炸</li>
+</ul>
+<div class="callout" data-label="基类">MathRewardFunction（可设 tolerance）· create_*_reward() 便捷工厂</div>
+
+</section>
+
+<section class="slide" data-id="three-rewards" data-label="三种内置奖励" data-group="11.2 数据与奖励">
+
+<p class="slide-sub">Accuracy · Length · Step · 表 11.4</p>
+<h2 class="slide-title">公式与防作弊细节</h2>
+<details class="expand-card" open><summary>AccuracyReward · r=1/0</summary>
+<div class="expand-body"><p>提取 Final Answer / #### / 末位数字；数值容差。简单但稀疏——错一点也是 0。</p></div></details>
+<details class="expand-card"><summary>LengthPenalty · r_acc − α·max(0,l−l_t)</summary>
+<div class="expand-body"><p>α 默认 0.001。<strong>仅答案正确时惩罚长度</strong>，否则短错误答案会被鼓励。</p></div></details>
+<details class="expand-card"><summary>StepReward · r_acc + β·s</summary>
+<div class="expand-body"><p>β 默认 0.1；检测 Step N / 换行。<strong>仅正确时加分</strong>，防「假步骤刷分」。</p></div></details>
+<table class="kv">
+  <tr><th>reward_type</th><th>场景</th></tr>
+  <tr><td>accuracy</td><td>有标准答案的任务起步</td></tr>
+  <tr><td>length_penalty</td><td>控成本、防啰嗦</td></tr>
+  <tr><td>step</td><td>教育/可解释推理</td></tr>
+  <tr><td>combined</td><td>GRPO 完整训练时多目标平衡</td></tr>
+</table>
+
+</section>
+
+<section class="slide" data-id="custom-reward" data-label="组合与自定义" data-group="11.2 数据与奖励">
+
+<p class="slide-sub">11.2.2–11.2.3</p>
+<h2 class="slide-title">组合权重与注册扩展</h2>
+<div class="code-block"># 三者：r = r_acc − α·max(0,l−lt) + β·s
+"reward_type": "combined",
+"reward_config": {"components": [
+  {"type": "accuracy", "weight": 1.0},
+  {"type": "length_penalty", "weight": 0.5, "target_length": 200},
+  {"type": "step", "weight": 0.3, "step_bonus": 0.1}
+]}
+
+def custom_reward(completions, **kwargs):
+    # kwargs 常含 ground_truth；返回 List[float]
+    ...</div>
+<div class="note"><strong>注意</strong>：create_reward 常只配单一类型；组合走训练配置。答案抽取失败 → 全 0 → 训练无信号。</div>
+
+</section>
+
+<section class="slide" data-id="flash92" data-label="闪卡 · 11.2" data-group="11.2 数据与奖励">
+<p class="slide-sub">巩固</p><h2 class="slide-title">闪卡 · 数据与奖励</h2><div class="flash-wrap" id="flash92" data-cards='[{"q": "RL 格式为什么不给解题过程？", "a": "迫使模型自主探索推理路径，而不是背 completion。"}, {"q": "长度惩罚为何只在答对时生效？", "a": "避免模型用「短且错」的答案逃避惩罚。"}, {"q": "GSM8K 训练集约多少条？", "a": "7473 训练 + 1319 测试。"}, {"q": "自定义数据最简路径？", "a": "question/answer → format_math_dataset → register_dataset + register_reward_function。"}]'>
+<div class="flash-idx"></div>
+<div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+<div class="flash-nav">
+<button class="btn" type="button" onclick="moveFlash('flash92',-1)">← 上一张</button>
+<button class="btn" type="button" onclick="moveFlash('flash92',1)">下一张 →</button>
+</div></div>
+</section>
+
+<section class="slide" data-id="quiz92" data-label="检测 · 11.2" data-group="11.2 数据与奖励">
+<p class="slide-sub">自测</p><h2 class="slide-title">检测 · 数据与奖励</h2><div class="quiz-item" data-quiz="q92" data-answer="1">
+  <h4>RL 样本的关键字段是？</h4>
+<button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">prompt + completion</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">prompt + ground_truth</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">仅 completion</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">仅 embedding</button>
+  <div class="quiz-explain">RL 用 ground_truth 算奖励，不提供完整解题 completion。</div>
+</div>
+<div class="quiz-item" data-quiz="q92" data-answer="1">
+  <h4>步骤奖励在答案错误时？</h4>
+<button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">仍按步数加分</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">奖励为 0</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">给负分</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">随机奖励</button>
+  <div class="quiz-explain">与长度惩罚一样：先正确，再谈步骤/长度塑形。</div>
+</div>
+<div class="quiz-score" id="score-q92"></div>
+</section>
+
+<section class="slide" data-id="why-sft" data-label="为什么必须先 SFT" data-group="11.3 SFT">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-6.png" alt="图 11.6 SFT 在训练流程中的作用" loading="lazy" />
+  <div class="fig-cap">图 11.6 SFT 在训练流程中的作用</div>
+  <div class="fig-fallback">SFT：学格式、建基线、缩小 RL 探索空间</div>
+</div>
+
+<p class="slide-sub">11.3.1</p>
+<h2 class="slide-title">没有格式，奖励就是噪声</h2>
+<ul>
+  <li>预训练输出自由文本，难抽 Final Answer</li>
+  <li>SFT 教会 Step / Final Answer 结构</li>
+  <li>提供可评估的初始策略，缩小 RL 搜索空间</li>
+</ul>
+<p class="callout" data-label="铁律">跳过 SFT 直接 RL → 答案抽取失败 → 奖励全 0 → 训练假死。SFT 是地基，GRPO 是上层建筑。</p>
+
+</section>
+
+<section class="slide" data-id="lora" data-label="LoRA 原理" data-group="11.3 SFT">
+
+<p class="slide-sub">11.3.2 · 表 11.5</p>
+<h2 class="slide-title">ΔW = BA，少参数撬大模型</h2>
+<p>冻结原权重 W，只训低秩矩阵 B、A（秩 r≪min(d,k)）。前向：h = Wx + BAx；常缩放 α/r。</p>
+<ul>
+  <li>参数量：全量 d×k → LoRA r(d+k)（例 4096²、r=8 ≈ 256× 减少）</li>
+  <li>超参：r=4–64（默认 8）；alpha≈2×rank；target：q/k/v/o_proj</li>
+  <li>权衡：显存↓速度↑，效果通常略逊全量</li>
+</ul>
+<div class="compare">
+  <div class="compare-col a"><h3>选 LoRA</h3><ul><li>单卡/显存紧</li><li>教学与快速迭代</li><li>多任务适配器切换</li></ul></div>
+  <div class="compare-col b"><h3>选全量</h3><ul><li>算力充足</li><li>追求极限精度</li><li>分布偏移极大</li></ul></div>
+</div>
+
+</section>
+
+<section class="slide" data-id="sft-prac" data-label="SFT 实战与评估" data-group="11.3 SFT">
+
+<p class="slide-sub">11.3.3–11.3.4 · SFTTrainerWrapper</p>
+<h2 class="slide-title">从 10 样本到全量 7473</h2>
+<div class="code-block">rl.run({
+  "action": "train", "algorithm": "sft",
+  "model_name": "Qwen/Qwen3-0.6B",
+  "output_dir": "./models/sft_full",
+  "max_samples": None, "num_epochs": 3,
+  "batch_size": 8, "learning_rate": 5e-5,
+  "use_lora": True, "lora_rank": 16, "lora_alpha": 32,
+  "lora_target_modules": ["q_proj","k_proj","v_proj","o_proj"],
+  "warmup_ratio": 0.1, "weight_decay": 0.01
+})</div>
+<details class="expand-card"><summary>期望量级与故障</summary>
+<div class="expand-body"><ul>
+  <li>Qwen3-0.6B：SFT 后约 <strong>40–50%</strong>；GRPO 后再到 <strong>60–70%</strong></li>
+  <li>OOM：降 batch、开 LoRA、梯度累积、混合精度</li>
+  <li>过拟合：加 weight_decay、减 epoch、加数据</li>
+  <li>loss 不降：查对话模板、提 lr、加 epoch</li>
+</ul></div></details>
+
+</section>
+
+<section class="slide" data-id="flash93" data-label="闪卡 · 11.3" data-group="11.3 SFT">
+<p class="slide-sub">巩固</p><h2 class="slide-title">闪卡 · SFT / LoRA</h2><div class="flash-wrap" id="flash93" data-cards='[{"q": "SFT 的四个作用？", "a": "学格式、学推理模式、建基线、缩小 RL 探索空间。"}, {"q": "LoRA 训什么？", "a": "只训低秩 BA，冻结原 W；推理时可 merge。"}, {"q": "SFT 常用学习率量级？", "a": "约 5e-5；LoRA 可略高到 1e-4。"}, {"q": "为何监控 format？", "a": "格式崩则答案抽不出，后续奖励失效。"}]'>
+<div class="flash-idx"></div>
+<div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+<div class="flash-nav">
+<button class="btn" type="button" onclick="moveFlash('flash93',-1)">← 上一张</button>
+<button class="btn" type="button" onclick="moveFlash('flash93',1)">下一张 →</button>
+</div></div>
+</section>
+
+<section class="slide" data-id="quiz93" data-label="检测 · 11.3" data-group="11.3 SFT">
+<p class="slide-sub">自测</p><h2 class="slide-title">检测 · SFT</h2><div class="quiz-item" data-quiz="q93" data-answer="1">
+  <h4>直接对预训练模型做 GRPO 最常见后果？</h4>
+<button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">立刻 90% 准确率</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">奖励稀疏/抽取失败导致难学</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">不需要 GPU</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">自动生成 Value Model</button>
+  <div class="quiz-explain">缺格式与基线时，奖励信号几乎无效。</div>
+</div>
+<div class="quiz-item" data-quiz="q93" data-answer="1">
+  <h4>LoRA 的 r 越大通常意味着？</h4>
+<button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">参数更少、一定更好</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">可表达能力更强但更吃显存</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">必须关闭 alpha</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">等于全量微调</button>
+  <div class="quiz-explain">r 增大 → 可训练参数增多，逼近全量，成本上升。</div>
+</div>
+<div class="quiz-score" id="score-q93"></div>
+</section>
+
+<section class="slide" data-id="ppo-grpo" data-label="从 PPO 到 GRPO" data-group="11.4 GRPO">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-7.png" alt="图 11.7 PPO vs GRPO 训练流程" loading="lazy" />
+  <div class="fig-cap">图 11.7 PPO vs GRPO 训练流程</div>
+  <div class="fig-fallback">GRPO 去掉 Value Model，用组内相对奖励</div>
+</div>
+
+<p class="slide-sub">11.4.1 · 表 11.6</p>
+<h2 class="slide-title">为何 LLM 更爱 GRPO</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>PPO 痛点</h3>
+    <ul><li>需要 Value Model</li><li>四模型：Policy/Ref/Value/Reward</li>
+    <li>不稳、易奖励崩塌</li><li>显存与工程重</li></ul>
+  </div>
+  <div class="compare-col b"><h3>GRPO 优势</h3>
+    <ul><li>无需 Value Model</li><li>Policy + Reference</li>
+    <li>组内相对奖励降方差</li><li>更稳、更省显存</li></ul>
+  </div>
+</div>
+
+</section>
+
+<section class="slide" data-id="grpo-formula" data-label="GRPO 公式与相对奖励" data-group="11.4 GRPO">
+
+<p class="slide-sub">数学直觉</p>
+<h2 class="slide-title">用「比同组更好」代替优势函数</h2>
+<div class="code-block">PPO:  A = Q − V（需 Value）
+GRPO: J ≈ E[ (π_θ/π_ref) · (r − r̄_group) ] − β · KL(π_θ || π_ref)</div>
+<p>例：组奖励 [1, 1, 0, 0.8]，均值 0.7 → 相对 [+0.3, +0.3, −0.7, +0.1]。正确且更好的样本被强化，差的被抑制。</p>
+<div class="note"><strong>KL</strong>：β 即 <code>kl_coef</code>，建议 0.05–0.1。太大学不动，太小策略漂飞。</div>
+
+</section>
+
+<section class="slide" data-id="grpo-params" data-label="GRPO 实战参数" data-group="11.4 GRPO">
+
+<p class="slide-sub">11.4.2 · GRPOTrainerWrapper</p>
+<h2 class="slide-title">从 SFT 权重起步</h2>
+<div class="code-block">rl.run({
+  "action": "train", "algorithm": "grpo",
+  "model_name": "./models/sft_full",
+  "output_dir": "./models/grpo_full",
+  "num_epochs": 3, "batch_size": 4, "learning_rate": 1e-5,
+  "num_generations": 4, "max_new_tokens": 512,
+  "temperature": 0.8, "kl_coef": 0.05, "clip_range": 0.2,
+  "use_lora": True, "lora_rank": 16, "lora_alpha": 32,
+  "reward_type": "combined"
+})</div>
+<ul>
+  <li>lr 通常<strong>小于</strong> SFT（1e-5–5e-5）</li>
+  <li><code>batch_size</code> 须能被 <code>num_generations</code> 整除</li>
+  <li>OOM：减 generations / batch / max_new_tokens</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="grpo-loop" data-label="训练循环与监控" data-group="11.4 GRPO">
+
+<p class="slide-sub">11.4.3</p>
+<h2 class="slide-title">采样 → 打分 → 相对化 → 更新</h2>
+<div class="loop-stepper" id="grpoFlow">
+  <div class="steps steps5">
+    <button class="step-btn" type="button">① 采样</button>
+    <button class="step-btn" type="button">② 奖励</button>
+    <button class="step-btn" type="button">③ 相对</button>
+    <button class="step-btn" type="button">④ 更新</button>
+    <button class="step-btn" type="button">⑤ 监控</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<details class="expand-card"><summary>异常诊断速查</summary>
+<div class="expand-body"><ul>
+  <li>奖励不升：lr 过小 / kl 过大 / 奖励差 / SFT 基线差</li>
+  <li>KL &gt; 0.5：降 lr、增 kl_coef、奖励别过激</li>
+  <li>准确率升但格式崩：combined 奖励、加大 kl</li>
+</ul></div></details>
+
+</section>
+
+<section class="slide" data-id="flash94" data-label="闪卡 · 11.4" data-group="11.4 GRPO">
+<p class="slide-sub">巩固</p><h2 class="slide-title">闪卡 · GRPO</h2><div class="flash-wrap" id="flash94" data-cards='[{"q": "GRPO 相对 PPO 省掉了什么？", "a": "Value Model；用组内相对奖励 r−r̄ 估计优势。"}, {"q": "num_generations 的作用？", "a": "每题采样多个答案组成一组，用于相对比较与降方差。"}, {"q": "KL 项防止什么？", "a": "策略偏离参考模型（常为 SFT）过远导致崩塌。"}, {"q": "GRPO 应从哪里初始化？", "a": "强烈建议从已完成的 SFT 模型路径加载。"}]'>
+<div class="flash-idx"></div>
+<div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+<div class="flash-nav">
+<button class="btn" type="button" onclick="moveFlash('flash94',-1)">← 上一张</button>
+<button class="btn" type="button" onclick="moveFlash('flash94',1)">下一张 →</button>
+</div></div>
+</section>
+
+<section class="slide" data-id="quiz94" data-label="检测 · 11.4" data-group="11.4 GRPO">
+<p class="slide-sub">自测</p><h2 class="slide-title">检测 · GRPO</h2><div class="quiz-item" data-quiz="q94" data-answer="1">
+  <h4>组奖励均值 0.5，某样本 r=0.8，相对奖励是？</h4>
+<button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">0.8</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">0.3</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">1.3</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">−0.5</button>
+  <div class="quiz-explain">相对奖励 = r − r̄ = 0.8 − 0.5 = 0.3。</div>
+</div>
+<div class="quiz-item" data-quiz="q94" data-answer="1">
+  <h4>下列哪项更适合 LLM 场景？</h4>
+<button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">坚持四模型 PPO 且不设 KL</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">GRPO + 适度 kl_coef</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">只用 Value Model 不要 Policy</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">温度恒为 0 且 generations=1</button>
+  <div class="quiz-explain">GRPO 更简更稳；generations=1 时相对奖励失去意义。</div>
+</div>
+<div class="quiz-score" id="score-q94"></div>
+</section>
+
+<section class="slide" data-id="metrics" data-label="评估指标体系" data-group="11.5 评估">
+
+<p class="slide-sub">11.5.1 · 表 11.7</p>
+<h2 class="slide-title">准确性 · 效率 · 质量</h2>
+<table class="kv">
+  <tr><th>指标</th><th>含义</th></tr>
+  <tr><td>Accuracy</td><td>正确数 / 总数</td></tr>
+  <tr><td>Accuracy@K</td><td>K 次采样至少一对的题占比</td></tr>
+  <tr><td>Numerical Error</td><td>平均 |y−ŷ|</td></tr>
+  <tr><td>Avg Length / Steps</td><td>成本与可解释性</td></tr>
+  <tr><td>Format Correctness</td><td>含 Step / Final Answer 等</td></tr>
+  <tr><td>Inference Time</td><td>延迟</td></tr>
+</table>
+<div class="code-block">rl.run({
+  "action": "evaluate", "model_path": "./models/grpo_full",
+  "max_samples": 200, "use_lora": True,
+  "metrics": ["accuracy","accuracy_at_k","average_length",
+              "average_steps","format_correctness"],
+  "k": 3, "return_details": True
+})</div>
+
+</section>
+
+<section class="slide" data-id="errors" data-label="错误分析与改进闭环" data-group="11.5 评估">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-8.png" alt="图 11.8 模型改进迭代流程" loading="lazy" />
+  <div class="fig-cap">图 11.8 模型改进迭代流程</div>
+  <div class="fig-fallback">评估 → 分析 → 定改进 → 再训</div>
+</div>
+
+<p class="slide-sub">11.5.3–11.5.4</p>
+<h2 class="slide-title">四类错误与分层准确率</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>错误类型</h3><ul><li>计算错误</li><li>推理错误</li><li>理解错误</li><li>格式错误</li></ul></div>
+  <div class="compare-col b"><h3>难度分层</h3><ul><li>1–2 步</li><li>3–4 步</li><li>5+ 步</li></ul></div>
+  <div class="compare-col c"><h3>对策提示</h3><ul><li>格式差 → 补 SFT</li><li>计算差 → 工具/数值</li><li>难题崩 → 别误判已会推理</li></ul></div>
+</div>
+<p class="note">对比 Base / SFT / GRPO 三模型；用 return_details 做案例级复盘。</p>
+
+</section>
+
+<section class="slide" data-id="pipeline" data-label="端到端 Pipeline" data-group="11.6 实战工程">
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/11-figures/11-9.png" alt="图 11.9 端到端训练流程" loading="lazy" />
+  <div class="fig-cap">图 11.9 端到端训练流程</div>
+  <div class="fig-fallback">数据准备 → SFT → SFT评估 → GRPO → GRPO评估 → 部署</div>
+</div>
+
+<p class="slide-sub">11.6.1 · AgenticRLPipeline</p>
+<h2 class="slide-title">六阶段一键串联</h2>
+<div class="loop-stepper" id="pipeFlow">
+  <div class="steps steps6">
+    <button class="step-btn" type="button">① 数据</button>
+    <button class="step-btn" type="button">② SFT</button>
+    <button class="step-btn" type="button">③ SFT评估</button>
+    <button class="step-btn" type="button">④ GRPO</button>
+    <button class="step-btn" type="button">⑤ GRPO评估</button>
+    <button class="step-btn" type="button">⑥ 落盘</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="callout" data-label="门槛">配置可设 sft_accuracy_threshold（如 0.40）；未达标勿强上 GRPO。</div>
+
+</section>
+
+<section class="slide" data-id="eng" data-label="超参 · 分布式 · 部署" data-group="11.6 实战工程">
+
+<p class="slide-sub">11.6.2–11.6.4 · 表 11.8 / 11.9</p>
+<h2 class="slide-title">从调参到上线</h2>
+<details class="expand-card" open><summary>超参调优</summary>
+<div class="expand-body"><p>网格 / 随机 / 贝叶斯(Optuna)。关键维：learning_rate、lora_rank、kl_coef。先 100–1000 样本验证流程再全量。</p></div></details>
+<details class="expand-card"><summary>分布式</summary>
+<div class="expand-body"><p>2–8 卡 DDP；大模型 DeepSpeed ZeRO-2/3。<code>accelerate launch</code>。总 batch = per_device × gpus × accum；lr 可按 √(B_new/B_base) 缩放。</p></div></details>
+<details class="expand-card"><summary>部署三步</summary>
+<div class="expand-body"><ol>
+  <li>LoRA <code>merge_and_unload</code> → merged_model</li>
+  <li>可选 8-bit：<code>load_in_8bit</code> + device_map=auto</li>
+  <li>FastAPI：POST /generate → uvicorn api:app --port 8000</li>
+</ol></div></details>
+
+</section>
+
+<section class="slide" data-id="flash95" data-label="闪卡 · 11.5–6" data-group="11.5–6 评估工程">
+<p class="slide-sub">巩固</p><h2 class="slide-title">闪卡 · 评估与工程</h2><div class="flash-wrap" id="flash95" data-cards='[{"q": "Accuracy@K 测什么？", "a": "同一题采样 K 次，至少一次正确的比例——反映潜力与探索。"}, {"q": "Pipeline 六阶段顺序？", "a": "数据→SFT→SFT评估→GRPO→GRPO评估→保存结果/部署。"}, {"q": "分布式后最易忽略的一致性？", "a": "总 batch 与学习率缩放，否则训练动力学漂移。"}, {"q": "部署前为何 merge LoRA？", "a": "合并进基座权重，推理路径更简单、依赖更少。"}]'>
+<div class="flash-idx"></div>
+<div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+<div class="flash-nav">
+<button class="btn" type="button" onclick="moveFlash('flash95',-1)">← 上一张</button>
+<button class="btn" type="button" onclick="moveFlash('flash95',1)">下一张 →</button>
+</div></div>
+</section>
+
+<section class="slide" data-id="quiz95" data-label="检测 · 11.5–6" data-group="11.5–6 评估工程">
+<p class="slide-sub">自测</p><h2 class="slide-title">检测 · 评估与工程</h2><div class="quiz-item" data-quiz="q95" data-answer="1">
+  <h4>简单题很高、5+ 步题崩盘说明？</h4>
+<button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">已完全掌握推理</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">可能只会浅层模式，需分层看指标</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">应立刻关掉评估</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">只需加长惩罚</button>
+  <div class="quiz-explain">难度分层能避免「平均数好看」的幻觉。</div>
+</div>
+<div class="quiz-item" data-quiz="q95" data-answer="1">
+  <h4>SFT 准确率远低于阈值时？</h4>
+<button class="quiz-opt" type="button" data-i="0" onclick="answerQuiz(this)">直接上 GRPO</button>
+<button class="quiz-opt" type="button" data-i="1" onclick="answerQuiz(this)">先修数据/SFT 再 RL</button>
+<button class="quiz-opt" type="button" data-i="2" onclick="answerQuiz(this)">只加 Value Model</button>
+<button class="quiz-opt" type="button" data-i="3" onclick="answerQuiz(this)">把 kl_coef 设为 0</button>
+  <div class="quiz-explain">基线不足时 RL 信号差，先过门槛。</div>
+</div>
+<div class="quiz-score" id="score-q95"></div>
+</section>
+
+<section class="slide" data-id="summary" data-label="本章小结" data-group="11.8 总结自测">
+
+<p class="slide-sub">11.8</p>
+<h2 class="slide-title">三条主线记住就够</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>本质</h3><ul><li>多步序贯决策</li><li>状态含历史观察</li><li>文本+工具行动</li><li>累积回报</li></ul></div>
+  <div class="compare-col b"><h3>流程</h3><ul><li>预训练（现成）</li><li><strong>SFT 打底</strong></li><li><strong>GRPO 拔高</strong></li><li>评估闭环</li></ul></div>
+  <div class="compare-col c"><h3>进阶</h3><ul><li>TRL 源码</li><li>自定义数据/奖励</li><li>工具学习 / 多智能体</li><li>读论文跟进</li></ul></div>
+</div>
+<div class="note">SFT 与 RL <strong>缺一不可</strong>：只会模仿，或只会在无格式空间乱撞，都走不远。</div>
+
+</section>
+
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="11.8 总结自测">
+
+<p class="slide-sub">勾选过关</p>
+<h2 class="slide-title">本章小结自测</h2>
+<ul class="check-list">
+  <li><input type="checkbox" /> 能用白话区分 PBRFT 与 Agentic RL（状态/行动/奖励）</li>
+  <li><input type="checkbox" /> 能说出后训练三步与六大能力</li>
+  <li><input type="checkbox" /> 能画出四层架构并列出 RLTrainingTool 四个 action</li>
+  <li><input type="checkbox" /> 能对比 SFT / RL 数据字段，并解释为何 RL 不给过程</li>
+  <li><input type="checkbox" /> 能写出三种奖励公式及「仅正确时塑形」的原因</li>
+  <li><input type="checkbox" /> 能解释 LoRA 与「必须先 SFT」</li>
+  <li><input type="checkbox" /> 能对比 PPO/GRPO，并说出相对奖励计算</li>
+  <li><input type="checkbox" /> 能列出评估指标与 Pipeline 六阶段</li>
+  <li><input type="checkbox" /> 知道 merge LoRA → 量化 → FastAPI 部署路径</li>
+</ul>
+
+</section>
+
+<section class="slide" data-id="exercises" data-label="习题导读" data-group="11.8 总结自测">
+
+<p class="slide-sub">源文档「习题」· 开放题</p>
+<h2 class="slide-title">继续深入</h2>
+<ol>
+  <li><strong>MDP 映射</strong>：为何状态含历史观察？把「代码调试助手」映射到 S/A/R/P；设计延迟奖励任务。</li>
+  <li><strong>SFT vs GRPO</strong>：LoRA 原理与选型；GRPO 相对 PPO 的简化；扩展多轮数据与可视化。</li>
+  <li><strong>奖励设计</strong>：部分正确/过程分/冗长惩罚；为代码助手·客服·游戏 AI 设计奖励；防 reward hacking。</li>
+  <li><strong>GSM8K 深化</strong>：扩展到高等数学；泛化评估防死记；在线学习的质量/遗忘/安全。</li>
+  <li><strong>工具学习</strong>：何时选工具的奖励；分层 RL；多工具课程学习。</li>
+</ol>
+<div class="callout" data-label="完成">恭喜走完 Lab 11。用 ← → 复习薄弱页，或打开「第十一章 Agentic-RL-学习版.md」精读。</div>
+
+</section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+
+const slides = Array.from(document.querySelectorAll(".slide"));
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+["flash91","flash92","flash93","flash94","flash95"].forEach(initFlash);
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+function bindStepper(rootId, texts) {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  function show(n) {
+    root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+    const panel = root.querySelector(".loop-panel");
+    panel.innerHTML = `<h4>${texts[n].t}</h4><p>${texts[n].p}</p>`;
+  }
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.addEventListener("click", () => show(i)));
+  show(0);
+}
+
+bindStepper("grpoFlow", [
+  { t: "① 采样", p: "对每个问题，用当前策略生成 num_generations 个答案，构成一组，供相对比较。" },
+  { t: "② 奖励计算", p: "对每个答案算 r_i：accuracy / length_penalty / step / combined。" },
+  { t: "③ 相对奖励", p: "r̄ = 均值；相对奖励 r̂_i = r_i − r̄。降低方差，稳定训练。" },
+  { t: "④ 策略更新", p: "用相对奖励更新 Policy，同时加 KL 惩罚，防止偏离 Reference（SFT）太远。" },
+  { t: "⑤ 监控", p: "盯 average reward↑、KL∈[0.01,0.1]、accuracy↑；可用 wandb / TensorBoard。" }
+]);
+
+bindStepper("pipeFlow", [
+  { t: "① 数据准备", p: "load_dataset；check_data_quality：缺字段/空值/重复；可做改写增强但控噪声。" },
+  { t: "② SFT 训练", p: "algorithm=sft，LoRA 打底，学 Step/Final Answer 格式与基础推理。" },
+  { t: "③ SFT 评估", p: "看 accuracy 是否过阈值（如 0.40）；不过关则回头修数据/超参。" },
+  { t: "④ GRPO 训练", p: "从 SFT 路径加载；组内采样 + 相对奖励 + KL；可用 combined 奖励。" },
+  { t: "⑤ GRPO 评估", p: "对比 Base/SFT/GRPO；错误分类与难度分层；return_details 复盘。" },
+  { t: "⑥ 保存与部署", p: "training_results.json；merge LoRA；可选量化；FastAPI 上线。" }
+]);
+
+document.querySelectorAll(".fig img").forEach((img) => {
+  img.addEventListener("error", () => {
+    const fig = img.closest(".fig");
+    if (fig) fig.classList.add("offline");
+  });
+});
+
+goTo(0);
+
+</script>
+</body>
+</html>

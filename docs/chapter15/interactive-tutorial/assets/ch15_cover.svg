@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <rect width="960" height="420" fill="#0a1520"/>
+  <defs>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="rgba(224,122,74,0.16)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e07a4a" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#3da8b8" stop-opacity="0.18"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="420" fill="url(#g)"/>
+  <ellipse cx="700" cy="60" rx="320" ry="160" fill="url(#glow)"/>
+
+  <g font-family="Oxanium, sans-serif">
+    <rect x="56" y="56" width="200" height="120" fill="#0f1e2c" stroke="#e07a4a" stroke-width="1.5"/>
+    <text x="72" y="88" fill="#f4a574" font-size="14" letter-spacing="2">GODOT</text>
+    <text x="72" y="112" fill="#9aafb8" font-size="12">2D Pixel Office</text>
+    <text x="72" y="140" fill="#6d8490" font-size="11">Player / NPC / UI</text>
+
+    <rect x="280" y="56" width="200" height="120" fill="#0f1e2c" stroke="#e8a84a" stroke-width="1.5"/>
+    <text x="296" y="88" fill="#e8a84a" font-size="14" letter-spacing="2">FASTAPI</text>
+    <text x="296" y="112" fill="#9aafb8" font-size="12">Routes / State</text>
+    <text x="296" y="140" fill="#6d8490" font-size="11">/dialogue / logs</text>
+
+    <rect x="504" y="56" width="200" height="120" fill="#0f1e2c" stroke="#3da8b8" stroke-width="1.5"/>
+    <text x="520" y="88" fill="#5ed4e0" font-size="14" letter-spacing="2">AGENTS</text>
+    <text x="520" y="112" fill="#9aafb8" font-size="12">SimpleAgent x3</text>
+    <text x="520" y="140" fill="#6d8490" font-size="11">Memory / Affinity</text>
+  </g>
+
+  <g font-family="Oxanium, sans-serif">
+    <circle cx="120" cy="260" r="22" fill="#152636" stroke="#e07a4a" stroke-width="2"/>
+    <text x="112" y="266" fill="#f4a574" font-size="12">Z</text>
+    <circle cx="200" cy="260" r="22" fill="#152636" stroke="#e8a84a" stroke-width="2"/>
+    <text x="192" y="266" fill="#e8a84a" font-size="12">L</text>
+    <circle cx="280" cy="260" r="22" fill="#152636" stroke="#6bc89a" stroke-width="2"/>
+    <text x="270" y="266" fill="#6bc89a" font-size="12">W</text>
+    <text x="56" y="310" fill="#9aafb8" font-size="12" letter-spacing="1">NPC · Engineer / PM / Designer</text>
+  </g>
+
+  <g font-family="Oxanium, sans-serif">
+    <text x="400" y="240" fill="#f4a574" font-size="12" letter-spacing="2">AFFINITY 0-100</text>
+    <rect x="400" y="254" width="280" height="18" fill="#152636" stroke="rgba(224,122,74,0.35)"/>
+    <rect x="400" y="254" width="56" height="18" fill="rgba(157,170,184,0.45)"/>
+    <rect x="456" y="254" width="56" height="18" fill="rgba(61,168,184,0.4)"/>
+    <rect x="512" y="254" width="56" height="18" fill="rgba(107,200,154,0.45)"/>
+    <rect x="568" y="254" width="56" height="18" fill="rgba(232,168,74,0.5)"/>
+    <rect x="624" y="254" width="56" height="18" fill="rgba(224,122,74,0.65)"/>
+  </g>
+
+  <g font-family="Oxanium, sans-serif">
+    <circle cx="820" cy="280" r="78" fill="#152636" stroke="#e07a4a" stroke-width="2"/>
+    <text x="784" y="270" fill="#f4a574" font-size="13" letter-spacing="2">LAB 15</text>
+    <text x="768" y="296" fill="#e6ede9" font-size="15" letter-spacing="1">CYBER</text>
+    <text x="772" y="318" fill="#9aafb8" font-size="12">TOWN</text>
+  </g>
+
+  <text x="56" y="380" fill="#6d8490" font-family="Oxanium, sans-serif" font-size="12" letter-spacing="2">HELLO-AGENTS  ·  INDUSTRIAL BLUEPRINT LAB</text>
+</svg>

@@ -1,0 +1,2745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第一章 · 初识智能体 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory
+   Deep navy drafting board + cyan construction grid + amber signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(61, 168, 184, 0.22);
+  --line-strong: rgba(61, 168, 184, 0.45);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.18);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+
+/* Blueprint grid atmosphere */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 30% 20%, black 20%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 85% 10%, rgba(61, 168, 184, 0.12), transparent),
+    radial-gradient(ellipse 40% 50% at 10% 90%, rgba(232, 168, 74, 0.08), transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.brand {
+  padding: 1.25rem 1.1rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand-kicker {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 0.35rem;
+}
+
+.brand h1 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.progress-wrap {
+  padding: 0.85rem 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.04em;
+}
+
+.progress-bar {
+  height: 3px;
+  background: var(--panel-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--cyan), var(--amber));
+  transition: width 0.35s ease;
+}
+
+.nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cyan) transparent;
+}
+
+.nav-group {
+  margin-bottom: 0.75rem;
+}
+
+.nav-group-title {
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  padding: 0.4rem 0.6rem;
+}
+
+.nav button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1.35;
+}
+
+.nav button:hover {
+  color: var(--text);
+  background: rgba(61, 168, 184, 0.08);
+  border-color: var(--line);
+}
+
+.nav button.active {
+  color: var(--ink);
+  background: var(--cyan);
+  border-color: var(--cyan-bright);
+  font-weight: 600;
+}
+
+.nav button .num {
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  opacity: 0.7;
+  margin-right: 0.35rem;
+}
+
+.sidebar-foot {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  color: var(--text-mute);
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Main stage ---------- */
+.stage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85);
+  backdrop-filter: blur(6px);
+}
+
+.menu-btn {
+  display: none;
+  font-family: var(--font-display);
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  color: var(--cyan);
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+.slide-label {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  flex: 1;
+}
+
+.nav-controls {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btn {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: var(--radius);
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--cyan);
+  color: var(--cyan-bright);
+  background: rgba(61, 168, 184, 0.12);
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--amber);
+  color: var(--ink);
+  border-color: var(--amber);
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #f0bc66;
+  color: var(--ink);
+  border-color: #f0bc66;
+}
+
+.slides-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cyan) transparent;
+}
+
+.slide {
+  display: none;
+  max-width: 920px;
+  margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+
+.slide.active { display: block; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 0.35rem;
+  color: var(--text);
+}
+
+.slide-sub {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 1.25rem;
+}
+
+.lead {
+  font-size: 1.08rem;
+  color: var(--paper);
+  margin-bottom: 1.1rem;
+}
+
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+
+strong, b { color: var(--text); font-weight: 700; }
+
+.term {
+  color: var(--cyan-bright);
+  border-bottom: 1px dashed rgba(94, 212, 224, 0.4);
+  cursor: help;
+}
+
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+
+.note {
+  border-left: 3px solid var(--amber);
+  background: var(--amber-dim);
+  padding: 0.85rem 1rem;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+}
+
+.note strong { color: var(--amber); }
+
+.callout {
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 1rem 1.15rem;
+  margin: 1.1rem 0;
+  position: relative;
+}
+
+.callout::before {
+  content: attr(data-label);
+  position: absolute;
+  top: -0.55rem;
+  left: 0.9rem;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--cyan);
+  padding: 0 0.4rem;
+}
+
+.analogy {
+  font-style: italic;
+  color: var(--paper);
+  border: 1px dashed var(--line-strong);
+  padding: 0.85rem 1rem;
+  margin: 1rem 0;
+  background: rgba(61, 168, 184, 0.05);
+}
+
+.analogy::before {
+  content: "类比 · ";
+  font-style: normal;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  text-transform: uppercase;
+}
+
+.fig {
+  margin: 1.25rem 0;
+  text-align: center;
+}
+
+.fig img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+}
+
+.fig-cap {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  color: var(--text-mute);
+  margin-top: 0.5rem;
+  letter-spacing: 0.04em;
+}
+
+.code-block {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  background: #071018;
+  border: 1px solid var(--line-strong);
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  color: #b8d4c8;
+  line-height: 1.55;
+  white-space: pre;
+}
+
+/* ---------- Concept cards (flip) ---------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem;
+  margin: 1.2rem 0;
+}
+
+.flip-card {
+  perspective: 1000px;
+  height: 168px;
+  cursor: pointer;
+}
+
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.flip-face.back {
+  transform: rotateY(180deg);
+  background: var(--panel-2);
+  border-color: var(--cyan);
+}
+
+.flip-face h3 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--cyan-bright);
+  margin-bottom: 0.35rem;
+}
+
+.flip-face .en {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-mute);
+  margin-bottom: 0.5rem;
+}
+
+.flip-face p {
+  font-size: 0.82rem;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.flip-hint {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--text-mute);
+  margin-top: 0.6rem;
+  text-transform: uppercase;
+}
+
+/* Expandable concept cards */
+.expand-card {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+
+.expand-card summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  color: var(--text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expand-card summary::-webkit-details-marker { display: none; }
+
+.expand-card summary::after {
+  content: "+";
+  font-family: var(--font-display);
+  color: var(--cyan);
+  font-size: 1.1rem;
+}
+
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--cyan); }
+
+.expand-body {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.85rem;
+}
+
+/* ---------- Comparison ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 1.2rem 0;
+}
+
+.compare-col {
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 1rem;
+}
+
+.compare-col h3 {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--amber); }
+
+.compare-col li { font-size: 0.88rem; }
+
+.compare-vs {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--amber);
+  margin: -0.2rem 0;
+}
+
+/* ---------- Timeline ---------- */
+.timeline {
+  position: relative;
+  margin: 1.25rem 0;
+  padding-left: 1.4rem;
+  border-left: 2px solid var(--line-strong);
+}
+
+.tl-item {
+  position: relative;
+  margin-bottom: 1.15rem;
+  padding-left: 0.5rem;
+}
+
+.tl-item::before {
+  content: "";
+  position: absolute;
+  left: -1.55rem;
+  top: 0.45rem;
+  width: 10px;
+  height: 10px;
+  background: var(--cyan);
+  border: 2px solid var(--ink);
+  box-shadow: 0 0 0 2px var(--cyan);
+}
+
+.tl-item h4 {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  color: var(--cyan-bright);
+  margin-bottom: 0.25rem;
+}
+
+.tl-item .tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--amber);
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+/* ---------- Agent loop viz ---------- */
+.loop-viz {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.4rem 0;
+  padding: 1.25rem;
+  border: 1px solid var(--line-strong);
+  background: rgba(15, 30, 44, 0.8);
+}
+
+.loop-node {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--cyan);
+  background: var(--panel-2);
+  color: var(--cyan-bright);
+  min-width: 110px;
+  text-align: center;
+  position: relative;
+  animation: pulseNode 2.8s ease-in-out infinite;
+}
+
+.loop-node:nth-child(1) { animation-delay: 0s; }
+.loop-node:nth-child(3) { animation-delay: 0.7s; }
+.loop-node:nth-child(5) { animation-delay: 1.4s; }
+.loop-node:nth-child(7) { animation-delay: 2.1s; }
+
+@keyframes pulseNode {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(61, 168, 184, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(61, 168, 184, 0.15); background: rgba(61, 168, 184, 0.15); }
+}
+
+.loop-arrow {
+  font-family: var(--font-display);
+  color: var(--amber);
+  font-size: 1.2rem;
+}
+
+.loop-desc {
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  color: var(--amber);
+  letter-spacing: 0.08em;
+  margin-top: 0.5rem;
+}
+
+/* Interactive loop stepper */
+.loop-stepper {
+  margin: 1rem 0;
+}
+
+.loop-stepper .steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.loop-stepper .step-btn {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  padding: 0.55rem 0.4rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.loop-stepper .step-btn.on {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: var(--amber-dim);
+}
+
+.loop-panel {
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 1rem 1.15rem;
+  min-height: 110px;
+}
+
+.loop-panel h4 {
+  font-family: var(--font-display);
+  color: var(--cyan-bright);
+  margin-bottom: 0.4rem;
+  font-size: 0.95rem;
+}
+
+/* ---------- Flashcards ---------- */
+.flash-wrap {
+  margin: 1rem 0;
+}
+
+.flash-card {
+  min-height: 200px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  transition: border-color 0.25s;
+  user-select: none;
+}
+
+.flash-card:hover { border-color: var(--cyan); }
+
+.flash-card .q {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--text);
+}
+
+.flash-card .a {
+  display: none;
+  font-size: 0.98rem;
+  color: var(--paper);
+  line-height: 1.55;
+}
+
+.flash-card.revealed .q { display: none; }
+.flash-card.revealed .a { display: block; }
+.flash-card.revealed { border-color: var(--amber); background: var(--amber-dim); }
+
+.flash-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  color: var(--text-mute);
+}
+
+.flash-controls { display: flex; gap: 0.4rem; }
+
+/* ---------- Quiz ---------- */
+.quiz-item {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.85rem;
+}
+
+.quiz-item h4 {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.quiz-opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.35rem;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quiz-opt:hover:not(:disabled) {
+  border-color: var(--cyan);
+  color: var(--text);
+}
+
+.quiz-opt.correct {
+  border-color: var(--mint);
+  background: rgba(107, 200, 154, 0.15);
+  color: var(--mint);
+}
+
+.quiz-opt.wrong {
+  border-color: var(--coral);
+  background: rgba(224, 107, 90, 0.12);
+  color: var(--coral);
+}
+
+.quiz-opt:disabled { cursor: default; }
+
+.quiz-explain {
+  display: none;
+  margin-top: 0.65rem;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.88rem;
+  border-left: 3px solid var(--cyan);
+  background: rgba(61, 168, 184, 0.08);
+  color: var(--paper);
+}
+
+.quiz-explain.show { display: block; }
+
+.quiz-score {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--amber);
+  margin: 0.5rem 0 1rem;
+}
+
+/* ---------- Checklist ---------- */
+.check-list {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+}
+
+.check-list li {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  margin-bottom: 0.4rem;
+  background: var(--panel);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.check-list li:hover { border-color: var(--line-strong); }
+
+.check-list li.done {
+  border-color: var(--mint);
+  background: rgba(107, 200, 154, 0.08);
+}
+
+.check-list li.done .ck-text { color: var(--mint); text-decoration: line-through; opacity: 0.85; }
+
+.ck-box {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--cyan);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: transparent;
+}
+
+.check-list li.done .ck-box {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: var(--ink);
+}
+
+.ck-text { font-size: 0.9rem; color: var(--text-dim); }
+
+/* ---------- Cover ---------- */
+.cover {
+  text-align: left;
+  padding: 1rem 0 2rem;
+}
+
+.cover-badge {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  border: 1px solid var(--line-strong);
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  margin-bottom: 1.25rem;
+}
+
+.cover h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+  max-width: 14ch;
+}
+
+.cover .tagline {
+  font-size: 1.1rem;
+  color: var(--paper);
+  max-width: 36em;
+  margin-bottom: 1.5rem;
+}
+
+.goals {
+  display: grid;
+  gap: 0.55rem;
+  margin: 1.25rem 0 1.75rem;
+}
+
+.goal {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.goal-n {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--amber);
+  line-height: 1;
+}
+
+.goal p { margin: 0; font-size: 0.92rem; }
+
+.cover-img {
+  margin-top: 1.5rem;
+  border: 1px solid var(--line-strong);
+  max-width: 100%;
+}
+
+/* ---------- Layers diagram ---------- */
+.layers {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+
+.layer {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.layer-n {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+  text-transform: uppercase;
+}
+
+.layer strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  margin-bottom: 0.15rem;
+}
+
+.layer span { font-size: 0.82rem; color: var(--text-dim); }
+
+/* ---------- PEAS grid ---------- */
+.peas {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+
+.peas-item {
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding: 0.9rem;
+}
+
+.peas-item .letter {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--amber);
+  line-height: 1;
+}
+
+.peas-item h4 {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--cyan-bright);
+  margin: 0.25rem 0 0.4rem;
+}
+
+.peas-item p { font-size: 0.82rem; margin: 0; }
+
+/* ---------- Case rounds ---------- */
+.round {
+  border: 1px solid var(--line);
+  margin-bottom: 0.65rem;
+  background: var(--panel);
+}
+
+.round summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  color: var(--cyan-bright);
+}
+
+.round summary::-webkit-details-marker { display: none; }
+.round[open] { border-color: var(--amber); }
+.round .body { padding: 0 1rem 1rem; font-size: 0.88rem; }
+
+.kbd-hint {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  color: var(--text-mute);
+  letter-spacing: 0.04em;
+}
+
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  border: 1px solid var(--line-strong);
+  padding: 0.1rem 0.35rem;
+  color: var(--cyan);
+  background: var(--panel);
+}
+
+/* Mobile */
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(86vw, 300px);
+    z-index: 40;
+    transform: translateX(-105%);
+    transition: transform 0.3s ease;
+    box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare { grid-template-columns: 1fr; }
+  .peas { grid-template-columns: 1fr; }
+  .loop-stepper .steps { grid-template-columns: repeat(2, 1fr); }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 35;
+  }
+  .overlay.show { display: block; }
+}
+
+@media (max-width: 520px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+  .layer { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<!--
+  COVERAGE CHECKLIST (对照原书 docs/chapter1/第一章 初识智能体.md)
+  [x] 章首导读 + 三问 + 图1.1 + 常见误解
+  [x] 1.1 定义、四要素分讲、概念卡、自测
+  [x] 1.1.1 反射/模型/目标/效用/学习+RL + 图1.2 + 闪卡自测
+  [x] 1.1.2 LLM 新范式 + 表1.1 + 旅行助手规划/工具/动态修正
+  [x] 1.1.3 三维分类：架构 / 反应规划混合 / 符号亚符号神经符号+双系统
+  [x] 1.2.1 PEAS + 表1.2 + 部分可观察/随机/多智能体/序贯动态
+  [x] 1.2.2 Agent Loop 分步 + 图1.5 + 交互演示
+  [x] 1.2.3 Thought-Action-Observation + Parser
+  [x] 1.3.1–1.3.4 依赖/Prompt/工具/客户端/主循环护栏/三轮案例/四能力
+  [x] 1.4.1–1.4.3 开发者工具产品 / 自主协作架构 / Workflow vs Agent / 方案C
+  [x] 小结 + 局限 + 清单 + 习题1–6要点 + 参考文献
+-->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 01</div>
+      <h1>初识智能体<br/>互动教程</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>学习进度</span>
+        <span id="progressText">1 / 95</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">蓝图实验室 · 键盘 ← → 翻页 · 共 95 页</div>
+  </aside>
+
+  <main class="stage">
+    <div class="topbar">
+      <button class="menu-btn" type="button" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="kbd-hint"><span class="kbd">←</span> <span class="kbd">→</span></div>
+      <div class="nav-controls">
+        <button class="btn" id="btnPrev" type="button">上一页</button>
+        <button class="btn btn-primary" id="btnNext" type="button">下一页</button>
+      </div>
+    </div>
+
+    <div class="slides-viewport" id="viewport">
+      <section class="slide active" data-id="cover" data-label="封面 · 学习目标" data-group="开篇">
+
+<div class="cover">
+  <div class="cover-badge">Chapter 01 · Blueprint Lab</div>
+  <h2>初识智能体</h2>
+  <p class="tagline">很多人第一次听到「智能体」，会以为它只是「更聪明的聊天机器人」。这个理解只摸到了表面——智能体更像：你交给它一个目标，它会想办法一步步把事情推进下去。</p>
+  <img class="cover-img" src="assets/ch1_cover.png" alt="封面" onerror="this.style.display='none'"/>
+  <h3 class="slide-sub" style="margin-top:1.5rem">本章学习目标</h3>
+  <div class="goals">
+    <div class="goal"><div class="goal-n">01</div><p>分清智能体与普通程序、普通聊天模型的差别</p></div>
+    <div class="goal"><div class="goal-n">02</div><p>弄懂感知→思考→行动循环如何运转</p></div>
+    <div class="goal"><div class="goal-n">03</div><p>理解为何今天谈 Agent，而不只谈大模型</p></div>
+    <div class="goal"><div class="goal-n">04</div><p>看懂最小旅行助手的 Thought-Action-Observation</p></div>
+    <div class="goal"><div class="goal-n">05</div><p>判断何时用 Workflow、何时用 Agent、如何混合</p></div>
+  </div>
+  <div class="note"><strong>怎么学：</strong>目录跳转 · ←→ 翻页 · 翻转卡/闪卡/选择题请动手点。本教程按原书小节展开，知识点不删节，讲解比提纲更深。</div>
+</div>
+      </section>
+      <section class="slide" data-id="roadmap" data-label="本章路线图" data-group="开篇">
+
+<div class="slide-sub">导读 · 地图</div>
+<h2 class="slide-title">这一章你要走完哪些站？</h2>
+<p class="lead">先搭地图，再堆积木。后面 ReAct、工具调用、记忆、RAG、多智能体，都站在这一章地基上。</p>
+<div class="layers">
+  <div class="layer"><div class="layer-n">1.1</div><div><strong>什么是智能体</strong><span>定义 · 传统五阶 · LLM 新范式 · 三维分类</span></div></div>
+  <div class="layer"><div class="layer-n">1.2</div><div><strong>构成与运行</strong><span>PEAS · Agent Loop · TAO 协议</span></div></div>
+  <div class="layer"><div class="layer-n">1.3</div><div><strong>动手体验</strong><span>提示词 · 工具 · LLM · 主循环 · 三轮案例</span></div></div>
+  <div class="layer"><div class="layer-n">1.4</div><div><strong>协作模式</strong><span>开发者工具 · 自主协作者 · Workflow vs Agent</span></div></div>
+  <div class="layer"><div class="layer-n">收尾</div><div><strong>小结 · 习题 · 局限</strong><span>自测与批判性思考</span></div></div>
+</div>
+<div class="callout" data-label="带着三个问题读">
+<ol>
+<li>智能体和普通程序、普通聊天模型到底差在哪？</li>
+<li>一个智能体是靠什么机制运转起来的？</li>
+<li>为什么今天大家都在谈 Agent，而不是只谈大模型？</li>
+</ol></div>
+      </section>
+      <section class="slide" data-id="chat-vs-agent" data-label="聊天 vs 智能体" data-group="开篇">
+
+<div class="slide-sub">导读 · 直觉</div>
+<h2 class="slide-title">聊天机器人 vs 智能体</h2>
+<p>聊天更像「你问一句，我答一句」；智能体更像「你给目标，它会看、会想、会做，还会根据结果继续调整」。</p>
+<div class="compare">
+  <div class="compare-col a"><h3>单轮问答 / 聊天</h3>
+    <ul><li>输入一段话，输出一段话</li><li>通常不主动调外部工具</li>
+    <li>缺少「做完再看结果」的多轮闭环</li><li>强项是理解与生成语言</li></ul></div>
+  <div class="compare-col b"><h3>智能体 / Agent</h3>
+    <ul><li>围绕目标持续推进</li><li>感知环境、调用工具、改变状态</li>
+    <li>行动后接收观察，再决策下一步</li><li>模型是大脑，系统才是身体</li></ul></div>
+</div>
+<div class="analogy">大模型像大脑：只会说话不够；接上眼睛（传感器）、手（执行器）和反馈回路，才开始「会做事」。</div>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/1-figures/1757242319667-0.png" alt="图 1.1 智能体与环境的基本交互循环" onerror="this.src='assets/ch1_agent_loop.png'"/><div class="fig-cap">图 1.1 智能体与环境的基本交互循环</div></div>
+      </section>
+      <section class="slide" data-id="misconceptions" data-label="新手五个误解" data-group="开篇">
+
+<div class="slide-sub">导读 · 避坑</div>
+<h2 class="slide-title">开始前先丢掉五个误解</h2>
+<details class="expand-card" open><summary>误解 1：有了大模型就等于有了智能体</summary>
+<div class="expand-body"><p>大模型提供推理与语言能力；智能体还要工具、状态、循环、终止条件与护栏。缺了这些，仍只是「会说话」。</p></div></details>
+<details class="expand-card"><summary>误解 2：智能体 = 自动化脚本</summary>
+<div class="expand-body"><p>脚本通常把路径写死；智能体在边界内自主决定下一步。真实系统常混合二者，概念上不能画等号。</p></div></details>
+<details class="expand-card"><summary>误解 3：自主性越高越好</summary>
+<div class="expand-body"><p>自主↑ → 能力↑，同时风险、成本、不可复现性也↑。成熟设计追求「刚刚好的自主性」。</p></div></details>
+<details class="expand-card"><summary>误解 4：智能体是 LLM 时代才有的新词</summary>
+<div class="expand-body"><p>传统 AI 已研究智能体数十年。现代 LLM Agent 是老思想在新技术上的重组。</p></div></details>
+<details class="expand-card"><summary>误解 5：提示词写好就能稳定上线</summary>
+<div class="expand-body"><p>提示词很重要，但解析器、重试、最大轮次、工具错误处理同样关键——工程护栏决定可用性。</p></div></details>
+      </section>
+      <section class="slide" data-id="def-plain" data-label="1.1 白话定义" data-group="1.1 什么是智能体">
+
+<div class="slide-sub">§ 1.1</div>
+<h2 class="slide-title">什么是智能体？先记一句</h2>
+<div class="callout" data-label="核心句"><p style="margin:0;color:var(--paper)"><strong>智能体不是一个只会回答问题的模型，而是一个会围绕目标持续行动的系统。</strong></p></div>
+<p>为什么强调「系统」而不是「模型」？因为<strong>模型只是大脑</strong>。智能体还需要眼睛、耳朵、手脚，甚至短期记忆、任务进度、规则边界和反馈机制。</p>
+<p>如果只能生成看起来聪明的话，但不能感知环境、不能调用工具、不能根据结果继续推进——更像「会说话」，还谈不上「会做事」。</p>
+<div class="fig"><img src="assets/ch1_what_is_agent.png" alt="智能体四要素示意" onerror="this.style.display='none'"/><div class="fig-cap">智能体四要素示意</div></div>
+<div class="note"><strong>正式定义（原书）：</strong>智能体是任何能够通过<strong>传感器（Sensors）</strong>感知其所处<strong>环境（Environment）</strong>，并<strong>自主</strong>地通过<strong>执行器（Actuators）</strong>采取<strong>行动（Action）</strong>以达成特定目标的实体。</div>
+      </section>
+      <section class="slide" data-id="env-deep" data-label="环境详解" data-group="1.1 什么是智能体">
+
+<div class="slide-sub">§ 1.1 · 环境</div>
+<h2 class="slide-title">环境：它到底活在什么世界里？</h2>
+<p class="lead">环境是智能体所处的外部世界。定义不清，后面所有设计都会漂。</p>
+<details class="expand-card" open><summary>物理环境例子</summary>
+<div class="expand-body"><ul>
+<li><strong>自动驾驶：</strong>动态道路、行人、天气、交通信号、其他车辆</li>
+<li><strong>仓储机器人：</strong>货架布局、障碍物、电量、任务单</li>
+</ul></div></details>
+<details class="expand-card"><summary>数字环境例子</summary>
+<div class="expand-body"><ul>
+<li><strong>交易算法：</strong>价格、订单簿、新闻、监管规则</li>
+<li><strong>代码助手：</strong>代码库、终端、测试日志、你的需求</li>
+<li><strong>旅行助手：</strong>天气 API、机票/酒店库存、点评站点、用户对话</li>
+</ul></div></details>
+<div class="note"><strong>设计前三问：</strong>① 世界边界画在哪？② 什么会变、谁在变？③ 智能体看不到的部分有哪些？</div>
+<div class="analogy">环境不是「背景板」，而是对手+舞台+规则的总和。</div>
+      </section>
+      <section class="slide" data-id="sensors-deep" data-label="传感器详解" data-group="1.1 什么是智能体">
+
+<div class="slide-sub">§ 1.1 · 传感器</div>
+<h2 class="slide-title">传感器：它怎么「看见」世界？</h2>
+<p>传感器是获取信息的通道。摄像头、麦克风、雷达是物理延伸；对软件智能体，API 返回的数据流同样是感知能力的延伸。</p>
+<ul>
+<li><strong>用户输入：</strong>自然语言指令、按钮点击、上传文件</li>
+<li><strong>API / HTTP：</strong>天气、搜索、数据库查询结果</li>
+<li><strong>系统反馈：</strong>命令退出码、日志、页面 DOM</li>
+<li><strong>Observation：</strong>上一轮工具执行后包装成文本的结果</li>
+</ul>
+<div class="callout" data-label="关键工程事实">
+<p style="margin:0">传感器决定信息上限。多数数字环境是<strong>部分可观察</strong>的——查航班不可能一次看到全网所有座位。智能体必须在信息不完整时仍能决策，并靠记忆与探索补洞。</p>
+</div>
+      </section>
+      <section class="slide" data-id="actuators-deep" data-label="执行器详解" data-group="1.1 什么是智能体">
+
+<div class="slide-sub">§ 1.1 · 执行器</div>
+<h2 class="slide-title">执行器：它怎么改变世界？</h2>
+<p>获取信息后，智能体通过执行器对环境施加影响，改变环境状态。</p>
+<div class="compare">
+  <div class="compare-col a"><h3>物理执行器</h3>
+    <ul><li>机械臂、夹爪</li><li>方向盘、油门、刹车</li><li>轮子、电机、喷头</li></ul></div>
+  <div class="compare-col b"><h3>虚拟执行器</h3>
+    <ul><li>执行一段代码</li><li>调用一个服务 / API</li>
+    <li>写文件、发消息、改数据库</li><li>触发预订、下单、创建工单</li></ul></div>
+</div>
+<div class="note"><strong>工具调用 = 软件智能体的执行器。</strong>没有执行器，再强的推理也只是「空想」；有了执行器但没有反馈，则无法形成闭环。</div>
+<div class="analogy">大脑想「开门」不够，还得有手去拧把手——Action 就是那只手。</div>
+      </section>
+      <section class="slide" data-id="autonomy-deep" data-label="自主性详解" data-group="1.1 什么是智能体">
+
+<div class="slide-sub">§ 1.1 · 自主性</div>
+<h2 class="slide-title">自主性：真正赋予「智能」的关键</h2>
+<p>智能体并非只是被动响应外部刺激或严格执行预设指令。它能够基于感知和内部状态进行<strong>独立决策</strong>，以达成设计目标。这种从感知到行动的闭环，构成所有智能体行为的基础。</p>
+<div class="layers">
+  <div class="layer"><div class="layer-n">低</div><div><strong>工具型</strong><span>人点一步，它走一步；主导权在人</span></div></div>
+  <div class="layer"><div class="layer-n">中</div><div><strong>半自主</strong><span>局部自己判断，关键节点等人确认</span></div></div>
+  <div class="layer"><div class="layer-n">高</div><div><strong>协作者型</strong><span>给人目标，它拆解、试探、修正直到交付</span></div></div>
+</div>
+<div class="note"><strong>脚本 vs 智能体：</strong>脚本通常把路线写死；智能体更像给目标后边走边判断。真实产品里二者常混合——后面 Workflow vs Agent 会展开。</div>
+      </section>
+      <section class="slide" data-id="four-cards" data-label="四要素概念卡" data-group="1.1 什么是智能体">
+
+<div class="slide-sub">§ 1.1 · 互动</div>
+<h2 class="slide-title">四要素概念卡</h2>
+<p>点击翻转。记法：<strong>看见了什么 · 能动什么 · 想去哪里 · 能不能自己决定怎么走</strong>。</p>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face front"><h3>环境</h3><div class="en">Environment</div><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>环境</h3><p>智能体面对的外部世界。自动驾驶面对道路；代码助手面对代码库与测试日志。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face front"><h3>传感器</h3><div class="en">Sensors</div><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>传感器</h3><p>获取信息的通道。软件智能体常用 API、网页、数据库、用户输入。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face front"><h3>执行器</h3><div class="en">Actuators</div><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>执行器</h3><p>影响世界的方式：调函数、改文件、发消息、执行命令。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face front"><h3>自主性</h3><div class="en">Autonomy</div><div class="flip-hint">点击翻转</div></div>
+    <div class="flip-face back"><h3>自主性</h3><p>能根据当前情况自己决定下一步查什么、做什么、改什么。</p></div>
+  </div></div>
+</div>
+      </section>
+      <section class="slide" data-id="def-quiz" data-label="自测 · 定义入门" data-group="1.1 什么是智能体">
+
+<div class="slide-sub">§ 1.1 · 自测</div>
+<h2 class="slide-title">用四要素快速判断</h2>
+<div class="quiz-score" id="score-defq"></div>
+<div class="quiz-item" data-quiz="defq" data-answer="2">
+  <h4>1. 计算器 App：输入表达式返回结果。</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">是完整智能体</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">是学习型智能体</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">更像工具/函数：缺面向目标的自主感知—行动闭环</button>
+  <div class="quiz-explain">按固定运算响应，没有围绕开放目标持续感知并自主行动的闭环。</div>
+</div>
+<div class="quiz-item" data-quiz="defq" data-answer="0">
+  <h4>2. 扫地机器人边扫边建图，低电量自动回充。</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">更接近智能体</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">只是普通吸尘器</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只有算力高才算</button>
+  <div class="quiz-explain">有传感器、执行器、环境，并围绕清扫/回充目标自主行动。</div>
+</div>
+<div class="quiz-item" data-quiz="defq" data-answer="1">
+  <h4>3. 哪句最接近智能体核心？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">参数很多、回答很流畅的大模型</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">能围绕目标感知、决策、行动并据反馈调整的系统</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">写死了所有分支的脚本</button>
+  <div class="quiz-explain">模型只是大脑；智能体强调闭环行动。</div>
+</div>
+      </section>
+      <section class="slide" data-id="trad-intro" data-label="1.1.1 传统视角总览" data-group="1.1.1 传统视角">
+
+<div class="slide-sub">§ 1.1.1</div>
+<h2 class="slide-title">传统视角下的智能体</h2>
+<p class="lead">智能体不是 LLM 火了之后才出现的。研究者已探索数十年——从简单反应走向复杂决策。</p>
+<div class="note"><strong>关键判断：</strong>现代 Agent 并不是凭空诞生，而是很多老思想在新技术条件下重新组合的结果。</div>
+<p>演进可压缩为一句：从「只会当场反应」→「会记忆、会规划、会权衡、会学习」。</p>
+<div class="timeline">
+  <div class="tl-item"><span class="tag">1 · Simple Reflex</span><h4>反射</h4><p>条件→动作，只看现在</p></div>
+  <div class="tl-item"><span class="tag">2 · Model-Based</span><h4>基于模型</h4><p>内部世界模型，有初级记忆</p></div>
+  <div class="tl-item"><span class="tag">3 · Goal-Based</span><h4>基于目标</h4><p>主动规划通向目标的行动</p></div>
+  <div class="tl-item"><span class="tag">4 · Utility-Based</span><h4>基于效用</h4><p>多目标权衡，最大化满意度</p></div>
+  <div class="tl-item"><span class="tag">5 · Learning</span><h4>学习型</h4><p>从经验改进策略（如 RL）</p></div>
+</div>
+      </section>
+      <section class="slide" data-id="trad-reflex" data-label="简单反射智能体" data-group="1.1.1 传统视角">
+
+<div class="slide-sub">§ 1.1.1 · 反射</div>
+<h2 class="slide-title">简单反射智能体（Simple Reflex Agent）</h2>
+<p>决策核心由工程师明确设计的「条件-动作」规则构成。经典例子：自动恒温器——若室温高于设定值，则启动制冷。</p>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/1-figures/1757242319667-1.png" alt="图 1.2 简单反射智能体的决策逻辑示意图"/><div class="fig-cap">图 1.2 简单反射智能体的决策逻辑示意图</div></div>
+<div class="callout" data-label="特点">
+<ul><li>完全依赖<strong>当前感知</strong></li><li>不具备记忆或预测能力</li>
+<li>像数字化的本能：可靠且高效</li><li>无法应对需要理解上下文的复杂任务</li></ul></div>
+<div class="analogy">像膝跳反射：敲一下就踢一下——快，但不「懂」全局。</div>
+<div class="note"><strong>引出下一问：</strong>如果环境当前状态不足以作为决策全部依据，智能体该怎么办？→ 引入「状态」与世界模型。</div>
+      </section>
+      <section class="slide" data-id="trad-model" data-label="基于模型的反射智能体" data-group="1.1.1 传统视角">
+
+<div class="slide-sub">§ 1.1.1 · 模型</div>
+<h2 class="slide-title">基于模型的反射智能体</h2>
+<p>这类智能体拥有内部的<strong>世界模型（World Model）</strong>，用于追踪和理解环境中那些无法被直接感知的方面。它试图回答：<strong>「世界现在是什么样子的？」</strong></p>
+<details class="expand-card" open><summary>例子：隧道中的自动驾驶</summary>
+<div class="expand-body"><p>即便摄像头暂时无法感知前方车辆，内部模型仍会维持对那辆车存在、速度和预估位置的判断。内部模型让智能体拥有初级「记忆」，决策基于更连贯、完整的世界状态理解，而不只是瞬时感知。</p></div></details>
+<ul>
+<li>多了：对不可见状态的估计与追踪</li>
+<li>仍偏反应式：规则可能仍是条件→动作，但条件来自内部状态</li>
+<li>局限：还不一定有明确长期目标与规划搜索</li>
+</ul>
+<div class="analogy">像你闭眼几秒仍知道身后有人——脑中有状态，不只靠眼前像素。</div>
+      </section>
+      <section class="slide" data-id="trad-goal" data-label="基于目标的智能体" data-group="1.1.1 传统视角">
+
+<div class="slide-sub">§ 1.1.1 · 目标</div>
+<h2 class="slide-title">基于目标的智能体（Goal-Based Agent）</h2>
+<p>行为不再只是被动反应，而是主动、有预见地选择能导向某个特定未来状态的行动。核心问题：<strong>「我应该做什么才能达成目标？」</strong></p>
+<details class="expand-card" open><summary>例子：GPS 导航</summary>
+<div class="expand-body"><p>目标是到达公司。智能体基于地图数据（世界模型），通过搜索算法（如 <strong>A*</strong>）规划（Planning）出一条最优路径。核心能力体现在对未来的考量与规划上。</p></div></details>
+<div class="callout" data-label="和前两类的差别">
+<p style="margin:0">反射式问「现在该不该动」；目标式问「怎样到达想要的未来」。它开始做<strong>前瞻</strong>与<strong>路径搜索</strong>。</p>
+</div>
+      </section>
+      <section class="slide" data-id="trad-utility" data-label="基于效用的智能体" data-group="1.1.1 传统视角">
+
+<div class="slide-sub">§ 1.1.1 · 效用</div>
+<h2 class="slide-title">基于效用的智能体（Utility-Based Agent）</h2>
+<p>现实世界的目标往往不是单一的。我们不仅希望到达公司，还希望时间最短、路程最省油并且避开拥堵。当多个目标需要权衡时，效用智能体便随之出现。</p>
+<ul>
+<li>为每一个可能的世界状态赋予一个<strong>效用值</strong>（满意度高低）</li>
+<li>核心目标不再是简单达成某个状态，而是<strong>最大化期望效用</strong></li>
+<li>它问：<strong>「哪种行为能为我带来最满意的结果？」</strong></li>
+</ul>
+<div class="note">这种架构让智能体学会在相互冲突的目标之间权衡，决策更接近人类的理性选择。</div>
+<div class="analogy">目标智能体像「只要到公司就行」；效用智能体像「又要快、又要省、又要少过路费」——开始算账。</div>
+      </section>
+      <section class="slide" data-id="trad-learning" data-label="学习型智能体与 RL" data-group="1.1.1 传统视角">
+
+<div class="slide-sub">§ 1.1.1 · 学习</div>
+<h2 class="slide-title">学习型智能体与强化学习</h2>
+<p>前面几类的核心决策逻辑（规则、模型、效用函数）仍依赖人类设计师的先验知识。学习型智能体的核心思想是：能否通过与环境互动<strong>自主学习</strong>？</p>
+<p><strong>强化学习（Reinforcement Learning, RL）</strong>是最具代表性的路径。学习型智能体包含：</p>
+<ul>
+<li><strong>性能元件：</strong>前面讨论的各类智能体（负责实际决策与行动）</li>
+<li><strong>学习元件：</strong>观察行动结果，不断修正性能元件的决策策略</li>
+</ul>
+<details class="expand-card" open><summary>AlphaGo Zero 的启示</summary>
+<div class="expand-body"><p>想象学习下棋的 AI：开始可能随机落子，赢了获得正向奖励。通过大量自我对弈，学习元件发现哪些棋路更可能导向胜利。AlphaGo Zero 在围棋中通过 RL 发现了许多超越人类既有知识的有效策略——这是里程碑式成就。</p></div></details>
+<div class="analogy">从恒温器 → 有记忆的汽车 → 会规划的导航 → 会权衡的决策者 → 能从经验自我进化的学习者。</div>
+      </section>
+      <section class="slide" data-id="flash-history" data-label="闪卡 · 传统五阶" data-group="1.1.1 传统视角">
+
+<div class="slide-sub">§ 1.1.1 · 概念速记</div>
+<h2 class="slide-title">闪卡：传统智能体五阶</h2>
+<p>先想答案，再点卡片揭示。用左右按钮切换题目。</p>
+<div class="flash-wrap" id="flash1" data-cards='[
+  {"q":"反射智能体靠什么决策？最大局限是什么？","a":"靠「条件→动作」规则，只看当前感知。局限：无记忆、无预测，应对不了需要上下文的任务。"},
+  {"q":"「基于模型」比「简单反射」多了什么？","a":"多了内部世界模型（World Model），能追踪当前看不见的状态，决策不再只靠瞬时感知。"},
+  {"q":"目标智能体 vs 效用智能体差在哪？","a":"目标智能体问「怎样达成目标」；效用智能体在多个目标冲突时问「哪种结果最满意」，会做权衡。"},
+  {"q":"学习型智能体与前面几类的根本区别？","a":"前面几类核心逻辑多由人预设；学习型可通过与环境互动（如强化学习）自己改进策略。"},
+  {"q":"一句话概括传统智能体演进线？","a":"当场反应 → 有记忆模型 → 会规划目标 → 会效用权衡 → 会从经验中学习。"}
+]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta"><span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button class="btn" type="button" onclick="event.stopPropagation(); moveFlash('flash1',-1)">上一张</button>
+      <button class="btn" type="button" onclick="event.stopPropagation(); moveFlash('flash1',1)">下一张</button>
+    </div>
+  </div>
+</div>
+      </section>
+      <section class="slide" data-id="trad-quiz" data-label="自测 · 传统五阶" data-group="1.1.1 传统视角">
+
+<div class="slide-sub">§ 1.1.1 · 自测</div>
+<h2 class="slide-title">自测：传统智能体演进</h2>
+<div class="quiz-score" id="score-tradq"></div>
+<div class="quiz-item" data-quiz="tradq" data-answer="2">
+  <h4>1. 恒温器「太热就制冷」最接近？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">基于效用</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">学习型</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">简单反射</button>
+  <div class="quiz-explain">条件—动作、只看当前感知，典型简单反射。</div>
+</div>
+<div class="quiz-item" data-quiz="tradq" data-answer="0">
+  <h4>2. GPS 用 A* 规划去公司的路线，最接近？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">基于目标的智能体</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">简单反射（无规划）</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">与智能体无关</button>
+  <div class="quiz-explain">有明确目标并搜索通向目标的行动序列，是目标智能体。</div>
+</div>
+<div class="quiz-item" data-quiz="tradq" data-answer="1">
+  <h4>3. AlphaGo Zero 自我对弈改进策略，体现？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">只有符号规则、无学习</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">学习型智能体 / 强化学习路径</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">单纯恒温器式反射</button>
+  <div class="quiz-explain">通过与环境（棋局）互动用奖励信号改进策略。</div>
+</div>
+      </section>
+      <section class="slide" data-id="llm-intro" data-label="1.1.2 LLM 新范式" data-group="1.1.2 LLM 新范式">
+
+<div class="slide-sub">§ 1.1.2</div>
+<h2 class="slide-title">大语言模型驱动的新范式</h2>
+<p>以前很多系统要求规则写得很清楚。现实任务却常常是模糊、开放、充满上下文的：</p>
+<ul>
+<li>「帮我规划一趟厦门三日游。」</li>
+<li>「帮我看看这段代码为什么老报错。」</li>
+<li>「帮我整理这周最重要的 AI 新闻，并按重要程度排序。」</li>
+</ul>
+<p>难点：很难提前把全部规则写死。信息太杂、表达不标准、推进中还会冒出新情况。</p>
+<p>以 <strong>GPT（Generative Pre-trained Transformer）</strong> 为代表的大语言模型，改变的正是这件事：不是工程师把每条规则写进去，而是先在大量数据上学会语言理解、知识关联、模式概括和任务分解。面对高层目标时，能先理解需求，再规划步骤，再按需要调工具。</p>
+<div class="note"><strong>抓住本质变化：</strong>软件正在从「按预设流程执行」，转向「围绕目标动态求解」。但有了 LLM 也不等于一切自动智能——仍需要工具、上下文、状态管理、约束机制和工程控制。</div>
+      </section>
+      <section class="slide" data-id="llm-compare-table" data-label="传统 vs LLM 对比表" data-group="1.1.2 LLM 新范式">
+
+<div class="slide-sub">§ 1.1.2 · 表 1.1</div>
+<h2 class="slide-title">传统智能体 vs LLM 驱动智能体</h2>
+<p>转变可从核心引擎、知识来源、交互方式等多个维度对比。简言之：传统能力源于工程师显式编程与知识构建，行为确定且有边界；LLM 智能体通过海量数据预训练，获得隐式世界模型与涌现能力，更灵活、更通用地应对复杂任务。</p>
+<div class="fig"><img src="assets/ch1_llm_paradigm.png" alt="表 1.1 传统智能体与 LLM 驱动智能体的核心对比" onerror="this.src='https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/1-figures/1757242319667-2.png'"/><div class="fig-cap">表 1.1 传统智能体与 LLM 驱动智能体的核心对比</div></div>
+<div class="compare">
+  <div class="compare-col a"><h3>传统智能体</h3>
+    <ul><li>能力来自显式编程与知识构建</li><li>行为相对确定、边界清晰</li>
+    <li>适合规则清楚、变化有限的场景</li><li>对模糊自然语言目标支持弱</li></ul></div>
+  <div class="compare-col b"><h3>LLM 驱动智能体</h3>
+    <ul><li>预训练获得隐式世界模型与涌现能力</li><li>更灵活、更通用地应对开放任务</li>
+    <li>可直接理解高层、模糊的自然语言指令</li><li>可规划、调工具、根据反馈动态修正</li></ul></div>
+</div>
+      </section>
+      <section class="slide" data-id="llm-travel-plan" data-label="旅行助手 · 规划与推理" data-group="1.1.2 LLM 新范式">
+
+<div class="slide-sub">§ 1.1.2 · 旅行助手（1）</div>
+<h2 class="slide-title">规划与推理：拆解模糊目标</h2>
+<p>LLM 出现之前，规划旅行通常意味着用户在多个专用应用（天气、地图、预订）之间手动切换，自己扮演信息整合与决策角色。LLM 智能体则能把流程整合起来。</p>
+<p>当收到「规划一次厦门之旅」这样的模糊指令时，它首先会把高层目标分解为逻辑子任务，例如：</p>
+<div class="code-block">[确认出行偏好] → [查询目的地信息] → [制定行程草案] → [预订票务住宿]</div>
+<p>这是一个<strong>内在的、由模型驱动的规划过程</strong>——不是人把流程图画死，而是模型根据上下文生成下一步合理拆解。</p>
+<div class="analogy">像一位助理先列待办清单，而不是一上来就胡乱订酒店。</div>
+      </section>
+      <section class="slide" data-id="llm-travel-tool" data-label="旅行助手 · 工具与修正" data-group="1.1.2 LLM 新范式">
+
+<div class="slide-sub">§ 1.1.2 · 旅行助手（2）</div>
+<h2 class="slide-title">工具使用与动态修正</h2>
+<details class="expand-card" open><summary>工具使用（Tool Use）</summary>
+<div class="expand-body"><p>执行规划时，智能体识别到信息缺口，会主动调用外部工具补全。例如调用天气查询接口获取实时天气；若预报有雨，后续规划会倾向推荐室内活动。</p></div></details>
+<details class="expand-card"><summary>动态修正（Dynamic Correction）</summary>
+<div class="expand-body"><p>交互中，用户反馈（如「这家酒店超出预算」）被视为新约束。智能体据此调整后续行动，重新搜索并推荐符合新要求的选项。「查天气 → 调行程 → 订酒店」展现了根据上下文动态修正自身行为的能力。</p></div></details>
+<div class="callout" data-label="范式转移">
+<p style="margin:0">我们正从开发专用自动化工具，转向构建能自主解决问题的系统。核心不再只是编写代码，而是引导一个通用「大脑」去规划、行动和学习。</p>
+</div>
+      </section>
+      <section class="slide" data-id="llm-quiz" data-label="自测 · LLM 范式" data-group="1.1.2 LLM 新范式">
+
+<div class="slide-sub">§ 1.1.2 · 自测</div>
+<h2 class="slide-title">自测：定义与新范式</h2>
+<div class="quiz-score" id="score-llmq"></div>
+<div class="quiz-item" data-quiz="llmq" data-answer="0">
+  <h4>1. LLM 智能体相对传统智能体，最大变化更接近？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">更能接住模糊的高层自然语言目标，并动态规划与调工具</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">完全不再需要工具、状态管理和工程护栏</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只能做聊天，不能执行任何外部动作</button>
+  <div class="quiz-explain">LLM 带来理解与规划接口；工具与工程控制仍然必需。</div>
+</div>
+<div class="quiz-item" data-quiz="llmq" data-answer="2">
+  <h4>2. 「预报有雨 → 改推室内景点」主要体现？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">与反馈无关的死流程</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">只有简单反射、无规划</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">根据观察动态修正后续计划</button>
+  <div class="quiz-explain">新观察改变后续行动，正是动态修正。</div>
+</div>
+      </section>
+      <section class="slide" data-id="types-why" data-label="1.1.3 为何要分类" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3</div>
+<h2 class="slide-title">智能体的类型：为什么要分类？</h2>
+<p>以后遇到一个系统，不能只说「它是 Agent」——太粗了。更有工程价值的是继续判断：偏即时反应还是偏规划？规则系统还是数据驱动？单层还是混合？</p>
+<div class="callout" data-label="三个互补维度">
+<ol>
+<li><strong>基于内部决策架构</strong>——脑子有多复杂（反射→模型→目标→效用→学习）</li>
+<li><strong>基于时间与反应性</strong>——快反应 vs 慢规划 vs 混合</li>
+<li><strong>基于知识表示</strong>——符号 / 亚符号 / 神经符号</li>
+</ol></div>
+<p>分类不是为了考试，而是设计时少走弯路：任务简单时简单反射可能最稳；任务复杂时才需要规划、效用与学习。</p>
+      </section>
+      <section class="slide" data-id="types-arch" data-label="维度一 · 决策架构" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3（1）决策架构</div>
+<h2 class="slide-title">基于内部决策架构的分类</h2>
+<p>这一维度依据智能体内部决策架构的复杂程度，在《Artificial Intelligence: A Modern Approach》中系统提出。传统智能体演进路径本身就构成最经典的分类阶梯。</p>
+<ul>
+<li><strong>反应式 / 简单反射：</strong>看到什么立刻做什么</li>
+<li><strong>模型式：</strong>脑中有简化地图，不再只看眼前</li>
+<li><strong>基于目标：</strong>知道自己到底想去哪</li>
+<li><strong>基于效用：</strong>不只想「到」，还想「更优地到」</li>
+<li><strong>学习能力：</strong>可赋予上述所有类型的<strong>元能力</strong>，使其通过经验自我改进</li>
+</ul>
+<div class="note">不是所有智能体都需要最复杂架构。匹配任务复杂度，才是好设计。</div>
+      </section>
+      <section class="slide" data-id="types-reactive" data-label="反应式智能体" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3（2）反应式</div>
+<h2 class="slide-title">反应式智能体（Reactive Agents）</h2>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/1-figures/1757242319667-3.png" alt="图 1.3 智能体决策时间与质量关系图"/><div class="fig-cap">图 1.3 智能体决策时间与质量关系图</div></div>
+<p>对环境刺激做出近乎即时的响应，决策延迟极低。通常遵循从感知到行动的直接映射，不进行或极少进行未来规划。简单反射与基于模型的智能体都属于此类别。</p>
+<div class="callout" data-label="优势与代价">
+<ul>
+<li><strong>优势：</strong>速度快、计算开销低——动态环境中至关重要</li>
+<li><strong>例子：</strong>车辆安全气囊须在碰撞毫秒内反应；高频交易捕捉稍纵即逝的机会</li>
+<li><strong>代价：</strong>「短视」——缺乏长远规划，易陷入局部最优，难完成多步骤协调任务</li>
+</ul></div>
+      </section>
+      <section class="slide" data-id="types-deliberative" data-label="规划式智能体" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3（2）规划式</div>
+<h2 class="slide-title">规划式 / 审议式智能体（Deliberative）</h2>
+<p>行动前会进行复杂思考和规划。不会立即对感知做反应，而是先利用内部世界模型，系统探索未来可能性，评估不同行动序列后果，以期找到达成目标的最佳路径。基于目标与基于效用的智能体是典型规划式智能体。</p>
+<div class="analogy">像一位棋手：不只看眼前一步，而是预想对手应对，规划后续几步甚至十几步。</div>
+<details class="expand-card" open><summary>优势与代价</summary>
+<div class="expand-body"><ul>
+<li><strong>优势：</strong>决策有战略性与远见；适合商业计划、长途旅行等复杂任务</li>
+<li><strong>代价：</strong>时间与计算成本高昂；环境瞬息万变时，想完时最佳时机可能已过</li>
+</ul></div></details>
+<div class="note">核心权衡：追求速度的<strong>反应性（Reactivity）</strong> vs 追求最优解的<strong>规划性（Deliberation）</strong>。</div>
+      </section>
+      <section class="slide" data-id="types-hybrid" data-label="混合式智能体" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3（2）混合式</div>
+<h2 class="slide-title">混合式智能体（Hybrid Agents）</h2>
+<p>现实任务往往既需即时反应，也需长远规划。例如智能旅行助手：要根据「这家酒店太贵了」快速调整（反应性），又要规划数天完整方案（规划性）。</p>
+<details class="expand-card" open><summary>经典分层设计</summary>
+<div class="expand-body"><p>底层：快速反应模块，处理紧急情况与基本动作；高层：审慎规划模块，制定长远目标。</p></div></details>
+<details class="expand-card"><summary>现代 LLM 的灵活混合</summary>
+<div class="expand-body"><p>通常在「思考-行动-观察」循环中运作：</p>
+<ul>
+<li><strong>规划（Reasoning）：</strong>「思考」阶段分析状况、规划下一步——审议过程</li>
+<li><strong>反应（Acting &amp; Observing）：</strong>与工具/环境交互并立即获反馈——反应过程</li>
+</ul>
+<p>把宏大长期任务，分解为一系列「规划-反应」微循环：既能灵活应对即时变化，又能通过连贯步骤完成长期目标。</p></div></details>
+      </section>
+      <section class="slide" data-id="types-symbolic" data-label="符号主义 AI" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3（3）符号主义</div>
+<h2 class="slide-title">符号主义 AI（Symbolic AI）</h2>
+<p>这是更根本的分类维度：智能体用以决策的知识，究竟以何种形式存于其「思想」之中？这是 AI 领域半个多世纪辩论的核心。</p>
+<p>符号主义常被称为传统人工智能，核心信念：智能源于对符号的逻辑操作。符号是人类可读实体（词语、概念），操作遵循严格逻辑规则。</p>
+<div class="analogy">像一位一丝不苟的图书管理员，将世界知识整理为清晰的规则库和知识图谱。</div>
+<ul>
+<li><strong>优势：</strong>透明、可解释；推理步骤可完整追溯——金融、医疗等高风险领域至关重要</li>
+<li><strong>阿喀琉斯之踵：</strong>脆弱性——依赖完备规则体系；现实充满模糊与例外，未覆盖的新情况可导致失灵（<strong>知识获取瓶颈</strong>）</li>
+</ul>
+      </section>
+      <section class="slide" data-id="types-subsymbolic" data-label="亚符号主义 AI" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3（3）亚符号</div>
+<h2 class="slide-title">亚符号主义 AI（Sub-symbolic AI）</h2>
+<p>或称连接主义：知识并非显式规则，而是内隐地分布在大量神经元组成的复杂网络中，是从海量数据中学到的统计模式。神经网络与深度学习是其代表。</p>
+<div class="analogy">如果说符号主义是图书管理员，亚符号主义像牙牙学语的孩童：不是靠「猫有四条腿、毛茸茸、会喵喵叫」的规则认猫，而是看过成千上万张猫图后，网络能辨识「猫」的视觉模式。</div>
+<ul>
+<li><strong>强大之处：</strong>模式识别能力、对噪声数据的鲁棒性；轻松处理图像、声音等非结构化数据</li>
+<li><strong>问题：</strong>通常被视为<strong>黑箱（Black Box）</strong>——能认出猫却难解释「为什么」；纯逻辑推理表现不佳；有时产生看似合理却事实错误的<strong>幻觉</strong></li>
+</ul>
+      </section>
+      <section class="slide" data-id="types-neurosym" data-label="神经符号与双系统" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3（3）神经符号</div>
+<h2 class="slide-title">神经符号主义 + 系统 1 / 系统 2</h2>
+<p>为克服两范式局限，「大和解」思想兴起：神经符号主义旨在融合优点——既能像神经网络从数据学习，又能像符号系统逻辑推理，弥合感知与认知、直觉与理性的鸿沟。</p>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/1-figures/1757242319667-4.png" alt="图 1.4 符号主义、亚符号主义与神经符号混合主义"/><div class="fig-cap">图 1.4 符号主义、亚符号主义与神经符号混合主义</div></div>
+<p>卡尼曼《思考，快与慢》的双系统理论提供绝佳类比：</p>
+<ul>
+<li><strong>系统 1：</strong>快速、凭直觉、并行——类似亚符号强大的模式识别</li>
+<li><strong>系统 2：</strong>缓慢、有条理、基于逻辑——恰如符号主义推理</li>
+</ul>
+<div class="note">LLM 智能体是神经符号的极佳实践：内核是巨大神经网络（感知/语言）；工作时生成思想、计划或 API 调用等可操作符号——实现直觉与理性的初步融合。</div>
+      </section>
+      <section class="slide" data-id="types-cards" data-label="概念卡 · 反应规划混合" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3 · 互动</div>
+<h2 class="slide-title">速度 vs 规划深度（点击翻转）</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face front"><h3>反应式</h3><div class="en">Reactive</div><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><h3>反应式</h3><p>快、延迟低、开销小。气囊、实时告警、部分高频交易依赖它。代价：短视，不善长远多步规划。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face front"><h3>规划式</h3><div class="en">Deliberative</div><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><h3>规划式</h3><p>先想局面与路径后果再行动，像下棋。适合长期复杂任务。代价：耗时耗算力，环境变得太快可能错过时机。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face front"><h3>混合式</h3><div class="en">Hybrid</div><div class="flip-hint">翻转</div></div>
+    <div class="flip-face back"><h3>混合式</h3><p>低层快响应，高层长远规划。现代 LLM Agent 常拆成许多小循环：思考→行动→观察→再思考。</p></div>
+  </div></div>
+</div>
+<div class="analogy">混合式像：不是一次把整件事想完，而是每走一步都重新校准方向。</div>
+      </section>
+      <section class="slide" data-id="types-quiz" data-label="自测 · 类型分类" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3 · 自测</div>
+<h2 class="slide-title">自测：三维分类</h2>
+<div class="quiz-score" id="score-typeq"></div>
+<div class="quiz-item" data-quiz="typeq" data-answer="1">
+  <h4>1. 安全气囊毫秒级弹出，主要偏？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">纯规划式、可慢慢算最优</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">反应式（速度优先）</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">与反应性无关</button>
+  <div class="quiz-explain">毫秒级决策必须低延迟，典型反应式需求。</div>
+</div>
+<div class="quiz-item" data-quiz="typeq" data-answer="0">
+  <h4>2. 「规则库可追溯为何拒贷」更贴近？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">符号主义优势（可解释）</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">纯亚符号黑箱</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">与知识表示无关</button>
+  <div class="quiz-explain">显式规则与可追溯推理是符号主义强项。</div>
+</div>
+<div class="quiz-item" data-quiz="typeq" data-answer="2">
+  <h4>3. LLM 吐出计划与 API 调用，可理解为？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">只有系统1、无符号</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">完全抛弃神经网络</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">神经符号实践：神经网络内核 + 符号化中间步骤</button>
+  <div class="quiz-explain">模型是神经网络，结构化计划/工具调用是符号化产物。</div>
+</div>
+      </section>
+      <section class="slide" data-id="s12-intro" data-label="1.2 构成与运行导读" data-group="1.2 构成与运行">
+
+<div class="slide-sub">§ 1.2</div>
+<h2 class="slide-title">智能体到底怎么运转？</h2>
+<p class="lead">上一节回答「是什么」。这一节回答更落地的问题：它怎么转起来？</p>
+<p>很多人停在概念层：好像会调工具、会拆任务。但一追问「具体怎么一步步转」，脑中只剩模糊印象。其实可以讲清楚——先看环境（PEAS），再看循环（Agent Loop），再看接口（Thought-Action-Observation）。</p>
+<div class="layers">
+  <div class="layer"><div class="layer-n">1.2.1</div><div><strong>PEAS 任务环境</strong><span>成功标准 · 世界 · 能做 · 能看</span></div></div>
+  <div class="layer"><div class="layer-n">1.2.2</div><div><strong>智能体循环</strong><span>感知 · 思考 · 行动 · 观察</span></div></div>
+  <div class="layer"><div class="layer-n">1.2.3</div><div><strong>交互协议</strong><span>把语言世界接到真实执行世界</span></div></div>
+</div>
+      </section>
+      <section class="slide" data-id="peas-intro" data-label="1.2.1 PEAS 是什么" data-group="1.2.1 PEAS">
+
+<div class="slide-sub">§ 1.2.1</div>
+<h2 class="slide-title">任务环境：先看它在什么世界里干活</h2>
+<p class="lead">想理解智能体，最该先看的不是用了哪个模型，而是：它到底在什么环境里工作。</p>
+<p><strong>PEAS 模型</strong>逼你把系统边界想清楚——很多 Agent 不稳，不是模型不够强，而是没定义清楚成功标准、能看到什么、能动什么。</p>
+<div class="peas">
+  <div class="peas-item"><div class="letter">P</div><h4>Performance 性能度量</h4><p>怎样才算做得好？行程合理、预算内、用户满意度……</p></div>
+  <div class="peas-item"><div class="letter">E</div><h4>Environment 环境</h4><p>身处什么世界？天气、机票、酒店、点评与用户对话</p></div>
+  <div class="peas-item"><div class="letter">A</div><h4>Actuators 执行器</h4><p>能做什么？查 API、发消息、生成行程、触发预订</p></div>
+  <div class="peas-item"><div class="letter">S</div><h4>Sensors 传感器</h4><p>能获取什么？用户输入、API 返回、搜索结果</p></div>
+</div>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/1-figures/1757242319667-6.png" alt="表 1.2 智能旅行助手的 PEAS 描述"/><div class="fig-cap">表 1.2 智能旅行助手的 PEAS 描述</div></div>
+      </section>
+      <section class="slide" data-id="peas-travel" data-label="旅行助手 PEAS 细读" data-group="1.2.1 PEAS">
+
+<div class="slide-sub">§ 1.2.1 · 案例</div>
+<h2 class="slide-title">把旅行助手塞进 PEAS</h2>
+<details class="expand-card" open><summary>P · 性能度量怎么写才有用？</summary>
+<div class="expand-body"><p>不要只写「用户满意」。尽量可观察：行程是否覆盖必去点、是否超预算、改签次数、用户是否接受推荐、完成任务轮数/成本等。没有 P，你无法判断 Agent「变强了还是变飘了」。</p></div></details>
+<details class="expand-card"><summary>E / A / S 对齐检查</summary>
+<div class="expand-body"><ul>
+<li>若 E 包含「实时票价」，S 就必须能读到票价接口</li>
+<li>若 A 包含「下单」，就要考虑权限、确认与回滚</li>
+<li>A 能做但 S 看不到结果 → 闭环断裂</li>
+</ul></div></details>
+<div class="note"><strong>练习预告：</strong>习题里的「智能健身教练」就要求你独立写完整 PEAS——现在先把方法练熟。</div>
+      </section>
+      <section class="slide" data-id="env-partial" data-label="环境特性 · 部分可观察" data-group="1.2.1 PEAS">
+
+<div class="slide-sub">§ 1.2.1 · 环境特性（1）</div>
+<h2 class="slide-title">部分可观察：永远只看到一块拼图</h2>
+<p>实践中，LLM 智能体所处的数字环境展现出若干复杂特性，直接影响设计。</p>
+<p>首先，环境通常是<strong>部分可观察的</strong>。旅行助手查询航班时，无法一次性获取所有航空公司的全部实时座位信息。它只能通过调用航班预订 API，看到该 API 返回的部分数据。</p>
+<div class="callout" data-label="设计含义">
+<ul>
+<li>必须具备<strong>记忆</strong>（记住已查询过的航线）</li>
+<li>必须具备<strong>探索</strong>（尝试不同查询日期/航司）</li>
+<li>决策永远在「信息不完整」条件下进行——别假设一次调用就看清全世界</li>
+</ul></div>
+      </section>
+      <section class="slide" data-id="env-stochastic" data-label="环境特性 · 随机与多智能体" data-group="1.2.1 PEAS">
+
+<div class="slide-sub">§ 1.2.1 · 环境特性（2）</div>
+<h2 class="slide-title">随机性、多智能体、序贯与动态</h2>
+<details class="expand-card" open><summary>确定性 vs 随机性</summary>
+<div class="expand-body"><p>行动结果并非总是确定。旅行助手任务环境是典型<strong>随机性</strong>环境：两次相邻搜索，机票价格和余票数量都可能不同。智能体必须处理不确定性、监控变化并及时决策。</p></div></details>
+<details class="expand-card"><summary>多智能体环境</summary>
+<div class="expand-body"><p>环境中可能存在其他行动者。其他用户的预订、自动化脚本、航司动态调价系统，都是其他「智能体」。它们的行动（订走最后一张特价票）会直接改变状态——要求更快响应与更稳策略。</p></div></details>
+<details class="expand-card"><summary>序贯 + 动态</summary>
+<div class="expand-body"><p><strong>序贯</strong>：当前动作影响未来；<strong>动态</strong>：环境自身可能在智能体决策时变化。因此「感知-思考-行动-观察」循环必须能快速、灵活地适应持续变化的世界。</p></div></details>
+      </section>
+      <section class="slide" data-id="loop-intro" data-label="1.2.2 智能体循环" data-group="1.2.2 Agent Loop">
+
+<div class="slide-sub">§ 1.2.2</div>
+<h2 class="slide-title">智能体循环（Agent Loop）</h2>
+<p>智能体并非一次性完成任务，而是通过持续循环与环境交互。这个核心机制构成自主行为的基础。往后学 ReAct、Function Calling、Planning、Memory、Multi-Agent，本质上都还在这个循环上加东西。</p>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/1-figures/1757242319667-5.png" alt="图 1.5 智能体与环境交互的基本循环" onerror="this.src='assets/ch1_agent_loop.png'"/><div class="fig-cap">图 1.5 智能体与环境交互的基本循环</div></div>
+<div class="loop-viz">
+  <div class="loop-node">感知</div><div class="loop-arrow">→</div>
+  <div class="loop-node">思考</div><div class="loop-arrow">→</div>
+  <div class="loop-node">行动</div><div class="loop-arrow">→</div>
+  <div class="loop-node">观察</div>
+  <div class="loop-desc">口语化：先看，再想，再做，再根据结果继续看</div>
+</div>
+      </section>
+      <section class="slide" data-id="loop-perceive" data-label="循环 · 感知" data-group="1.2.2 Agent Loop">
+
+<div class="slide-sub">§ 1.2.2 · 感知</div>
+<h2 class="slide-title">感知（Perception）：循环的起点</h2>
+<p>智能体通过传感器（例如 API 监听端口、用户输入接口）接收来自环境的输入信息。这些信息即<strong>观察（Observation）</strong>，既可以是用户的初始指令，也可以是上一步行动所导致的环境状态变化反馈。</p>
+<ul>
+<li>第 0 轮：常是用户目标（「查北京天气并推荐景点」）</li>
+<li>后续轮：常是工具返回包装后的 Observation 文本</li>
+<li>也可能是错误信息——好的系统把错误也当可观察信号</li>
+</ul>
+<div class="note">行动不是终点。真正的 Agent 味道，是做完动作之后还能继续接收反馈，并根据反馈改变下一步。</div>
+      </section>
+      <section class="slide" data-id="loop-thought" data-label="循环 · 思考拆解" data-group="1.2.2 Agent Loop">
+
+<div class="slide-sub">§ 1.2.2 · 思考</div>
+<h2 class="slide-title">思考（Thought）：规划 + 工具选择</h2>
+<p>接收观察后进入核心决策。对 LLM 智能体，「思考」常由大模型驱动，可细分为：</p>
+<div class="compare">
+  <div class="compare-col a"><h3>规划 Planning</h3>
+    <ul><li>更新对任务与环境的理解</li><li>制定或调整行动计划</li>
+    <li>把复杂目标分解为子任务</li><li>问：离目标还有多远？下一步最合理的子任务是什么？</li></ul></div>
+  <div class="compare-col b"><h3>工具选择 Tool Selection</h3>
+    <ul><li>从工具库选最适合下一步的工具</li><li>确定调用所需参数</li>
+    <li>问：该用哪个工具？参数怎么填？</li><li>或决定：信息够了，该 Finish</li></ul></div>
+</div>
+<div class="analogy">好用的 Agent，不只是模型会说话，而是模型在持续承担「局势判断」和「下一步决策」。</div>
+      </section>
+      <section class="slide" data-id="loop-action" data-label="循环 · 行动与回流" data-group="1.2.2 Agent Loop">
+
+<div class="slide-sub">§ 1.2.2 · 行动</div>
+<h2 class="slide-title">行动 → 环境变化 → 新观察</h2>
+<p>决策完成后，智能体通过执行器执行具体行动——通常表现为调用选定工具（代码解释器、搜索引擎 API 等），对环境施加影响，意图改变状态。</p>
+<p>行动会引起环境的<strong>状态变化（State Change）</strong>，环境随即产生新的<strong>观察（Observation）</strong>作为结果反馈。新观察在下一轮被感知系统捕获，形成持续的「感知-思考-行动-观察」闭环。智能体通过不断重复这一循环，从初始状态向目标状态演进。</p>
+<div class="callout" data-label="旅行助手直觉">
+<ol>
+<li>先意识到缺少天气信息</li>
+<li>调天气工具</li>
+<li>拿到「晴天」</li>
+<li>再据「晴天」调景点推荐</li>
+<li>最后合成完整回答——一轮一轮推进，而非一次说完</li>
+</ol></div>
+      </section>
+      <section class="slide" data-id="loop-demo" data-label="循环演示 · 点着看" data-group="1.2.2 Agent Loop">
+
+<div class="slide-sub">§ 1.2.2 · 流程可视化</div>
+<h2 class="slide-title">点着看：一轮轮怎么推进</h2>
+<p>以「查北京天气再推荐景点」为例，点击步骤查看说明。</p>
+<div class="loop-stepper" id="loopDemo">
+  <div class="steps">
+    <button type="button" class="step-btn on" onclick="showLoopStep(0)">① 感知思考</button>
+    <button type="button" class="step-btn" onclick="showLoopStep(1)">② 行动</button>
+    <button type="button" class="step-btn" onclick="showLoopStep(2)">③ 观察</button>
+    <button type="button" class="step-btn" onclick="showLoopStep(3)">④ 再行动</button>
+  </div>
+  <div class="loop-panel" id="loopPanel"><h4>① 感知与思考</h4><p>先意识到：还缺少天气信息，不能凭空推荐。下一步应调用天气工具。</p></div>
+</div>
+      </section>
+      <section class="slide" data-id="tao-intro" data-label="1.2.3 交互协议" data-group="1.2.3 感知与行动">
+
+<div class="slide-sub">§ 1.2.3</div>
+<h2 class="slide-title">模型怎么和外部世界对接？</h2>
+<p>理论上说「感知-思考-行动」很顺，但落到工程必须回答：模型到底怎么和外部世界对接？</p>
+<p>总不能让模型自由发挥一大段自然语言，然后程序员靠猜测判断它是想调工具还是已给最终答案——那样系统会非常脆弱。</p>
+<p>因此需要一套明确的<strong>交互协议（Interaction Protocol）</strong>规范与环境的信息交换。在许多现代框架中，协议体现在对每次输出的结构化定义上：输出不再是单一自然语言回复，而是遵循特定格式的文本，明确展示内部推理与最终决策。</p>
+      </section>
+      <section class="slide" data-id="tao-format" data-label="Thought / Action / Observation" data-group="1.2.3 感知与行动">
+
+<div class="slide-sub">§ 1.2.3 · 格式</div>
+<h2 class="slide-title">TAO：把语言接到执行</h2>
+<ul>
+<li><strong>Thought（思考）：</strong>内部决策「快照」——分析情境、回顾观察、自我反思与问题分解，规划下一步</li>
+<li><strong>Action（行动）：</strong>基于思考后对环境施加的具体操作，通常以函数调用形式表示</li>
+</ul>
+<div class="code-block">Thought: 用户想知道北京的天气。我需要调用天气查询工具。
+Action: get_weather("北京")</div>
+<p><code>Action</code> 构成对外部世界的指令。外部<strong>解析器（Parser）</strong>捕捉指令并调用相应函数。</p>
+<p>工具返回原始数据（常为 JSON）后，感知系统将其处理封装为简洁自然语言，即 Observation：</p>
+<div class="code-block">Observation: 北京当前天气为晴，气温25摄氏度，微风。</div>
+<div class="note"><strong>工程事实：</strong>Thought、Action、Observation 不只是提示词格式，它们是把「语言世界」和「真实执行世界」接起来的接口层。</div>
+      </section>
+      <section class="slide" data-id="quiz-12" data-label="自测 · 1.2 节" data-group="1.2 构成与运行">
+
+<div class="slide-sub">问答检测 · 1.2</div>
+<h2 class="slide-title">自测：构成与运行</h2>
+<div class="quiz-score" id="score-q12"></div>
+<div class="quiz-item" data-quiz="q12" data-answer="1">
+  <h4>1. PEAS 中的 P 主要回答？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">用了哪个大模型</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">怎样才算做得好（性能度量）</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">服务器放在哪个机房</button>
+  <div class="quiz-explain">P = Performance，成功标准。</div>
+</div>
+<div class="quiz-item" data-quiz="q12" data-answer="0">
+  <h4>2. 机票五分钟后涨价，主要体现环境的？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">随机性 / 动态性</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">完全确定性、永不变化</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">与环境特性无关</button>
+  <div class="quiz-explain">结果不确定且世界在变，是随机/动态环境的典型表现。</div>
+</div>
+<div class="quiz-item" data-quiz="q12" data-answer="2">
+  <h4>3. Thought-Action-Observation 的核心作用？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">只为了让回复更好看</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">替代所有工具</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">作为语言推理与外部执行之间的接口协议</button>
+  <div class="quiz-explain">结构化输出让程序可解析并执行，再把结果喂回模型。</div>
+</div>
+      </section>
+      <section class="slide" data-id="hands-intro" data-label="1.3 动手体验总览" data-group="1.3 动手体验">
+
+<div class="slide-sub">§ 1.3</div>
+<h2 class="slide-title">5 分钟实现第一个智能体</h2>
+<p>理论知识重要，最好的学习是亲手实践。目标：构建能处理分步任务的智能旅行助手。</p>
+<p><strong>用户任务：</strong>「你好，请帮我查询一下今天北京的天气，然后根据天气推荐一个合适的旅游景点。」</p>
+<p>智能体必须先调用天气工具，把观察作为下一步依据；再调用景点推荐工具，得出最终建议。</p>
+<div class="layers">
+  <div class="layer"><div class="layer-n">角色层</div><div><strong>它是谁</strong><span>旅行助手 + 行为规则 + 输出协议</span></div></div>
+  <div class="layer"><div class="layer-n">工具层</div><div><strong>它能做什么</strong><span>get_weather · get_attraction</span></div></div>
+  <div class="layer"><div class="layer-n">循环层</div><div><strong>怎么推进</strong><span>prompt_history + 解析 Action + 执行</span></div></div>
+  <div class="layer"><div class="layer-n">终止层</div><div><strong>何时停下</strong><span>Finish[...] · 最大循环次数</span></div></div>
+</div>
+      </section>
+      <section class="slide" data-id="prep-deps" data-label="1.3.1 依赖安装" data-group="1.3.1 准备工作">
+
+<div class="slide-sub">§ 1.3.1 · 依赖</div>
+<h2 class="slide-title">准备工作：先接上外部世界</h2>
+<p>为从 Python 访问网络 API，需要：</p>
+<ul>
+<li><code>requests</code>：最流行易用的 HTTP 库</li>
+<li><code>tavily-python</code>：AI 搜索 API 客户端，获取实时网络搜索（可在 tavily.com 注册获取 API）</li>
+<li><code>openai</code>：调用兼容 OpenAI 接口的大语言模型服务</li>
+</ul>
+<div class="code-block">pip install requests tavily-python openai</div>
+<div class="note"><strong>抓住本质：</strong>智能体之所以能「做事」，是因为背后接了真实工具。没有工具，模型再聪明也只能靠已有知识猜。</div>
+      </section>
+      <section class="slide" data-id="prep-prompt" data-label="1.3.1 指令模板" data-group="1.3.1 准备工作">
+
+<div class="slide-sub">§ 1.3.1 · 提示工程</div>
+<h2 class="slide-title">指令模板：智能体的「说明书」</h2>
+<p>驱动真实 LLM 的关键在于<strong>提示工程（Prompt Engineering）</strong>。指令模板告诉 LLM：扮演什么角色、拥有哪些工具、如何格式化思考和行动。它作为 <code>system_prompt</code> 传递给 LLM。</p>
+<p>不是随便写「你是旅行助手」就够。还要告诉它：有哪些工具、每次输出长什么样、何时继续、何时结束。</p>
+<div class="code-block">AGENT_SYSTEM_PROMPT = """
+你是一个智能旅行助手。你的任务是分析用户的请求，并使用可用工具一步步地解决问题。
+
+# 可用工具:
+- `get_weather(city: str)`: 查询指定城市的实时天气。
+- `get_attraction(city: str, weather: str)`: 根据城市和天气搜索推荐的旅游景点。
+
+# 输出格式要求:
+你的每次回复必须严格遵循以下格式，包含一对Thought和Action：
+
+Thought: [你的思考过程和下一步计划]
+Action: [你要执行的具体行动]
+
+Action的格式必须是以下之一：
+1. 调用工具：function_name(arg_name="arg_value")
+2. 结束任务：Finish[最终答案]
+
+# 重要提示:
+- 每次只输出一对Thought-Action
+- Action必须在同一行，不要换行
+- 当收集到足够信息可以回答用户问题时，必须使用 Action: Finish[最终答案] 格式结束
+"""</div>
+      </section>
+      <section class="slide" data-id="prep-prompt-why" data-label="提示词干了三件事" data-group="1.3.1 准备工作">
+
+<div class="slide-sub">§ 1.3.1 · 提示词工程解读</div>
+<h2 class="slide-title">这段 Prompt 到底干了什么？</h2>
+<p>从工程角度看，system prompt 干了三件非常重要的事：</p>
+<ol>
+<li><strong>限定角色</strong>——避免模型跑偏成闲聊或无关助手</li>
+<li><strong>暴露工具</strong>——让模型知道自己有哪些手段可用</li>
+<li><strong>强制输出格式</strong>——方便后续程序用正则/解析器接住</li>
+</ol>
+<p>三件事少任何一件，系统稳定性都会明显下降。</p>
+<div class="callout" data-label="新手易忽略">
+<ul>
+<li>「每次只输出一对 Thought-Action」——防止模型一次吐多步导致解析混乱</li>
+<li>Finish 格式——给循环一个明确出口</li>
+<li>工具签名写清参数名——降低乱填参数概率</li>
+</ul></div>
+      </section>
+      <section class="slide" data-id="tool-weather" data-label="工具1 · 查天气" data-group="1.3.1 准备工作">
+
+<div class="slide-sub">§ 1.3.1 · 工具 1</div>
+<h2 class="slide-title">get_weather：查询真实天气</h2>
+<p>使用免费服务 <code>wttr.in</code>，以 JSON 返回指定城市天气。读函数时重点看三件事：如何发请求、如何提取关键字段、如何把机器数据整理成模型易懂的自然语言。</p>
+<div class="code-block">import requests
+
+def get_weather(city: str) -> str:
+    url = f"https://wttr.in/{city}?format=j1"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        current = data['current_condition'][0]
+        weather_desc = current['weatherDesc'][0]['value']
+        temp_c = current['temp_C']
+        return f"{city}当前天气:{weather_desc}，气温{temp_c}摄氏度"
+    except requests.exceptions.RequestException as e:
+        return f"错误:查询天气时遇到网络问题 - {e}"
+    except (KeyError, IndexError) as e:
+        return f"错误:解析天气数据失败，可能是城市名称无效 - {e}"</div>
+<div class="note">错误也返回字符串而不是直接崩掉：智能体拿到错误后还可继续思考（换参数、提示用户、或 Finish 并解释）。</div>
+      </section>
+      <section class="slide" data-id="tool-attraction" data-label="工具2 · 荐景点" data-group="1.3.1 准备工作">
+
+<div class="slide-sub">§ 1.3.1 · 工具 2</div>
+<h2 class="slide-title">get_attraction：按天气搜景点</h2>
+<p>根据城市和天气，用 Tavily Search API 搜索并返回优化后的景点推荐。注意：它接收的不是「城市」一个参数，而是「城市 + 天气」——把前一轮结果带进下一轮，这就是多步任务雏形。</p>
+<div class="code-block">def get_attraction(city: str, weather: str) -> str:
+    api_key = os.environ.get("TAVILY_API_KEY")
+    if not api_key:
+        return "错误:未配置TAVILY_API_KEY环境变量。"
+    tavily = TavilyClient(api_key=api_key)
+    query = f"'{city}' 在'{weather}'天气下最值得去的旅游景点推荐及理由"
+    response = tavily.search(query=query, search_depth="basic", include_answer=True)
+    if response.get("answer"):
+        return response["answer"]
+    # ... 格式化 results 或返回未找到 ...</div>
+<div class="code-block">available_tools = {
+    "get_weather": get_weather,
+    "get_attraction": get_attraction,
+}</div>
+<p>工具挂进同一张表后，主循环可变通用：模型输出工具名，系统按名查找执行。</p>
+      </section>
+      <section class="slide" data-id="llm-client" data-label="1.3.2 接入大模型" data-group="1.3.2 接入 LLM">
+
+<div class="slide-sub">§ 1.3.2</div>
+<h2 class="slide-title">OpenAICompatibleClient：模型适配层</h2>
+<p>许多 LLM 服务商（OpenAI、Azure、Ollama、vLLM 等）遵循与 OpenAI API 相似的接口规范。我们实现通用客户端，连接到任何兼容服务。</p>
+<div class="code-block">from openai import OpenAI
+
+class OpenAICompatibleClient:
+    def __init__(self, model: str, api_key: str, base_url: str):
+        self.model = model
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
+
+    def generate(self, prompt: str, system_prompt: str) -> str:
+        messages = [
+            {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': prompt}
+        ]
+        response = self.client.chat.completions.create(
+            model=self.model, messages=messages, stream=False)
+        return response.choices[0].message.content</div>
+<p>实例化需要：<code>API_KEY</code>、<code>BASE_URL</code>、<code>MODEL_ID</code>。业务循环不关心底层是哪家——只关心「给提示词，能否返回输出」。这种封装便于换模型、做 AB、接本地部署。</p>
+      </section>
+      <section class="slide" data-id="main-loop" data-label="1.3.3 主循环精读" data-group="1.3.3 行动循环">
+
+<div class="slide-sub">§ 1.3.3</div>
+<h2 class="slide-title">执行行动循环：最小 Agent 怎么跑</h2>
+<p>读代码时一直问自己四个问题：① 上下文怎么累计？② 模型输出后怎么解析？③ 工具怎么被真正执行？④ 结果怎么回流？</p>
+<div class="code-block">user_prompt = "你好，请帮我查询一下今天北京的天气，然后根据天气推荐一个合适的旅游景点。"
+prompt_history = [f"用户请求: {user_prompt}"]
+
+for i in range(5):  # 最大循环次数护栏
+    full_prompt = "\n".join(prompt_history)
+    llm_output = llm.generate(full_prompt, system_prompt=AGENT_SYSTEM_PROMPT)
+    # 截断多余 Thought-Action；解析 Action
+    # 若 Finish[...] → break
+    # 若工具调用 → available_tools[name](**kwargs)
+    # Observation 追加回 prompt_history</div>
+<ul>
+<li><code>prompt_history</code> = 短期工作记忆</li>
+<li>正则截出 Thought+Action，并解析工具名与参数</li>
+<li>Finish 是出口；工具结果包装成 Observation 回流</li>
+</ul>
+      </section>
+      <section class="slide" data-id="main-loop-guards" data-label="护栏 · 截断与上限" data-group="1.3.3 行动循环">
+
+<div class="slide-sub">§ 1.3.3 · 工程细节</div>
+<h2 class="slide-title">为什么要最大轮次和格式校验？</h2>
+<details class="expand-card" open><summary>for i in range(5) 的意义</summary>
+<div class="expand-body"><p>真实模型可能跑偏、重复尝试、或在某状态兜圈子。不给上限，系统可能无限循环——烧钱、占资源、永远不交付。</p></div></details>
+<details class="expand-card"><summary>输出截断与格式校验</summary>
+<div class="expand-body"><p>模型再聪明也不保证每次按格式输出。Agent 工程现实：<strong>你不能假设模型永远听话，必须加护栏。</strong>解析器、校验器、重试、fallback 不是多余代码，而是让原型变成可用系统的关键部分。</p></div></details>
+<div class="analogy">把 Agent 想成实习生：能力强，但需要工单格式、截止时间和异常上报制度。</div>
+      </section>
+      <section class="slide" data-id="case-rounds" data-label="1.3.4 三轮案例分析" data-group="1.3.4 运行案例">
+
+<div class="slide-sub">§ 1.3.4</div>
+<h2 class="slide-title">三轮跑通：四个核心能力</h2>
+<details class="round" open><summary>循环 1 · 任务分解</summary>
+<div class="body"><div class="code-block">Thought: 首先需要获取北京今天的天气情况……
+Action: get_weather(city="北京")
+Observation: 北京当前天气:Sunny，气温26摄氏度</div>
+<p>没有急着直接给答案，先意识到缺少关键信息。</p></div></details>
+<details class="round"><summary>循环 2 · 上下文承接 + 工具调用</summary>
+<div class="body"><div class="code-block">Thought: 已知晴朗温度适中，基于此推荐景点……
+Action: get_attraction(city="北京", weather="Sunny")
+Observation: ……颐和园……长城……</div>
+<p>把上一轮天气结果作为条件继续推进。</p></div></details>
+<details class="round"><summary>循环 3 · 结果合成与结束</summary>
+<div class="body"><div class="code-block">Action: Finish[今天北京……推荐颐和园或长城……]</div>
+<p>判断信息已够，收束成最终回答——不只会用工具，还会决定何时停止。</p></div></details>
+      </section>
+      <section class="slide" data-id="case-four-skills" data-label="案例提炼 · 四项能力" data-group="1.3.4 运行案例">
+
+<div class="slide-sub">§ 1.3.4 · 提炼</div>
+<h2 class="slide-title">这个小案例已经包含什么？</h2>
+<div class="goals">
+  <div class="goal"><div class="goal-n">01</div><p><strong>任务分解</strong>——先查天气再荐景点，而不是一步空想</p></div>
+  <div class="goal"><div class="goal-n">02</div><p><strong>工具调用</strong>——真正执行 get_weather / get_attraction</p></div>
+  <div class="goal"><div class="goal-n">03</div><p><strong>上下文理解</strong>——weather 参数来自上一轮 Observation</p></div>
+  <div class="goal"><div class="goal-n">04</div><p><strong>结果合成</strong>——Finish 时整合天气与景点给人可读答案</p></div>
+</div>
+<div class="note">正是通过循环不断迭代，智能体才把模糊用户意图，转化为一系列具体可执行步骤并最终达成目标。后面 LangChain、LlamaIndex、LangGraph、AutoGen 等多是在帮你把这套循环写得更稳、更大、更可控。</div>
+      </section>
+      <section class="slide" data-id="flash-loop" data-label="闪卡 · Loop 与四层" data-group="1.3 动手体验">
+
+<div class="slide-sub">概念速记</div>
+<h2 class="slide-title">闪卡：Loop 与工程四层</h2>
+<div class="flash-wrap" id="flash2" data-cards='[
+  {"q":"Agent Loop 四步口语化怎么说？","a":"先看，再想，再做，再根据结果继续看（感知→思考→行动→观察）。"},
+  {"q":"最小可运行 Agent 可拆哪四层？","a":"角色层、工具层、循环层、终止层。"},
+  {"q":"prompt_history 扮演什么角色？","a":"短期工作记忆：按时间累计用户请求、模型输出、Observation。"},
+  {"q":"为什么要 max steps？","a":"防止跑偏/死循环导致成本失控与永不交付。"},
+  {"q":"Finish 与工具调用的差别？","a":"工具调用继续改变环境；Finish 表示信息足够，输出最终答案并结束循环。"}
+]'>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-meta"><span class="flash-idx"></span>
+    <div class="flash-controls">
+      <button class="btn" type="button" onclick="event.stopPropagation(); moveFlash('flash2',-1)">上一张</button>
+      <button class="btn" type="button" onclick="event.stopPropagation(); moveFlash('flash2',1)">下一张</button>
+    </div>
+  </div>
+</div>
+      </section>
+      <section class="slide" data-id="quiz-13" data-label="自测 · 1.3 节" data-group="1.3 动手体验">
+
+<div class="slide-sub">问答检测 · 1.3</div>
+<h2 class="slide-title">自测：动手案例</h2>
+<div class="quiz-score" id="score-q13"></div>
+<div class="quiz-item" data-quiz="q13" data-answer="1">
+  <h4>1. system prompt 最不该缺少的是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">模型参数量宣传语</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">角色、可用工具、输出格式与结束条件</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">与任务无关的长篇小说</button>
+  <div class="quiz-explain">角色+工具+格式+结束条件，是可解析半结构化智能体的底座。</div>
+</div>
+<div class="quiz-item" data-quiz="q13" data-answer="0">
+  <h4>2. get_attraction(city, weather) 为何带 weather？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">把上一轮观察带入下一轮，形成多步依赖</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">纯属多余参数</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">为了让函数更长</button>
+  <div class="quiz-explain">多步任务的关键：条件来自先前 Observation。</div>
+</div>
+<div class="quiz-item" data-quiz="q13" data-answer="2">
+  <h4>3. 没有最大循环次数，最可能？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">一定更快完成</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">成本必然下降</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">可能死循环/反复试错导致成本与延迟失控</button>
+  <div class="quiz-explain">护栏缺失时，跑偏与循环是真实风险。</div>
+</div>
+      </section>
+      <section class="slide" data-id="s14-intro" data-label="1.4 协作模式导读" data-group="1.4 协作模式">
+
+<div class="slide-sub">§ 1.4</div>
+<h2 class="slide-title">不是所有软件都该做成 Agent</h2>
+<p class="lead">学到这里容易踩坑：智能体概念很吸引人，看上去很「高级」，于是以为系统越自主越先进。真实工程讲究的是稳定、合适、划算。</p>
+<p>基于智能体在任务中的角色和自主性程度，协作模式主要分两种：① 作为高效工具，深度融入工作流；② 作为自主协作者，与其他智能体协作完成复杂目标。然后必须讲清 Workflow 与 Agent 的边界。</p>
+<div class="callout" data-label="本节地图">
+<ol>
+<li>1.4.1 作为开发者工具（Copilot / Cursor 等）</li>
+<li>1.4.2 作为自主协作者（CrewAI / MetaGPT / LangGraph 等）</li>
+<li>1.4.3 Workflow vs Agent</li>
+</ol></div>
+      </section>
+      <section class="slide" data-id="tool-mode" data-label="1.4.1 开发者工具模式" data-group="1.4.1 开发者工具">
+
+<div class="slide-sub">§ 1.4.1</div>
+<h2 class="slide-title">作为开发者工具的智能体</h2>
+<p>在这种模式下，智能体被深度集成到开发者工作流中，增强而非取代开发者。通过自动化繁琐重复任务，让人更专注创造性核心工作。人机协同提升效率与质量。</p>
+<ul>
+<li>帮你补全代码、解释报错、查 API 文档</li>
+<li>生成测试样例、重构重复逻辑</li>
+<li>在大型代码库里定位问题</li>
+</ul>
+<div class="note">主导权仍主要在人：人定义目标、判断质量、做最后决策；Agent 接走繁琐、重复、搜索型、草稿型工作。</div>
+<div class="analogy">像实习生先做辅助——风险更低、可控更强、落地门槛更小。</div>
+      </section>
+      <section class="slide" data-id="tool-products" data-label="Copilot / Claude / Trae / Cursor" data-group="1.4.1 开发者工具">
+
+<div class="slide-sub">§ 1.4.1 · 产品对照</div>
+<h2 class="slide-title">几款典型 AI 编程辅助工具</h2>
+<details class="expand-card" open><summary>GitHub Copilot</summary>
+<div class="expand-body"><p>GitHub 与 OpenAI 联合开发，深度集成 VS Code 等编辑器，以强大代码自动补全闻名，可提供整行甚至函数块建议。近年通过 Copilot Chat 扩展对话式编程。</p></div></details>
+<details class="expand-card"><summary>Claude Code</summary>
+<div class="expand-body"><p>Anthropic 的 AI 编程助手，通过自然语言在终端高效完成编码。能理解完整代码库结构，执行编辑、测试、调试；支持 headless 模式用于 CI、pre-commit、构建脚本等自动化。</p></div></details>
+<details class="expand-card"><summary>Trae</summary>
+<div class="expand-body"><p>新兴工具，专注智能代码生成与优化；轻量快速，适合频繁迭代与快速原型。</p></div></details>
+<details class="expand-card"><summary>Cursor</summary>
+<div class="expand-body"><p>AI 原生代码编辑器——不是在现有编辑器上「加 AI」，而是设计之初就以 AI 交互为核心。强调理解整个代码库上下文，支持更深层次问答、重构与调试。</p></div></details>
+<div class="note">共同趋势：AI 深度融入软件开发全生命周期，通过人机协同工作流重塑效率边界与开发范式。</div>
+      </section>
+      <section class="slide" data-id="collab-mode" data-label="1.4.2 自主协作者" data-group="1.4.2 自主协作者">
+
+<div class="slide-sub">§ 1.4.2</div>
+<h2 class="slide-title">作为自主协作者的智能体</h2>
+<p>第二种模式把自动化程度提升到新层次：我们不再手把手指导每一步，而是将高层级目标委托给它。智能体像真正的项目成员，独立规划、推理、执行和反思，直到交付成果。</p>
+<p>这标志着与 AI 的关系从「命令-执行」演变为「目标-委托」。智能体不再只是被动工具，而是主动的目标追求者。</p>
+<div class="analogy">你不再说「先查天气再查酒店再给我行程」，而是说：「做一个适合亲子的三天厦门方案，预算 5000 以内。」</div>
+<div class="note">自主性越高，越难调、难控、难保证稳定——能力更强，工程要求也更高。并非「更高级所以一定更好」。</div>
+      </section>
+      <section class="slide" data-id="collab-arch" data-label="自主协作架构范式" data-group="1.4.2 自主协作者">
+
+<div class="slide-sub">§ 1.4.2 · 架构</div>
+<h2 class="slide-title">从 BabyAGI 到 LangGraph：三条主流路线</h2>
+<p>早期 BabyAGI、AutoGPT，到更成熟的 CrewAI、AutoGen、MetaGPT、LangGraph、AgentScope……实现千差万别，架构范式大致可归为：</p>
+<details class="expand-card" open><summary>1. 单智能体自主循环</summary>
+<div class="expand-body"><p>如 AgentGPT 代表的模式：通用智能体通过「思考-规划-执行-反思」闭环自我提示迭代，完成开放式高层目标。结构直接，适合展示自主闭环。</p></div></details>
+<details class="expand-card"><summary>2. 多智能体协作</summary>
+<div class="expand-body"><ul>
+<li><strong>角色扮演式对话：</strong>如 CAMEL——「程序员」与「产品经理」按协议协同</li>
+<li><strong>组织化工作流：</strong>如 MetaGPT、CrewAI——模拟虚拟团队与 SOP，层级/顺序协作产出代码库或研究报告</li>
+<li><strong>灵活对话网络：</strong>AutoGen、AgentScope 允许自定义复杂交互</li>
+</ul></div></details>
+<details class="expand-card"><summary>3. 高级控制流架构</summary>
+<div class="expand-body"><p>如 LangGraph：把执行过程建模为状态图（State Graph），更灵活可靠地实现循环、分支、回溯与人工介入。</p></div></details>
+      </section>
+      <section class="slide" data-id="collab-risks" data-label="高自主的风险清单" data-group="1.4.2 自主协作者">
+
+<div class="slide-sub">§ 1.4.2 · 风险</div>
+<h2 class="slide-title">听起来很强，也可能翻车</h2>
+<p>一个能自主调用十个工具、运行多轮计划的 Agent，听起来很强，但也更可能：</p>
+<ul>
+<li>误解任务</li>
+<li>调错工具</li>
+<li>在错误分支里越走越远</li>
+<li>成本失控</li>
+<li>结果不可复现</li>
+</ul>
+<div class="callout" data-label="设计提醒">
+<p style="margin:0">后续章节会比较不同框架的差异与优势。现在先建立判断：选协作模式时，同时评估能力收益与工程成本。</p>
+</div>
+      </section>
+      <section class="slide" data-id="wf-vs-agent" data-label="1.4.3 Workflow vs Agent" data-group="1.4.3 Workflow vs Agent">
+
+<div class="slide-sub">§ 1.4.3</div>
+<h2 class="slide-title">Workflow 和 Agent 的差异</h2>
+<p>尽管都旨在实现任务自动化，底层逻辑、核心特征和适用场景截然不同。</p>
+<div class="callout" data-label="先记一句">
+<p style="margin:0;color:var(--paper)"><strong>Workflow 是让 AI（或系统）按部就班执行指令；Agent 则是赋予自由度去自主达成目标。</strong></p>
+</div>
+<p>更口语：<strong>Workflow 把路径提前写好；Agent 把目标给出来，再让系统动态决定路径。</strong></p>
+<div class="fig"><img src="https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/1-figures/1757242319667-18.png" alt="图 1.6 Workflow 和 Agent 的差异"/><div class="fig-cap">图 1.6 Workflow 和 Agent 的差异</div></div>
+      </section>
+      <section class="slide" data-id="wf-example" data-label="Workflow 报销例子" data-group="1.4.3 Workflow vs Agent">
+
+<div class="slide-sub">§ 1.4.3 · Workflow</div>
+<h2 class="slide-title">工作流：精确、静态的流程图</h2>
+<p>工作流是传统自动化范式，核心是对一系列任务或步骤进行<strong>预先定义的、结构化的编排</strong>。规定在何种条件下、以何种顺序执行哪些操作。</p>
+<details class="expand-card" open><summary>费用报销审批</summary>
+<div class="expand-body"><ol>
+<li>员工提交报销单（触发）</li>
+<li>金额 &lt; 500：部门经理审批</li>
+<li>金额 &gt; 500：经理后再到财务总监</li>
+<li>通过后通知财务打款</li>
+</ol>
+<p>每一步、每一个判断条件都被精确预先设定。</p></div></details>
+<ul>
+<li><strong>优点：</strong>稳定、可审计、结果可预测、易控风险</li>
+<li><strong>前提：</strong>对流程已很清楚，场景变化相对有限</li>
+</ul>
+      </section>
+      <section class="slide" data-id="agent-example" data-label="Agent 动态推理例子" data-group="1.4.3 Workflow vs Agent">
+
+<div class="slide-sub">§ 1.4.3 · Agent</div>
+<h2 class="slide-title">Agent：目标导向的动态推理</h2>
+<p>基于 LLM 的智能体是具备自主性、以目标为导向的系统。不仅执行预设指令，还能在一定程度上理解环境、推理、制定计划，并动态采取行动。LLM 扮演「大脑」。</p>
+<p>仍以旅行助手指令为例：「查询今天北京天气，然后根据天气推荐合适旅游景点。」</p>
+<ol>
+<li><strong>规划与工具调用：</strong>拆成查天气 + 荐景点；自主选天气 API</li>
+<li><strong>推理与决策：</strong>若返回「晴朗微风」→ 推理「适合户外」→ 筛选户外景点</li>
+<li><strong>生成结果：</strong>综合信息给出人性化回答</li>
+</ol>
+<div class="note">没有写死 <code>if 天气=晴天 then 推荐颐和园</code>。若是雨天，会自主推理并推荐博物馆等室内场所。<strong>基于实时信息动态推理决策，正是 Agent 核心价值。</strong></div>
+      </section>
+      <section class="slide" data-id="wf-agent-compare" data-label="对照卡 · 何时用谁" data-group="1.4.3 Workflow vs Agent">
+
+<div class="slide-sub">§ 1.4.3 · 对照</div>
+<h2 class="slide-title">不是谁更高级，是谁更合适</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>更适合 Workflow</h3>
+    <ul><li>规则明确、流程固定</li><li>合规要求高、出错代价大</li>
+    <li>需要可审计、可复现</li><li>例：报销、权限审批、固定退款规则</li></ul></div>
+  <div class="compare-col b"><h3>更适合 Agent</h3>
+    <ul><li>目标明确但路径难完全预定义</li><li>需要灵活判断与多步探索</li>
+    <li>环境不确定、信息需动态补全</li><li>例：开放式旅行规划、复杂排障</li></ul></div>
+</div>
+<div class="analogy">越来越常见：让 Workflow 负责兜底和护栏，让 Agent 负责局部灵活决策；关键节点保留人工审核。</div>
+      </section>
+      <section class="slide" data-id="scheme-c" data-label="方案 C · 混合设计" data-group="1.4.3 Workflow vs Agent">
+
+<div class="slide-sub">§ 1.4.3 · 混合</div>
+<h2 class="slide-title">方案 C：扬长避短的组合拳</h2>
+<p>习题里电商退款会问：Workflow（方案 A）与全自主 Agent（方案 B）之外，是否存在方案 C？</p>
+<ul>
+<li>大流程由 Workflow 控制（时限、金额档位、特殊商品禁退等硬规则）</li>
+<li>需要理解文本、判断意图、生成协商话术的节点交给 Agent</li>
+<li>高金额 / 高风险节点保留人工审核</li>
+</ul>
+<div class="callout" data-label="成熟倾向">
+<p style="margin:0">这通常比「全 Workflow」更灵活，也比「全 Agent」更稳。真正成熟的系统设计，不是盲目追求「更自主」，而是找到「刚刚好的自主性」。</p>
+</div>
+      </section>
+      <section class="slide" data-id="quiz-14" data-label="自测 · 1.4 节" data-group="1.4 协作模式">
+
+<div class="slide-sub">问答检测 · 1.4</div>
+<h2 class="slide-title">自测：协作与边界</h2>
+<div class="quiz-score" id="score-q14"></div>
+<div class="quiz-item" data-quiz="q14" data-answer="1">
+  <h4>1. 关于「自主协作者」模式，正确的是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">自主性越高一定越好，工程成本会自动下降</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">能力更强，但更难调、难控，工程要求更高</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只适合替代所有 Workflow，不应混合</button>
+  <div class="quiz-explain">自主↑ → 风险与工程复杂度↑；成熟设计常混合护栏与灵活点。</div>
+</div>
+<div class="quiz-item" data-quiz="q14" data-answer="0">
+  <h4>2. 规则明确、合规要求高、出错代价大，通常更适合？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">Workflow</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">完全无护栏的全自主 Agent</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只用聊天、不执行任何动作</button>
+  <div class="quiz-explain">高风险固定流程优先稳定可审计的 Workflow。</div>
+</div>
+<div class="quiz-item" data-quiz="q14" data-answer="2">
+  <h4>3. 「方案 C」较贴近的描述是？</h4>
+  <button type="button" class="quiz-opt" data-i="0" onclick="answerQuiz(this)">全部步骤由模型自由决定，不做任何流程约束</button>
+  <button type="button" class="quiz-opt" data-i="1" onclick="answerQuiz(this)">完全禁止模型参与任何判断</button>
+  <button type="button" class="quiz-opt" data-i="2" onclick="answerQuiz(this)">大流程 Workflow 控，局部节点交 Agent，关键点人工审</button>
+  <div class="quiz-explain">护栏 + 局部灵活 + 人工审核，是常见成熟组合。</div>
+</div>
+      </section>
+      <section class="slide" data-id="summary" data-label="本章小结" data-group="总结与习题">
+
+<div class="slide-sub">本章小结</div>
+<h2 class="slide-title">带走五个核心判断</h2>
+<ol>
+<li><strong>核心不在会聊天，而在围绕目标形成闭环</strong>（感知—判断—行动—反馈）。</li>
+<li><strong>现代 Agent 很新，思想不新</strong>——站在反射→模型→目标→效用→学习的历史积累上。</li>
+<li><strong>LLM 最大变化：更能接住模糊任务</strong>，而不只是「更会说」。</li>
+<li><strong>运转本质是一个循环</strong>；多数框架在增强它，而非推翻它。</li>
+<li><strong>不是所有自动化都该做成 Agent</strong>——找到「刚刚好的自主性」。</li>
+</ol>
+<div class="callout" data-label="生活里练手">
+<ul>
+<li>它的环境是什么？能看到什么？能做什么？</li>
+<li>按固定流程执行，还是会动态决策？</li>
+<li>更像 Workflow，还是更像 Agent？</li>
+</ul></div>
+      </section>
+      <section class="slide" data-id="limits" data-label="局限 · 幻觉与评估" data-group="总结与习题">
+
+<div class="slide-sub">补充 · 新手必知</div>
+<h2 class="slide-title">能力很强，但局限真实存在</h2>
+<details class="expand-card" open><summary>为什么会「幻觉」？</summary>
+<div class="expand-body"><p>模型本质是统计模式生成，不保证事实正确；工具缺失、观察被误解、提示压力「必须给答案」时，更容易一本正经说错。神经符号中的「系统1」感很强，「系统2」校验不足时尤甚。</p></div></details>
+<details class="expand-card"><summary>没有最大循环次数会怎样？</summary>
+<div class="expand-body"><p>可能陷入重复调用、无效探索或错误分支越走越远——成本与延迟失控，甚至永不 Finish。</p></div></details>
+<details class="expand-card"><summary>如何评估「智能」？仅准确率够吗？</summary>
+<div class="expand-body"><p>不够。还应看任务成功率、步数/成本、鲁棒性、可恢复性、安全性、用户满意度、是否可审计等。Agent 是系统，不是单次分类器。</p></div></details>
+      </section>
+      <section class="slide" data-id="checklist" data-label="自测清单" data-group="总结与习题">
+
+<div class="slide-sub">自测清单</div>
+<h2 class="slide-title">勾选：我真的懂了吗？</h2>
+<p>点击条目标记完成。建议全部勾完再结束本章。</p>
+<ul class="check-list" id="checklist">
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能用白话说出智能体与聊天机器人、自动化脚本的差别</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能解释环境 / 传感器 / 执行器 / 自主性</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能按演进线说出传统五类智能体各自多了什么能力</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能对比传统 Agent 与 LLM Agent 的核心差异</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能从三个维度给智能体分类（架构 / 反应性 / 知识表示）</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能用 PEAS 描述任务环境，并说出部分可观察/随机/动态等特性</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能口述 Agent Loop，并解释 TAO 接口层</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能说明最小 Agent 四层与案例三轮分别展示了什么</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能判断何时用 Workflow、何时用 Agent、如何混合</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能说出幻觉、死循环风险与评估不止准确率</span></li>
+</ul>
+      </section>
+      <section class="slide" data-id="ex1" data-label="习题1 · 谁是智能体" data-group="总结与习题">
+
+<div class="slide-sub">习题 1</div>
+<h2 class="slide-title">四个 case：算不算智能体？什么类型？</h2>
+<p>可从多个分类维度分析。部分无标准答案，重在批判性思考。</p>
+<details class="expand-card" open><summary>case A · 超级计算机（仅峰值算力极高）</summary>
+<div class="expand-body"><p>通常<strong>不算</strong>智能体：算力平台 ≠ 面向目标的感知—行动自主闭环。缺环境交互目标与自主决策时，只是计算资源。</p></div></details>
+<details class="expand-card"><summary>case B · 特斯拉高速遇障毫秒决策</summary>
+<div class="expand-body"><p><strong>是</strong>智能体成分很强：感知障碍、执行刹车/变道。时间维度偏<strong>反应式</strong>；完整自动驾驶常含模型与规划，可作<strong>混合式</strong>分析。</p></div></details>
+<details class="expand-card"><summary>case C · AlphaGo 规划数十步</summary>
+<div class="expand-body"><p><strong>是</strong>：强规划 / 效用与<strong>学习型</strong>（RL）特征明显。</p></div></details>
+<details class="expand-card"><summary>case D · ChatGPT 智能客服查单解诉</summary>
+<div class="expand-body"><p>若能查订单、分析、给方案并可能调工具，则接近 <strong>LLM 智能体</strong>；若仅闲聊无工具无闭环，则更偏聊天。关键看是否具备感知—行动闭环。</p></div></details>
+      </section>
+      <section class="slide" data-id="ex2" data-label="习题2 · 健身教练 PEAS" data-group="总结与习题">
+
+<div class="slide-sub">习题 2</div>
+<h2 class="slide-title">智能健身教练：写出 PEAS + 环境特性</h2>
+<p>能力：可穿戴监测心率与强度；按减脂/增肌/耐力动态调计划；运动中语音指导与动作纠正；评估效果并给饮食建议。</p>
+<div class="peas">
+  <div class="peas-item"><div class="letter">P</div><h4>Performance</h4><p>目标达成度、受伤风险、依从性、用户满意度、计划调整合理性……</p></div>
+  <div class="peas-item"><div class="letter">E</div><h4>Environment</h4><p>用户身体状态、器械/场地、日程、饮食条件、其他干扰</p></div>
+  <div class="peas-item"><div class="letter">A</div><h4>Actuators</h4><p>语音指导、计划更新、提醒推送、动作纠正提示……</p></div>
+  <div class="peas-item"><div class="letter">S</div><h4>Sensors</h4><p>心率/加速度等可穿戴、用户反馈、历史训练日志……</p></div>
+</div>
+<div class="note">环境特性提示：部分可观察（无法完全知道疼痛主观感受）、随机（状态波动）、动态（疲劳累积）、序贯（今日训练影响明日）。请自行展开完整作答。</div>
+      </section>
+      <section class="slide" data-id="ex3" data-label="习题3 · 退款 Workflow/Agent" data-group="总结与习题">
+
+<div class="slide-sub">习题 3</div>
+<h2 class="slide-title">售后退款：A / B / C 怎么选？</h2>
+<details class="expand-card" open><summary>方案 A Workflow</summary>
+<div class="expand-body"><p>7 天内按金额档位自动/客服/主管；特殊商品禁退；超时只能人工。优点：稳、可审计；缺点：难处理模糊例外与复杂话术。</p></div></details>
+<details class="expand-card"><summary>方案 B 全自主 Agent</summary>
+<div class="expand-body"><p>理解政策、分析历史行为、评估商品、自主批退。优点：灵活；缺点：合规风险、不可复现、成本与错误代价可能很高。</p></div></details>
+<details class="expand-card"><summary>方案 C 混合（推荐思考方向）</summary>
+<div class="expand-body"><p>硬规则走 Workflow；意图理解/协商话术走 Agent；高金额人工审。请认真分析优劣并给出你作为负责人的倾向。</p></div></details>
+      </section>
+      <section class="slide" data-id="ex4-6" data-label="习题4–6 · 扩展与局限" data-group="总结与习题">
+
+<div class="slide-sub">习题 4–6</div>
+<h2 class="slide-title">记忆 / 备选 / 反思 · 双系统 · 局限</h2>
+<details class="expand-card" open><summary>习题 4 · 旅行助手加能力</summary>
+<div class="expand-body"><ul>
+<li><strong>记忆：</strong>把用户偏好写入可检索的 memory，并在 Thought 中引用</li>
+<li><strong>门票售罄：</strong>Observation 含售罄 → 再 Action 搜备选，而非直接失败</li>
+<li><strong>连续拒绝 3 次：</strong>计数触发反思策略（换风格/问澄清/降低约束）</li>
+</ul><p>提示：都可通过扩展 TAO 循环与状态变量实现。</p></div></details>
+<details class="expand-card"><summary>习题 5 · 系统1 / 系统2 落地</summary>
+<div class="expand-body"><p>选场景（医疗/法律/风控）：系统1做快速模式识别与初筛；系统2做规则校验、证据链与可解释决策；二者协同（如初筛后强制规则审查）。</p></div></details>
+<details class="expand-card"><summary>习题 6 · 幻觉、死循环、评估</summary>
+<div class="expand-body"><p>见「局限」页；请结合 1.3 案例书面分析，并可到 GitHub Discussions 交流。</p></div></details>
+      </section>
+      <section class="slide" data-id="refs" data-label="参考文献与下一步" data-group="总结与习题">
+
+<div class="slide-sub">收尾</div>
+<h2 class="slide-title">参考文献与下一步</h2>
+<ol>
+<li>RUSSELL S, NORVIG P. <em>Artificial Intelligence: A Modern Approach</em>. 4th ed. Pearson, 2020.</li>
+<li>KAHNEMAN D. <em>Thinking, Fast and Slow</em>. Farrar, Straus and Giroux, 2011.</li>
+</ol>
+<div class="callout" data-label="本互动教程覆盖范围">
+<p style="margin:0">已按原书展开：1.1–1.1.3、1.2.1–1.2.3、1.3.1–1.3.4、1.4.1–1.4.3、本章小结、习题 1–6 要点与参考文献。代码以精读讲解为主，完整可运行源码见课程仓库 <code style="font-family:var(--font-mono);color:var(--cyan)">code/</code> 对应章节。</p>
+</div>
+<p style="margin-top:1.25rem">新手向详细文字版见同目录上级：<code style="font-family:var(--font-mono);color:var(--cyan)">docs/chapter1/第一章 初识智能体-学习版.md</code></p>
+<button class="btn btn-primary" type="button" onclick="goTo(0)" style="margin-top:0.75rem">回到封面</button>
+      </section>
+      <section class="slide" data-id="script-vs-agent" data-label="脚本 vs 智能体对照" data-group="1.1 什么是智能体">
+
+<div class="slide-sub">§ 1.1 · 对照加深</div>
+<h2 class="slide-title">自动化脚本和智能体差在哪？</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>自动化脚本</h3>
+    <ul><li>路径由人提前写死</li><li>分支用 if/else 穷举</li>
+    <li>遇到未覆盖情况易卡住或报错</li><li>可预测、易测试、易审计</li></ul></div>
+  <div class="compare-col b"><h3>智能体</h3>
+    <ul><li>给定目标与边界，动态选路径</li><li>可据观察改计划、换工具</li>
+    <li>更适应开放与不确定任务</li><li>需要护栏，否则可能跑偏</li></ul></div>
+</div>
+<div class="note">真实产品常是 continuum：关键合规步骤用脚本/Workflow，开放探索用 Agent。不要二元对立。</div>
+      </section>
+      <section class="slide" data-id="world-model-deep" data-label="世界模型再理解" data-group="1.1.1 传统视角">
+
+<div class="slide-sub">§ 1.1.1 · 加深</div>
+<h2 class="slide-title">World Model：为什么「看不见」也能决策？</h2>
+<p>世界模型回答的是：「当前真实世界大概处于什么状态？」它不是完整复制宇宙，而是任务相关的简化状态表示。</p>
+<ul>
+<li>维护对<strong>当前不可见</strong>对象的信念（位置、速度、是否仍存在）</li>
+<li>用传感器更新信念；传感器失效时靠预测维持连贯性</li>
+<li>为后续目标规划、效用评估提供输入状态</li>
+</ul>
+<div class="analogy">像玩《黑暗灵魂》时的小地图：不是整张大陆照片，但够你判断「我大概在哪、怪大概在哪」。</div>
+<div class="callout" data-label="连到现代 Agent">
+<p style="margin:0">LLM Agent 的 <code>prompt_history</code> / Memory，某种意义上也在扮演可读写的「工作世界状态」——记住查过什么、约束是什么、走到哪一步。</p>
+</div>
+      </section>
+      <section class="slide" data-id="utility-math-intuit" data-label="效用直觉" data-group="1.1.1 传统视角">
+
+<div class="slide-sub">§ 1.1.1 · 效用直觉</div>
+<h2 class="slide-title">「最大化期望效用」到底在说什么？</h2>
+<p>不必先啃公式。把它想成打分：每个可能结果有一个满意度分数；不确定时，按概率加权平均，再选平均分最高的行动。</p>
+<details class="expand-card" open><summary>通勤例子</summary>
+<div class="expand-body"><ul>
+<li>路线 A：快但常堵，堵车时效用很低</li>
+<li>路线 B：稍慢但稳定</li>
+<li>效用智能体不是只看「最快的那次」，而是看长期期望满意度</li>
+</ul></div></details>
+<div class="note">这也解释了为何「只达成目标」不够：目标可达的方案很多，智能体还要在冲突目标间权衡。</div>
+      </section>
+      <section class="slide" data-id="llm-not-magic" data-label="LLM 不是魔法" data-group="1.1.2 LLM 新范式">
+
+<div class="slide-sub">§ 1.1.2 · 冷静看待</div>
+<h2 class="slide-title">有了 LLM，仍然缺什么？</h2>
+<ul>
+<li><strong>工具：</strong>否则无法接触实时世界</li>
+<li><strong>状态 / 记忆：</strong>否则多步任务会失忆</li>
+<li><strong>协议与解析：</strong>否则行动无法被程序执行</li>
+<li><strong>约束与护栏：</strong>权限、预算、最大步数、人工确认</li>
+<li><strong>评估与观测：</strong>否则不知道系统变好还是变差</li>
+</ul>
+<div class="analogy">LLM 像请到一位博学但会胡说的顾问；智能体工程是给顾问配助理、电话、工单系统和审计。</div>
+      </section>
+      <section class="slide" data-id="hybrid-microloop" data-label="微循环拆解" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3 · 混合加深</div>
+<h2 class="slide-title">LLM Agent 如何把「大规划」拆成微循环？</h2>
+<p>宏大任务（三天旅行）不会一次规划到每个呼吸，而是：</p>
+<ol>
+<li>思考：当前最缺什么信息？</li>
+<li>行动：调用一个工具</li>
+<li>观察：读结果</li>
+<li>再思考：计划是否要改？下一步是什么？</li>
+</ol>
+<p>每一步都含一点「审议」（想清楚下一步）和一点「反应」（立刻根据工具结果调整）。这就是现代混合模式的灵活处。</p>
+<div class="note">代价是：步数变多、成本上升、更依赖良好的终止条件与记忆管理。</div>
+      </section>
+      <section class="slide" data-id="knowledge-bottleneck" data-label="知识获取瓶颈" data-group="1.1.3 智能体类型">
+
+<div class="slide-sub">§ 1.1.3 · 符号主义短板</div>
+<h2 class="slide-title">为什么规则系统会「突然失灵」？</h2>
+<p>符号系统强在透明，但依赖完备规则。现实充满模糊、例外、新情况——任何未覆盖分支都可能导致系统失灵。这就是<strong>知识获取瓶颈</strong>：把专家知识写成无矛盾、全覆盖规则，成本极高且几乎做不到。</p>
+<div class="compare">
+  <div class="compare-col a"><h3>规则世界</h3><ul><li>「若 VIP 且 7 天内 → …」</li><li>清晰但脆</li></ul></div>
+  <div class="compare-col b"><h3>开放世界</h3><ul><li>用户含糊投诉、照片模糊、政策灰色地带</li><li>需要学习/神经符号补洞</li></ul></div>
+</div>
+      </section>
+      <section class="slide" data-id="peas-practice" data-label="小练习 · 写个迷你 PEAS" data-group="1.2.1 PEAS">
+
+<div class="slide-sub">§ 1.2.1 · 动手想</div>
+<h2 class="slide-title">60 秒：给「智能客服退货助手」填 PEAS</h2>
+<p>先自己想，再点开对照（非唯一答案）。</p>
+<details class="expand-card"><summary>参考答案（示例）</summary>
+<div class="expand-body"><ul>
+<li><strong>P：</strong>正确率、处理时长、用户满意度、误退款率、合规率</li>
+<li><strong>E：</strong>订单系统、物流状态、退货政策、用户对话、库存</li>
+<li><strong>A：</strong>查询订单、发起退款工单、发送话术、转人工、要求补图</li>
+<li><strong>S：</strong>用户消息、订单 API、物流 API、知识库检索结果</li>
+</ul>
+<p>环境特性：部分可观察、可能多智能体（仓储/物流）、动态、序贯。</p></div></details>
+      </section>
+      <section class="slide" data-id="tao-parser" data-label="解析器为什么重要" data-group="1.2.3 感知与行动">
+
+<div class="slide-sub">§ 1.2.3 · 解析器</div>
+<h2 class="slide-title">Parser：从「说说而已」到「真的执行」</h2>
+<p>没有解析器，Action 只是一段看起来像函数调用的文字。有了解析器，系统才能：</p>
+<ul>
+<li>识别工具名与参数</li>
+<li>拒绝非法/未知工具（安全）</li>
+<li>在格式错误时返回 Observation 要求重试</li>
+<li>识别 Finish 并结束循环</li>
+</ul>
+<div class="code-block"># 概念流程
+llm_output → 正则/结构化解析 → Action
+  → 校验工具白名单 → 执行 → Observation
+  → 追加历史 → 下一轮</div>
+<div class="note">现代框架里的 Function Calling / Tool Calling，本质是把这层协议做得更稳、更标准化。</div>
+      </section>
+      <section class="slide" data-id="prompt-history-deep" data-label="工作记忆怎么长" data-group="1.3.3 行动循环">
+
+<div class="slide-sub">§ 1.3.3 · 记忆</div>
+<h2 class="slide-title">prompt_history：最小可用的短期记忆</h2>
+<p>每一轮把用户请求、模型输出、Observation 按时间追加。下一轮把历史拼成 full_prompt，相当于告诉模型「我们已经走到哪」。</p>
+<details class="expand-card" open><summary>优点</summary>
+<div class="expand-body"><p>实现简单、可打印调试、足够支撑教学级多步任务。</p></div></details>
+<details class="expand-card"><summary>局限（后面章节会扩展）</summary>
+<div class="expand-body"><ul>
+<li>上下文窗口会爆</li>
+<li>噪声 Observation 会污染决策</li>
+<li>缺少结构化状态（目标、约束、已完成子任务列表）</li>
+</ul></div></details>
+      </section>
+      <section class="slide" data-id="code-read-checklist" data-label="读主循环检查单" data-group="1.3.3 行动循环">
+
+<div class="slide-sub">§ 1.3.3 · 阅读法</div>
+<h2 class="slide-title">对着代码勾这四问</h2>
+<ul class="check-list">
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">当前上下文是怎么累计的？（prompt_history）</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">模型输出后，系统怎么解析 Thought/Action？</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">工具怎么被真正执行？（available_tools）</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">结果怎么回流？（Observation 追加）</span></li>
+  <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">如何结束？（Finish + max steps）</span></li>
+</ul>
+<div class="analogy">会勾这五问，再看复杂框架时就不容易被表面 API 吓到。</div>
+      </section>
+      <section class="slide" data-id="devtool-trend" data-label="人机协同趋势" data-group="1.4.1 开发者工具">
+
+<div class="slide-sub">§ 1.4.1 · 趋势</div>
+<h2 class="slide-title">为什么「先做工具」往往更现实？</h2>
+<ul>
+<li>风险更低：人始终在回路里做最终判断</li>
+<li>反馈更快：补全/解释立刻可见对错</li>
+<li>数据更好收集：哪些建议被接受，可反哺产品</li>
+<li>组织更容易接受：增强员工，而非一夜替换流程</li>
+</ul>
+<div class="note">这不否定自主协作者路线，而是提醒：落地顺序常常是「工具 → 半自主 → 更高自主」，而不是一步登天。</div>
+      </section>
+      <section class="slide" data-id="multiagent-roles" data-label="多智能体角色直觉" data-group="1.4.2 自主协作者">
+
+<div class="slide-sub">§ 1.4.2 · 多智能体</div>
+<h2 class="slide-title">为什么要「虚拟团队」而不只是一个全能 Agent？</h2>
+<p>复杂任务常需不同专长与互相制衡。多智能体用角色分工模拟人类团队：</p>
+<ul>
+<li>产品经理：澄清需求与验收标准</li>
+<li>工程师：实现与改代码</li>
+<li>测试：找漏洞、写用例</li>
+<li>审稿/合规：挑错与风控</li>
+</ul>
+<div class="callout" data-label="代价">
+<p style="margin:0">角色一多，协议、状态同步、冲突解决、成本都会上升。LangGraph 等控制流框架，正是为了把这些协作变得更可控。</p>
+</div>
+      </section>
+      <section class="slide" data-id="decide-framework" data-label="选型决策树" data-group="1.4.3 Workflow vs Agent">
+
+<div class="slide-sub">§ 1.4.3 · 选型</div>
+<h2 class="slide-title">一张决策树帮你选型</h2>
+<div class="layers">
+  <div class="layer"><div class="layer-n">Q1</div><div><strong>路径能否预先写清？</strong><span>能 → 偏 Workflow；不能 → 往下</span></div></div>
+  <div class="layer"><div class="layer-n">Q2</div><div><strong>出错代价是否很高？</strong><span>高 → Workflow 兜底 + 人工；低 → 可给 Agent 更多自由</span></div></div>
+  <div class="layer"><div class="layer-n">Q3</div><div><strong>是否需实时探索补信息？</strong><span>是 → Agent / 混合；否 → 固定集成即可</span></div></div>
+  <div class="layer"><div class="layer-n">Q4</div><div><strong>需要可审计解释吗？</strong><span>强需求 → 保留符号规则与日志；纯黑箱慎用</span></div></div>
+</div>
+      </section>
+      <section class="slide" data-id="glossary" data-label="术语速查" data-group="总结与习题">
+
+<div class="slide-sub">附录 · 术语</div>
+<h2 class="slide-title">本章术语速查（新手向）</h2>
+<details class="expand-card" open><summary>Agent / 智能体</summary>
+<div class="expand-body"><p>能感知环境、自主决策并通过执行器行动以达成目标的实体/系统。</p></div></details>
+<details class="expand-card"><summary>PEAS</summary>
+<div class="expand-body"><p>Performance, Environment, Actuators, Sensors——描述任务环境的经典框架。</p></div></details>
+<details class="expand-card"><summary>Agent Loop / TAO</summary>
+<div class="expand-body"><p>感知-思考-行动-观察循环；Thought-Action-Observation 是常见交互协议。</p></div></details>
+<details class="expand-card"><summary>World Model / Utility / RL</summary>
+<div class="expand-body"><p>世界模型：内部状态估计；效用：满意度度量；强化学习：用奖励从互动中学策略。</p></div></details>
+<details class="expand-card"><summary>Workflow vs Agent</summary>
+<div class="expand-body"><p>Workflow 预定义路径；Agent 目标驱动动态选路。常混合使用。</p></div></details>
+      </section>
+      <section class="slide" data-id="next-study" data-label="学完怎么接着练" data-group="总结与习题">
+
+<div class="slide-sub">学习建议</div>
+<h2 class="slide-title">把第一章「练进肌肉记忆」</h2>
+<ol>
+<li>用四要素分析一个你每天用的 App（导航/外卖/客服）</li>
+<li>给「智能健身教练」完整写一遍 PEAS（习题 2）</li>
+<li>把旅行助手主循环画成流程图，标出护栏位置</li>
+<li>设想给助手加「记忆」时，Observation 与 prompt 会怎么变</li>
+<li>读下一章前，先能用白话解释：为何谈 Agent 不只谈 LLM</li>
+</ol>
+<div class="note">详细叙述与完整代码注释见学习版 Markdown；本 HTML 负责可视化拆解与自测。</div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let idx = 0;
+const navEl = document.getElementById("nav");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const slideLabel = document.getElementById("slideLabel");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group || "章节";
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+initFlash("flash1");
+initFlash("flash2");
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  const opts = item.querySelectorAll(".quiz-opt");
+  opts.forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) {
+    scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+  }
+}
+
+const loopTexts = [
+  { t: "① 感知与思考", p: "先意识到：还缺少天气信息，不能凭空推荐。下一步应调用天气工具。" },
+  { t: "② 行动", p: "Action: get_weather(city=\"北京\") —— 真正调用外部 API 补信息。" },
+  { t: "③ 观察", p: "Observation: 今天晴天。新信息进入上下文，改变后续决策条件。" },
+  { t: "④ 再思考并行动", p: "基于「晴天」调用景点推荐工具，最后合成完整回答。一轮一轮推进，而非一次说完。" }
+];
+function showLoopStep(n) {
+  document.querySelectorAll("#loopDemo .step-btn").forEach((b, i) => {
+    b.classList.toggle("on", i === n);
+  });
+  const panel = document.getElementById("loopPanel");
+  if (panel) panel.innerHTML = `<h4>${loopTexts[n].t}</h4><p>${loopTexts[n].p}</p>`;
+}
+
+goTo(0);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第十六章 · 毕业设计 · Hello-Agents 互动教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   Aesthetic: Industrial Blueprint Laboratory · Lab 16 Capstone Signal
+   Same product line as Ch1–Ch15; graduation gold primary signal
+   ============================================================ */
+:root {
+  --ink: #0a1520;
+  --panel: #0f1e2c;
+  --panel-2: #152636;
+  --line: rgba(245, 197, 66, 0.14);
+  --line-strong: rgba(245, 197, 66, 0.36);
+  --cyan: #3da8b8;
+  --cyan-bright: #5ed4e0;
+  --signal: #f5c542;
+  --signal-bright: #ffd666;
+  --amber: #e8a84a;
+  --amber-dim: rgba(232, 168, 74, 0.14);
+  --coral: #e06b5a;
+  --mint: #6bc89a;
+  --mint-dim: rgba(107, 200, 154, 0.16);
+  --text: #e6ede9;
+  --text-dim: #9aafb8;
+  --text-mute: #6d8490;
+  --paper: #d8e4e8;
+  --radius: 2px;
+  --sidebar-w: 280px;
+  --font-display: "Oxanium", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  overflow: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 42% 14%, black 18%, transparent 72%);
+  pointer-events: none; z-index: 0; opacity: 0.75;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 48% 36% at 90% 6%, rgba(245, 197, 66, 0.18), transparent),
+    radial-gradient(ellipse 40% 45% at 8% 90%, rgba(232, 168, 74, 0.10), transparent);
+  pointer-events: none; z-index: 0;
+}
+.app {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+.sidebar {
+  background: rgba(10, 21, 32, 0.92);
+  border-right: 1px solid var(--line-strong);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px); overflow: hidden;
+}
+.brand { padding: 1.25rem 1.1rem 1rem; border-bottom: 1px solid var(--line); }
+.brand-kicker {
+  font-family: var(--font-display); font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.brand h1 {
+  font-family: var(--font-display); font-size: 1.05rem;
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+.progress-wrap { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.04em;
+}
+.progress-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--signal), var(--amber), var(--cyan));
+  transition: width 0.35s ease;
+}
+.nav {
+  flex: 1; overflow-y: auto; padding: 0.6rem 0.5rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.nav-group { margin-bottom: 0.75rem; }
+.nav-group-title {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-mute); padding: 0.4rem 0.6rem;
+}
+.nav button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 0.82rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; line-height: 1.35;
+}
+.nav button:hover {
+  color: var(--text);
+  background: rgba(245, 197, 66, 0.08);
+  border-color: var(--line);
+}
+.nav button.active {
+  color: var(--ink); background: var(--signal);
+  border-color: var(--signal-bright); font-weight: 600;
+}
+.nav button .num {
+  font-family: var(--font-display); font-size: 0.68rem;
+  opacity: 0.7; margin-right: 0.35rem;
+}
+.sidebar-foot {
+  padding: 0.75rem 1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.65rem;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.stage { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line);
+  background: rgba(15, 30, 44, 0.85); backdrop-filter: blur(6px);
+}
+.menu-btn {
+  display: none; font-family: var(--font-display);
+  background: var(--panel-2); border: 1px solid var(--line-strong);
+  color: var(--signal); padding: 0.35rem 0.65rem;
+  cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em;
+}
+.slide-label {
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-bright); flex: 1;
+}
+.nav-controls { display: flex; gap: 0.4rem; }
+.btn {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.06em; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-strong); background: var(--panel-2);
+  color: var(--text); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--radius);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--signal); color: var(--signal-bright);
+  background: rgba(245, 197, 66, 0.12);
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--ink);
+  border-color: var(--signal); font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--signal-bright); color: var(--ink);
+  border-color: var(--signal-bright);
+}
+.slides-viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1.75rem 3rem;
+  scrollbar-width: thin; scrollbar-color: var(--signal) transparent;
+}
+.slide {
+  display: none; max-width: 920px; margin: 0 auto;
+  animation: slideIn 0.45s ease both;
+}
+.slide.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.slide-sub {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 1.25rem;
+}
+.lead { font-size: 1.08rem; color: var(--paper); margin-bottom: 1.1rem; }
+p { margin-bottom: 0.9rem; color: var(--text-dim); }
+strong, b { color: var(--text); font-weight: 700; }
+.term {
+  color: var(--signal-bright);
+  border-bottom: 1px dashed rgba(244, 165, 116, 0.45);
+  cursor: help;
+}
+ul, ol { margin: 0 0 1rem 1.2rem; color: var(--text-dim); }
+li { margin-bottom: 0.4rem; }
+code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  color: var(--signal-bright); background: rgba(224,122,74,0.08);
+  padding: 0.05em 0.3em;
+}
+a { color: var(--cyan-bright); }
+.note {
+  border-left: 3px solid var(--cyan); background: rgba(61,168,184,0.1);
+  padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { color: var(--cyan-bright); }
+.callout {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; margin: 1.1rem 0; position: relative;
+}
+.callout::before {
+  content: attr(data-label); position: absolute;
+  top: -0.55rem; left: 0.9rem;
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--ink); color: var(--signal); padding: 0 0.4rem;
+}
+.analogy {
+  font-style: italic; color: var(--paper);
+  border: 1px dashed var(--line-strong); padding: 0.85rem 1rem;
+  margin: 1rem 0; background: rgba(245, 197, 66, 0.05);
+}
+.analogy::before {
+  content: "类比 · "; font-style: normal;
+  font-family: var(--font-display); font-size: 0.72rem;
+  letter-spacing: 0.1em; color: var(--cyan-bright); text-transform: uppercase;
+}
+.fig { margin: 1.25rem 0; text-align: center; }
+.fig img {
+  max-width: 100%; height: auto;
+  border: 1px solid var(--line-strong); background: var(--panel);
+}
+.fig-cap {
+  font-family: var(--font-display); font-size: 0.72rem;
+  color: var(--text-mute); margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.fig-fallback {
+  display: none; border: 1px dashed var(--line-strong);
+  background: var(--panel); padding: 1rem; text-align: left;
+  font-size: 0.88rem; color: var(--text-dim);
+}
+.fig.offline img { display: none; }
+.fig.offline .fig-fallback { display: block; }
+.cover-hero {
+  margin: 1rem 0 1.4rem; border: 1px solid var(--line-strong);
+  background: var(--panel); overflow: hidden;
+}
+.cover-hero img { width: 100%; height: auto; display: block; }
+.code-block {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  background: #071018; border: 1px solid var(--line-strong);
+  padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  color: #b8d4c8; line-height: 1.55; white-space: pre-wrap;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem; margin: 1.2rem 0;
+}
+.flip-card { perspective: 1000px; height: 168px; cursor: pointer; }
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; display: flex; flex-direction: column; justify-content: center;
+}
+.flip-face.back {
+  transform: rotateY(180deg); background: var(--panel-2);
+  border-color: var(--signal);
+}
+.flip-face h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  color: var(--signal-bright); margin-bottom: 0.35rem;
+}
+.flip-face .en {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--text-mute); margin-bottom: 0.5rem;
+}
+.flip-face p { font-size: 0.82rem; margin: 0; line-height: 1.45; }
+.flip-hint {
+  font-family: var(--font-display); font-size: 0.6rem;
+  letter-spacing: 0.1em; color: var(--text-mute);
+  margin-top: 0.6rem; text-transform: uppercase;
+}
+.expand-card {
+  border: 1px solid var(--line); background: var(--panel);
+  margin-bottom: 0.65rem;
+}
+.expand-card summary {
+  list-style: none; cursor: pointer; padding: 0.85rem 1rem;
+  font-family: var(--font-display); font-size: 0.92rem;
+  color: var(--text); display: flex; justify-content: space-between;
+  align-items: center; gap: 0.5rem;
+}
+.expand-card summary::-webkit-details-marker { display: none; }
+.expand-card summary::after {
+  content: "+"; font-family: var(--font-display);
+  color: var(--signal); font-size: 1.1rem;
+}
+.expand-card[open] summary::after { content: "−"; }
+.expand-card[open] { border-color: var(--signal); }
+.expand-body {
+  padding: 0 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.85rem;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.compare-col {
+  border: 1px solid var(--line-strong); background: var(--panel); padding: 1rem;
+}
+.compare-col h3 {
+  font-family: var(--font-display); font-size: 0.88rem;
+  margin-bottom: 0.65rem; padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare-col.a h3 { color: var(--text-dim); }
+.compare-col.b h3 { color: var(--signal); }
+.compare-col.c h3 { color: var(--cyan-bright); }
+.compare-col li { font-size: 0.88rem; }
+.compare-vs {
+  grid-column: 1 / -1; text-align: center;
+  font-family: var(--font-display); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--cyan-bright); margin: -0.2rem 0;
+}
+.compare3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem; margin: 1.2rem 0;
+}
+.compare3 .compare-col h3 { font-size: 0.82rem; }
+.loop-stepper { margin: 1rem 0; }
+.loop-stepper .steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem; margin-bottom: 0.85rem;
+}
+.loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
+.loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
+.loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps7 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .step-btn {
+  font-family: var(--font-display); font-size: 0.72rem;
+  padding: 0.55rem 0.4rem; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.loop-stepper .step-btn.on {
+  border-color: var(--signal); color: var(--signal); background: rgba(224,122,74,0.12);
+}
+.loop-panel {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem 1.15rem; min-height: 110px;
+}
+.loop-panel h4 {
+  font-family: var(--font-display); color: var(--signal-bright);
+  margin-bottom: 0.4rem; font-size: 0.95rem;
+}
+.arch-stack { display: grid; gap: 0.4rem; margin: 1.2rem 0; }
+.arch-block {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 0.88rem;
+}
+.arch-block .sub {
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--text-dim); margin-top: 0.25rem; font-weight: 400;
+}
+.arch-block.enc { border-left: 3px solid var(--signal); }
+.arch-block.dec { border-left: 3px solid var(--cyan); }
+.arch-block.head { border-left: 3px solid var(--amber); }
+.arch-block.base { border-left: 3px solid var(--mint); }
+.flash-wrap { margin: 1rem 0; }
+.flash-card {
+  min-height: 200px; border: 1px solid var(--line-strong);
+  background: var(--panel); padding: 1.5rem; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: center;
+  transition: border-color 0.2s;
+}
+.flash-card:hover { border-color: var(--signal); }
+.flash-card .q {
+  font-family: var(--font-display); font-size: 1.05rem; color: var(--text);
+}
+.flash-card .a {
+  display: none; margin-top: 1rem; color: var(--paper);
+  border-top: 1px solid var(--line); padding-top: 1rem; font-size: 0.95rem;
+}
+.flash-card.revealed .a { display: block; }
+.flash-idx {
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: var(--text-mute); margin-bottom: 0.75rem; letter-spacing: 0.06em;
+}
+.flash-nav { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
+.quiz-item {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 1rem 1.1rem; margin-bottom: 0.85rem;
+}
+.quiz-item h4 {
+  font-family: var(--font-display); font-size: 0.92rem;
+  margin-bottom: 0.75rem; color: var(--text);
+}
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--font-body); font-size: 0.88rem;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.4rem;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--signal); color: var(--text); }
+.quiz-opt.correct {
+  border-color: var(--mint); background: var(--mint-dim); color: var(--mint);
+}
+.quiz-opt.wrong {
+  border-color: var(--coral); background: rgba(224,107,90,0.12); color: var(--coral);
+}
+.quiz-opt:disabled { cursor: default; }
+.quiz-explain {
+  display: none; margin-top: 0.75rem; padding: 0.75rem;
+  font-size: 0.88rem; border-left: 3px solid var(--signal);
+  background: rgba(224,122,74,0.08); color: var(--text-dim);
+}
+.quiz-explain.show { display: block; }
+.quiz-score {
+  font-family: var(--font-display); font-size: 0.78rem;
+  color: var(--cyan-bright); margin-top: 0.5rem;
+}
+.check-list { list-style: none; margin: 1rem 0; }
+.check-list li {
+  display: flex; align-items: flex-start; gap: 0.65rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--line);
+  color: var(--text-dim); font-size: 0.92rem;
+}
+.check-list input {
+  margin-top: 0.25rem; accent-color: var(--signal);
+  width: 18px; height: 18px; flex-shrink: 0;
+}
+.goal-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem; margin: 1.2rem 0;
+}
+.goal-card {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1rem; position: relative;
+}
+.goal-card .tag {
+  font-family: var(--font-display); font-size: 0.62rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: 0.35rem;
+}
+.goal-card h3 {
+  font-family: var(--font-display); font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+.goal-card p { font-size: 0.85rem; margin: 0; }
+.budget-lab {
+  border: 1px solid var(--line-strong); background: var(--panel);
+  padding: 1.15rem; margin: 1.2rem 0;
+}
+.budget-lab label {
+  font-family: var(--font-body); font-size: 0.88rem;
+  letter-spacing: 0; color: var(--text-dim);
+  display: flex; align-items: flex-start; gap: 0.55rem;
+  margin-bottom: 0.55rem; text-transform: none; cursor: pointer;
+}
+.budget-lab label input { margin-top: 0.2rem; accent-color: var(--signal); flex-shrink: 0; }
+.budget-lab input[type="range"] {
+  width: 100%; accent-color: var(--signal); margin-bottom: 0.85rem;
+}
+.budget-bar {
+  display: flex; height: 36px; border: 1px solid var(--line-strong);
+  overflow: hidden; margin: 0.75rem 0;
+  font-family: var(--font-display); font-size: 0.65rem;
+}
+.budget-seg {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink); font-weight: 600; transition: width 0.3s ease;
+  overflow: hidden; white-space: nowrap;
+}
+.budget-seg.sys { background: var(--signal); }
+.budget-seg.ev { background: var(--cyan); }
+.budget-seg.ctx { background: var(--amber); }
+.budget-seg.free { background: var(--panel-2); color: var(--text-mute); }
+.budget-meta {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  color: var(--text-dim); line-height: 1.6;
+}
+.budget-warn {
+  margin-top: 0.65rem; padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--amber); background: var(--amber-dim);
+  font-size: 0.88rem; color: var(--paper); display: none;
+}
+.budget-warn.show { display: block; }
+.template-map {
+  display: grid; gap: 0.35rem; margin: 1rem 0;
+  font-family: var(--font-mono); font-size: 0.8rem;
+}
+.template-map div {
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 0.55rem 0.85rem; color: var(--text-dim);
+}
+.template-map div strong { color: var(--signal-bright); font-weight: 500; }
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 40;
+}
+.overlay.show { display: block; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: min(86vw, 300px);
+    z-index: 50; transform: translateX(-105%); transition: transform 0.3s;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: inline-block; }
+  .compare, .compare3 { grid-template-columns: 1fr; }
+  .loop-stepper .steps,
+  .loop-stepper .steps.steps5,
+  .loop-stepper .steps.steps3,
+  .loop-stepper .steps.steps4,
+  .loop-stepper .steps.steps7 { grid-template-columns: repeat(2, 1fr); }
+  .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
+}
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-kicker">Hello-Agents · Lab 16</div>
+      <h1>第十六章 · 毕业设计</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>进度</span>
+        <span id="progressText">1 / 1</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">CAPSTONE · ← → 翻页</div>
+  </aside>
+
+  <main class="stage">
+    <div class="topbar">
+      <button class="menu-btn" type="button" onclick="toggleSidebar()">目录</button>
+      <div class="slide-label" id="slideLabel">封面</div>
+      <div class="nav-controls">
+        <button class="btn" id="btnPrev" type="button">← 上一页</button>
+        <button class="btn btn-primary" id="btnNext" type="button">下一页 →</button>
+      </div>
+    </div>
+    <div class="slides-viewport" id="viewport">
+
+<!--
+  COVERAGE CHECKLIST (源文档小节对照 · 第十六章 毕业设计.md)
+  [x] 开篇：15 章旅程 → 毕业设计目标
+  [x] 16.1 意义 · 开源提交形式 · 命名规范
+  [x] 16.2 选题原则 · 五类方向 · CodeReviewAgent 示例
+  [x] 16.3 环境：HelloAgents / Git / Jupyter · Fork · 目录结构
+  [x] 16.4 README · requirements · Notebook · 测试清单 · 大文件
+  [x] 16.5 Git 提交 · PR 模板 · Review 响应
+  [x] 16.6 示例项目结构与核心代码
+  [x] 16.7 总结 · 自测 · 展望
+-->
+
+<section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
+<p class="slide-sub">Lab 16 · Industrial Blueprint · Capstone</p>
+<h2 class="slide-title">第十六章 · 毕业设计</h2>
+<p class="lead">恭喜来到 Hello-Agents 最后一章。前面 15 章打好了框架与实战底子；本章目标是：<strong>构建属于你自己的多智能体应用</strong>，并通过开源协作分享成果。</p>
+<div class="cover-hero"><img src="assets/ch16_cover.svg" alt="Lab 16 毕业设计流水线"/></div>
+<div class="note"><strong>本章交付物：</strong>可运行项目（Notebook/脚本）· README · requirements · PR 提交到 <code>Co-creation-projects/</code>。</div>
+</section>
+
+<section class="slide" data-id="goals" data-label="本章地图" data-group="开篇">
+<p class="slide-sub">16.1 → 16.7 · 从选题到社区合并</p>
+<h2 class="slide-title">本章地图</h2>
+<div class="goal-grid">
+  <div class="goal-card"><div class="tag">16.1–16.2</div><h3>意义与选题</h3><p>为何要做毕业设计；五类方向；CodeReviewAgent 样板。</p></div>
+  <div class="goal-card"><div class="tag">16.3</div><h3>环境准备</h3><p>HelloAgents · Git/GitHub · Jupyter · Fork 与分支 · 目录结构。</p></div>
+  <div class="goal-card"><div class="tag">16.4–16.5</div><h3>开发与提交</h3><p>README / 依赖 / Notebook / 大文件规范；PR 标题与 Review。</p></div>
+  <div class="goal-card"><div class="tag">16.6–16.7</div><h3>示例与展望</h3><p>完整示例项目拆解；总结自测与下一步学习路径。</p></div>
+</div>
+<div class="callout" data-label="学习目标">学完后你应能：独立选题并划定范围；搭好仓库与目录；写出合格 README/Notebook；按规范提 PR 并响应 Review。</div>
+</section>
+
+<section class="slide" data-id="journey" data-label="十五章旅程" data-group="开篇">
+<p class="slide-sub">你已经走过的路</p>
+<h2 class="slide-title">从「认识 Agent」到「独立构建」</h2>
+<div class="arch-stack">
+  <div class="arch-block enc">第 1–6 章 <span class="sub">概念、历史、LLM、经典范式、低代码与框架入门</span></div>
+  <div class="arch-block head">第 7–12 章 <span class="sub">自建框架、记忆检索、上下文、通信协议、RL、评估</span></div>
+  <div class="arch-block dec">第 13–15 章 <span class="sub">旅行助手 · 深度研究 · 赛博小镇——三项完整实战</span></div>
+  <div class="arch-block base">第 16 章（本章）<span class="sub">选题 → 开发 → 开源 PR → 社区共创</span></div>
+</div>
+<div class="analogy">毕业设计不是「再看一遍教程」，而是把工具箱打开，解决一个<strong>真实问题</strong>，并留下可展示的作品。</div>
+</section>
+
+<section class="slide" data-id="terms" data-label="新手术语" data-group="开篇">
+<p class="slide-sub">贯穿全章 · 建议收藏</p>
+<h2 class="slide-title">先把词说人话</h2>
+<div class="card-grid">
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>Co-creation-projects</h3><span class="en">共创目录</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>仓库里专门放学员毕业作品的文件夹。你的项目会以 PR 形式合入这里。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>命名规范</h3><span class="en">{user}-{Project}</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>如 <code>jjyaoao-CodeReviewAgent</code>：GitHub 用户名 + 项目名，方便检索与归属。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>PR 标题</h3><span class="en">[毕业设计] …</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>统一写成 <code>[毕业设计] 项目名 - 一句话</code>，社区才能快速筛选与 review。</p></div>
+  </div></div>
+  <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner">
+    <div class="flip-face"><h3>大文件规范</h3><span class="en">≤5MB 主仓</span><p class="flip-hint">点击翻转</p></div>
+    <div class="flip-face back"><h3>白话</h3><p>视频、大数据、模型不进主仓；用外链 / 独立资源仓 / 小样例数据。</p></div>
+  </div></div>
+</div>
+</section>
+
+<section class="slide" data-id="why-capstone" data-label="为何要做毕业设计" data-group="16.1 意义与形式">
+<p class="slide-sub">16.1.1 · 综合应用能力</p>
+<h2 class="slide-title">为什么要做毕业设计？</h2>
+<p class="lead">最好的学习方式不是「再看教程」，而是<strong>动手实践</strong>——把范式、工具、记忆、协议等知识，选择性整合进一个完整项目。</p>
+<ul>
+  <li>如何把知识应用到<strong>实际问题</strong>？</li>
+  <li>如何设计一个<strong>端到端系统</strong>（而不是零散 demo）？</li>
+  <li>如何处理<strong>边界情况与异常</strong>？</li>
+</ul>
+<div class="callout" data-label="期望收获">独立设计实现 · 熟练使用 HelloAgents · 掌握 Git/GitHub · 写清文档 · 参与开源协作 · 得到可展示作品。</div>
+</section>
+
+<section class="slide" data-id="form-req" data-label="提交形式与要求" data-group="16.1 意义与形式">
+<p class="slide-sub">16.1.2 · 开源项目形式</p>
+<h2 class="slide-title">毕业设计的形式</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>必须交付</h3>
+    <ul>
+      <li>可运行 <code>.ipynb</code> 或 Python 脚本</li>
+      <li><code>requirements.txt</code></li>
+      <li>清晰 <code>README.md</code></li>
+    </ul>
+  </div>
+  <div class="compare-col b"><h3>可选加分</h3>
+    <ul>
+      <li>演示视频 / 截图</li>
+      <li>小规模示例数据集</li>
+      <li>额外文档与评估结果</li>
+    </ul>
+  </div>
+</div>
+<div class="note"><strong>提交路径：</strong>Fork → 本地开发 → PR 到 <code>datawhalechina/hello-agents</code> 的 <code>Co-creation-projects/</code>；社区 review 通过后合并。</div>
+<div class="code-block">项目命名：{你的GitHub用户名}-{项目名称}
+示例：jjyaoao-CodeReviewAgent</div>
+</section>
+
+<section class="slide" data-id="flash161" data-label="闪卡 · 16.1" data-group="16.1 意义与形式">
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · 意义与形式</h2>
+<div class="flash-wrap" id="flash161" data-cards='[
+  {"q":"毕业设计的核心价值是什么？","a":"培养综合应用能力：把智能体范式、工具、记忆、协议等选择性整合进完整项目，而不只是跟练 demo。"},
+  {"q":"项目必须提交哪些文件？","a":"可运行 Notebook/脚本、requirements.txt、README.md；可选视频、截图、小样例数据。"},
+  {"q":"项目文件夹应如何命名？","a":"{GitHub用户名}-{项目名称}，例如 jjyaoao-CodeReviewAgent。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash161',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash161',1)">下一张</button>
+  </div>
+</div>
+</section>
+
+<section class="slide" data-id="quiz161" data-label="检测 · 16.1" data-group="16.1 意义与形式">
+<p class="slide-sub">选择题 · 含解析</p>
+<h2 class="slide-title">检测 · 16.1</h2>
+<div class="quiz-item" data-quiz="q161" data-answer="1">
+  <h4>1. 毕业设计最终以什么形式进入社区？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">私下发给助教的 zip</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">向 Hello-Agents 仓库提交 Pull Request</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">只发朋友圈截图即可</button>
+  <div class="quiz-explain">正确：提交到 Co-creation-projects，经社区 review 后合并。</div>
+</div>
+<div class="quiz-item" data-quiz="q161" data-answer="0">
+  <h4>2. 下列哪项是「必须」交付物？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">README.md + requirements.txt + 可运行代码</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">必须附带 10 分钟以上演示视频</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">必须训练并上传完整大模型权重</button>
+  <div class="quiz-explain">视频与大模型权重非必须；核心是可运行、可复现、文档清晰。</div>
+</div>
+<p class="quiz-score" id="score-q161"></p>
+</section>
+
+<section class="slide" data-id="topic-principles" data-label="选题原则" data-group="16.2 选题指南">
+<p class="slide-sub">16.2.1 · 好项目的标准</p>
+<h2 class="slide-title">选题三原则</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>实用性</h3><ul><li>解决真实问题</li><li>不为技术而技术</li></ul></div>
+  <div class="compare-col b"><h3>可完成性</h3><ul><li>时间与资源内可交付</li><li>先 MVP，再扩展</li></ul></div>
+  <div class="compare-col c"><h3>可展示性</h3><ul><li>清晰体现你的技术能力</li><li>别人能跑通、看懂</li></ul></div>
+</div>
+<div class="note"><strong>小创意也值得收录。</strong>不必追求「颠覆行业」——完整、可运行、自己动手，就是好毕业设计。</div>
+</section>
+
+<section class="slide" data-id="topic-prod" data-label="方向 · 生产力工具" data-group="16.2 选题指南">
+<p class="slide-sub">16.2.2 ·（1）生产力工具类</p>
+<h2 class="slide-title">推荐方向：生产力工具</h2>
+<div class="card-grid">
+  <div class="goal-card"><div class="tag">Code</div><h3>智能代码审查助手</h3><p>质量分析、潜在 bug、优化建议。</p></div>
+  <div class="goal-card"><div class="tag">Docs</div><h3>智能文档生成器</h3><p>从代码生成 API 文档、用户手册。</p></div>
+  <div class="goal-card"><div class="tag">Meeting</div><h3>智能会议助手</h3><p>纪要、行动项提取。</p></div>
+  <div class="goal-card"><div class="tag">Mail</div><h3>智能邮件助手</h3><p>分类、回复草稿、重要提醒。</p></div>
+</div>
+</section>
+
+<section class="slide" data-id="topic-learn" data-label="方向 · 学习辅助" data-group="16.2 选题指南">
+<p class="slide-sub">16.2.2 ·（2）学习辅助类</p>
+<h2 class="slide-title">推荐方向：学习辅助</h2>
+<ul>
+  <li><strong>智能学习伙伴</strong>：按进度推资源、出练习、答疑</li>
+  <li><strong>智能论文助手</strong>：文献查找、总结、生成引用</li>
+  <li><strong>智能编程导师</strong>：练习、code review、路径规划</li>
+  <li><strong>智能语言学习助手</strong>：对话练习、语法纠错、词汇扩展</li>
+</ul>
+<div class="callout" data-label="提示">可与第 8–9 章 Memory / NoteTool 结合：记住学习进度与错题本。</div>
+</section>
+
+<section class="slide" data-id="topic-creative" data-label="方向 · 创意与数据" data-group="16.2 选题指南">
+<p class="slide-sub">16.2.2 ·（3）（4）创意娱乐 · 数据分析</p>
+<h2 class="slide-title">创意娱乐 &amp; 数据分析</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>创意娱乐</h3>
+    <ul>
+      <li>故事 / 剧本 / 诗歌生成器</li>
+      <li>有个性的游戏 NPC</li>
+      <li>心情场景音乐推荐</li>
+      <li>按食材推荐菜谱 + 购物清单</li>
+    </ul>
+  </div>
+  <div class="compare-col b"><h3>数据分析</h3>
+    <ul>
+      <li>自动分析 + 可视化报告</li>
+      <li>股票 / 舆情监控（注意合规）</li>
+      <li>竞品信息收集与对比</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section class="slide" data-id="topic-life" data-label="方向 · 生活服务" data-group="16.2 选题指南">
+<p class="slide-sub">16.2.2 ·（5）生活服务类</p>
+<h2 class="slide-title">推荐方向：生活服务</h2>
+<ul>
+  <li><strong>健康助手</strong>：记录数据、建议、运动计划</li>
+  <li><strong>理财助手</strong>：收支记录、消费习惯、理财建议</li>
+  <li><strong>购物助手</strong>：比价、推荐、清单</li>
+  <li><strong>智能家居控制</strong>：自然语言控设备（可用模拟器 / 假设备层起步）</li>
+</ul>
+<div class="analogy">选题像点菜：先选一个你<strong>真的会用</strong>或<strong>真的关心</strong>的场景，完成度会远高于「看起来很酷」的空题目。</div>
+</section>
+
+<section class="slide" data-id="topic-example" data-label="选题示例 CodeReview" data-group="16.2 选题指南">
+<p class="slide-sub">16.2.3 · 从问题到交付</p>
+<h2 class="slide-title">选题示例：CodeReviewAgent</h2>
+<div class="loop-stepper" id="topicFlow">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">问题</button>
+    <button class="step-btn" type="button">功能</button>
+    <button class="step-btn" type="button">成果</button>
+    <button class="step-btn" type="button">可迁移</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+</section>
+
+<section class="slide" data-id="topic-picker" data-label="选题自检实验室" data-group="16.2 选题指南">
+<p class="slide-sub">交互 · 勾选后看建议</p>
+<h2 class="slide-title">选题自检实验室</h2>
+<p>勾选你当前想法的特征，右侧会给出「是否适合作为毕业设计」的提示。</p>
+<div class="budget-lab" id="topicLab">
+  <label><input type="checkbox" id="tpReal" checked /> 解决我或身边人的真实痛点</label>
+  <label><input type="checkbox" id="tpMvp" checked /> 两周内能做出可演示 MVP</label>
+  <label><input type="checkbox" id="tpAgent" checked /> 确实需要 Agent/工具/多步推理（不是单次 LLM 问答）</label>
+  <label><input type="checkbox" id="tpHuge" /> 依赖未公开的大型私有数据集或训练权重</label>
+  <label><input type="checkbox" id="tpLegal" /> 涉及未授权爬取 / 金融建议 / 医疗诊断等强合规风险</label>
+  <div class="budget-meta" id="tpMeta" style="margin-top:0.85rem"></div>
+  <div class="budget-warn" id="tpWarn"></div>
+</div>
+</section>
+
+<section class="slide" data-id="flash162" data-label="闪卡 · 16.2" data-group="16.2 选题指南">
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · 选题</h2>
+<div class="flash-wrap" id="flash162" data-cards='[
+  {"q":"好选题的三个原则？","a":"实用性（真问题）、可完成性（期限内可交付）、可展示性（能体现技术能力且别人能复现）。"},
+  {"q":"CodeReviewAgent 要解决什么现有工具做不好的点？","a":"静态分析多停在语法层；需要能理解语义、给深度建议的智能助手。"},
+  {"q":"五类推荐方向分别是？","a":"生产力工具、学习辅助、创意娱乐、数据分析、生活服务。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash162',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash162',1)">下一张</button>
+  </div>
+</div>
+</section>
+
+<section class="slide" data-id="quiz162" data-label="检测 · 16.2" data-group="16.2 选题指南">
+<p class="slide-sub">选择题 · 含解析</p>
+<h2 class="slide-title">检测 · 16.2</h2>
+<div class="quiz-item" data-quiz="q162" data-answer="2">
+  <h4>1. 哪个选题更适合作为 Hello-Agents 毕业设计？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">从零预训练一个 70B 模型并上传权重</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">只写一篇没有代码的 Agent 综述</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">用 HelloAgents + 自定义工具做可运行的代码审查助手</button>
+  <div class="quiz-explain">毕业设计强调可运行应用与框架运用，而非大规模预训练或纯论文。</div>
+</div>
+<div class="quiz-item" data-quiz="q162" data-answer="1">
+  <h4>2. CodeReviewAgent 预期交付不包括？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">可运行 Notebook 展示审查流程</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">必须支持世界上所有编程语言</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">生成结构化 Markdown 审查报告</button>
+  <div class="quiz-explain">示例聚焦主流语言与完整流程；「支持一切语言」不是 MVP 要求。</div>
+</div>
+<p class="quiz-score" id="score-q162"></p>
+</section>
+
+<section class="slide" data-id="env-tools" data-label="安装必要工具" data-group="16.3 环境准备">
+<p class="slide-sub">16.3.1 · Python · Git · Jupyter</p>
+<h2 class="slide-title">开发环境三件套</h2>
+<div class="code-block"># HelloAgents
+pip install "hello-agents[all]"
+
+# Git 用户信息
+git config --global user.name "你的名字"
+git config --global user.email "你的邮箱"
+
+# Jupyter（推荐 Lab）
+pip install jupyterlab
+jupyter lab</div>
+<details class="expand-card"><summary>SSH 密钥（推荐）</summary>
+<div class="expand-body">
+<div class="code-block">ssh-keygen -t ed25519 -C "你的邮箱"
+# 把 ~/.ssh/id_ed25519.pub 加到 GitHub → Settings → SSH and GPG keys
+ssh -T git@github.com</div>
+</div></details>
+</section>
+
+<section class="slide" data-id="fork-repo" data-label="Fork 仓库" data-group="16.3 环境准备">
+<p class="slide-sub">16.3.2 · 步骤 1</p>
+<h2 class="slide-title">Fork Hello-Agents</h2>
+<ol>
+  <li>打开 <a href="https://github.com/datawhalechina/hello-agents" target="_blank" rel="noopener">datawhalechina/hello-agents</a></li>
+  <li>点右上角 <strong>Fork</strong></li>
+  <li>选择你的账号，创建 Fork</li>
+</ol>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/hello-agents/main/docs/images/16-figures/16-1.png" alt="图16.1" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 16.1（离线要点）</strong><br>在 GitHub 仓库页右上角点击 Fork，把仓库复制到你的账号下，再在本地克隆自己的 Fork。</div>
+  <p class="fig-cap">图 16.1 Fork 仓库步骤</p>
+</div>
+</section>
+
+<section class="slide" data-id="clone-branch" data-label="克隆与分支" data-group="16.3 环境准备">
+<p class="slide-sub">16.3.2 · 步骤 2–3</p>
+<h2 class="slide-title">克隆本地并开开发分支</h2>
+<div class="code-block">git clone git@github.com:你的用户名/hello-agents.git
+cd Hello-Agents   # 或实际目录名 hello-agents
+git remote add upstream https://github.com/datawhalechina/hello-agents.git
+git remote -v
+
+git checkout -b feature/你的项目名称
+# 例：git checkout -b feature/code-review-agent</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/hello-agents/main/docs/images/16-figures/16-2.png" alt="图16.2" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 16.2（离线要点）</strong><br>克隆你自己的 Fork；用 <code>upstream</code> 指向官方仓库以便同步；在 feature 分支上开发毕业设计。</div>
+  <p class="fig-cap">图 16.2 克隆仓库到本地</p>
+</div>
+</section>
+
+<section class="slide" data-id="dir-structure" data-label="项目目录结构" data-group="16.3 环境准备">
+<p class="slide-sub">16.3.3 · Co-creation-projects/</p>
+<h2 class="slide-title">推荐项目结构</h2>
+<div class="code-block">cd Co-creation-projects
+mkdir 你的用户名-项目名称
+# 例：mkdir jjyaoao-CodeReviewAgent
+
+jjyaoao-CodeReviewAgent/
+├── README.md
+├── requirements.txt
+├── main.ipynb
+├── data/          # 可选：小样例
+├── outputs/       # 可选：报告/截图
+└── src/           # 可选：agents / tools / utils</div>
+<div class="note"><strong>原则：</strong>别人打开 README 就能装依赖、跑通主 Notebook，并看懂「解决了什么问题」。</div>
+</section>
+
+<section class="slide" data-id="flash163" data-label="闪卡 · 16.3" data-group="16.3 环境准备">
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · 环境</h2>
+<div class="flash-wrap" id="flash163" data-cards='[
+  {"q":"为什么要加 upstream 远程？","a":"origin 指向你的 Fork；upstream 指向官方仓，便于同步主线更新。"},
+  {"q":"开发应在什么分支上进行？","a":"新建 feature/项目名 之类分支，避免直接在 main 上堆提交。"},
+  {"q":"项目应建在哪个目录？","a":"仓库内 Co-creation-projects/{用户名}-{项目名}/。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash163',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash163',1)">下一张</button>
+  </div>
+</div>
+</section>
+
+<section class="slide" data-id="readme-guide" data-label="编写 README" data-group="16.4 开发指南">
+<p class="slide-sub">16.4.1 · 项目门面</p>
+<h2 class="slide-title">README 应写什么？</h2>
+<div class="template-map">
+  <div><strong>简介</strong> · 解决什么问题 / 特色 / 场景</div>
+  <div><strong>核心功能</strong> ·  checklist</div>
+  <div><strong>技术栈</strong> · HelloAgents 范式、工具、API</div>
+  <div><strong>快速开始</strong> · 环境 · 安装 · .env · 运行</div>
+  <div><strong>使用示例</strong> · 代码 + 结果</div>
+  <div><strong>亮点 / 评估 / 计划</strong> · 可选但加分</div>
+  <div><strong>作者 · 致谢 · 许可证</strong></div>
+</div>
+<div class="callout" data-label="门面原则">Reviewer 通常先读 README。写不清「怎么跑」，再好的代码也难合并。</div>
+</section>
+
+<section class="slide" data-id="requirements" data-label="requirements.txt" data-group="16.4 开发指南">
+<p class="slide-sub">16.4.2 · 可复现依赖</p>
+<h2 class="slide-title">写全依赖列表</h2>
+<div class="code-block"># 核心
+hello-agents[all]&gt;=0.2.7
+
+# 按需
+matplotlib&gt;=3.7.0
+plotly&gt;=5.14.0
+fastapi&gt;=0.109.0
+uvicorn&gt;=0.27.0</div>
+<p>只写你项目<strong>真正 import</strong> 到的包；版本尽量给出下界，避免「在我机器能跑」。</p>
+</section>
+
+<section class="slide" data-id="notebook-struct" data-label="Notebook 结构" data-group="16.4 开发指南">
+<p class="slide-sub">16.4.3 · 七段式建议</p>
+<h2 class="slide-title">好 Notebook 的骨架</h2>
+<div class="loop-stepper" id="nbFlow">
+  <div class="steps steps7">
+    <button class="step-btn" type="button">1 介绍</button>
+    <button class="step-btn" type="button">2 环境</button>
+    <button class="step-btn" type="button">3 工具</button>
+    <button class="step-btn" type="button">4 Agent</button>
+    <button class="step-btn" type="button">5 演示</button>
+    <button class="step-btn" type="button">6 评估</button>
+    <button class="step-btn" type="button">7 总结</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+</section>
+
+<section class="slide" data-id="test-list" data-label="提交前测试清单" data-group="16.4 开发指南">
+<p class="slide-sub">16.4.4 · 自检</p>
+<h2 class="slide-title">提交前测试清单</h2>
+<ul class="check-list">
+  <li><input type="checkbox" /> 代码能正常运行，没有报错</li>
+  <li><input type="checkbox" /> README 完整清晰</li>
+  <li><input type="checkbox" /> requirements.txt 含全部依赖</li>
+  <li><input type="checkbox" /> 有清晰使用示例</li>
+  <li><input type="checkbox" /> 代码有适当注释</li>
+  <li><input type="checkbox" /> 输出符合预期</li>
+  <li><input type="checkbox" /> 处理了常见异常</li>
+  <li><input type="checkbox" /> 结构清晰、命名规范</li>
+  <li><input type="checkbox" /> 大文件已按规范外置</li>
+</ul>
+</section>
+
+<section class="slide" data-id="large-files" data-label="大文件处理" data-group="16.4 开发指南">
+<p class="slide-sub">16.4.5 · 保持主仓轻量</p>
+<h2 class="slide-title">大文件三条出路</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>外链（推荐）</h3><ul><li>网盘 / Drive / Kaggle / HF</li><li>视频放 B 站 / YouTube</li><li>README 写清下载步骤</li></ul></div>
+  <div class="compare-col b"><h3>独立资源仓</h3><ul><li>另建 *-resources</li><li>主仓只放代码与说明</li></ul></div>
+  <div class="compare-col c"><h3>小样例数据</h3><ul><li>主仓仅 &lt;1MB 样例</li><li>完整集外链</li></ul></div>
+</div>
+<div class="note"><strong>硬限制：</strong>项目总大小建议 ≤ <strong>5MB</strong>；禁止直接提交视频、大型数据集、模型文件。</div>
+</section>
+
+<section class="slide" data-id="flash164" data-label="闪卡 · 16.4" data-group="16.4 开发指南">
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · 开发</h2>
+<div class="flash-wrap" id="flash164" data-cards='[
+  {"q":"README 最关键的作用是什么？","a":"让陌生人（含 reviewer）快速理解问题、安装依赖并跑通示例。"},
+  {"q":"Notebook 建议至少覆盖哪些部分？","a":"介绍、环境、工具定义、智能体构建、功能演示；可选评估与总结。"},
+  {"q":"主仓库对大文件的态度？","a":"控制体积（约≤5MB）；大资源用外链/独立仓/小样例，勿把视频和模型直接塞进 PR。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash164',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash164',1)">下一张</button>
+  </div>
+</div>
+</section>
+
+<section class="slide" data-id="quiz164" data-label="检测 · 16.4" data-group="16.4 开发指南">
+<p class="slide-sub">选择题 · 含解析</p>
+<h2 class="slide-title">检测 · 16.4</h2>
+<div class="quiz-item" data-quiz="q164" data-answer="1">
+  <h4>1. 500MB 演示视频应如何处理？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">直接 git add 进主仓库</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">上传 B 站/YouTube，在 README 放链接</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">改成 base64 写进 Markdown</button>
+  <div class="quiz-explain">外链是推荐方案，避免撑爆主仓。</div>
+</div>
+<div class="quiz-item" data-quiz="q164" data-answer="0">
+  <h4>2. requirements.txt 的目标是？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">让他人能复现运行环境</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">罗列全世界所有 Python 包</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">替代 README</button>
+  <div class="quiz-explain">只列真实依赖并尽量带版本下界，服务可复现。</div>
+</div>
+<p class="quiz-score" id="score-q164"></p>
+</section>
+
+<section class="slide" data-id="git-push" data-label="Git 提交与推送" data-group="16.5 提交 PR">
+<p class="slide-sub">16.5.1 · status → add → commit → push</p>
+<h2 class="slide-title">把代码推到你的 Fork</h2>
+<div class="code-block">git status
+git add Co-creation-projects/你的用户名-项目名称/
+git commit -m "feat: 添加XXX毕业设计项目"
+git push origin feature/你的项目名称</div>
+<details class="expand-card"><summary>提交类型速查</summary>
+<div class="expand-body">
+<ul>
+  <li><code>feat</code>：新功能/新项目（毕业设计用这个）</li>
+  <li><code>fix</code> / <code>docs</code> / <code>style</code> / <code>refactor</code> / <code>test</code> / <code>chore</code></li>
+</ul>
+</div></details>
+</section>
+
+<section class="slide" data-id="create-pr" data-label="创建 Pull Request" data-group="16.5 提交 PR">
+<p class="slide-sub">16.5.2 · 标题必须规范</p>
+<h2 class="slide-title">开 PR：分支与标题</h2>
+<ul>
+  <li><strong>Base</strong>：<code>datawhalechina/hello-agents</code> · <code>main</code></li>
+  <li><strong>Compare</strong>：你的 Fork · <code>feature/…</code></li>
+</ul>
+<div class="code-block">标题格式：
+[毕业设计] 项目名称 - 简短描述
+
+示例：
+[毕业设计] CodeReviewAgent - 智能代码审查助手
+[毕业设计] StudyBuddy - AI学习伙伴</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/hello-agents/main/docs/images/16-figures/16-3.png" alt="图16.3" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 16.3（离线要点）</strong><br>在 Fork 仓库进入 Pull requests → New pull request，选对 base/compare 分支。</div>
+  <p class="fig-cap">图 16.3 创建 Pull Request</p>
+</div>
+</section>
+
+<section class="slide" data-id="pr-template" data-label="PR 描述模板" data-group="16.5 提交 PR">
+<p class="slide-sub">16.5.2 · 描述写给 Reviewer</p>
+<h2 class="slide-title">PR 描述清单</h2>
+<div class="template-map">
+  <div><strong>项目信息</strong> · 名称 / 作者 / 类型（五类之一）</div>
+  <div><strong>简介</strong> · 2–3 句话</div>
+  <div><strong>核心功能</strong> · 勾选列表</div>
+  <div><strong>技术亮点</strong> · 范式 / 工具 / 优化</div>
+  <div><strong>演示效果</strong> · 截图或 GIF（可选）</div>
+  <div><strong>自检清单</strong> · 能跑 / README / 依赖 / 示例 / 注释</div>
+</div>
+<div class="fig">
+  <img src="https://raw.githubusercontent.com/datawhalechina/hello-agents/main/docs/images/16-figures/16-4.png" alt="图16.4" onerror="this.closest('.fig').classList.add('offline')"/>
+  <div class="fig-fallback"><strong>图 16.4（离线要点）</strong><br>填好标题与描述后，点击 Create pull request 提交。</div>
+  <p class="fig-cap">图 16.4 提交 Pull Request</p>
+</div>
+</section>
+
+<section class="slide" data-id="review-loop" data-label="响应 Review" data-group="16.5 提交 PR">
+<p class="slide-sub">16.5.3 · 协作闭环</p>
+<h2 class="slide-title">Review 意见怎么处理？</h2>
+<div class="loop-stepper" id="reviewFlow">
+  <div class="steps steps4">
+    <button class="step-btn" type="button">看评论</button>
+    <button class="step-btn" type="button">改代码</button>
+    <button class="step-btn" type="button">再推送</button>
+    <button class="step-btn" type="button">回复说明</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="code-block">git add .
+git commit -m "fix: 根据review意见修改XXX"
+git push origin feature/你的项目名称</div>
+</section>
+
+<section class="slide" data-id="flash165" data-label="闪卡 · 16.5" data-group="16.5 提交 PR">
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · PR</h2>
+<div class="flash-wrap" id="flash165" data-cards='[
+  {"q":"毕业设计 commit 常用什么 type？","a":"feat（新增项目/功能）；根据 review 修改多用 fix。"},
+  {"q":"PR 标题固定前缀是什么？","a":"[毕业设计]，后接「项目名 - 简短描述」。"},
+  {"q":"收到 review 后正确做法？","a":"本地修改 → 同分支再 push → 在 PR 下回复说明改动，而不是新开一个无关 PR 丢弃讨论。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash165',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash165',1)">下一张</button>
+  </div>
+</div>
+</section>
+
+<section class="slide" data-id="quiz165" data-label="检测 · 16.5" data-group="16.5 提交 PR">
+<p class="slide-sub">选择题 · 含解析</p>
+<h2 class="slide-title">检测 · 16.5</h2>
+<div class="quiz-item" data-quiz="q165" data-answer="1">
+  <h4>1. 下列哪个 PR 标题符合规范？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">update stuff</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">[毕业设计] DataAnalyst - 智能数据分析师</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">请合并谢谢</button>
+  <div class="quiz-explain">必须带 [毕业设计] 前缀与可读项目描述。</div>
+</div>
+<div class="quiz-item" data-quiz="q165" data-answer="2">
+  <h4>2. Base 仓库应选？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">自己的任意私有仓库 main</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">随便一个组织的 fork</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">datawhalechina/hello-agents 的 main</button>
+  <div class="quiz-explain">PR 目标是官方主仓 main，才能进入共创目录。</div>
+</div>
+<p class="quiz-score" id="score-q165"></p>
+</section>
+
+<section class="slide" data-id="example-overview" data-label="示例项目总览" data-group="16.6 示例项目">
+<p class="slide-sub">16.6 · jjyaoao-CodeReviewAgent</p>
+<h2 class="slide-title">示例：智能代码审查助手</h2>
+<div class="goal-grid">
+  <div class="goal-card"><div class="tag">作者</div><h3>@jjyaoao</h3><p>路径：Co-creation-projects/jjyaoao-CodeReviewAgent/</p></div>
+  <div class="goal-card"><div class="tag">结构</div><h3>最小可运行集</h3><p>README · requirements · main.ipynb · .env.example · data/ · outputs/</p></div>
+  <div class="goal-card"><div class="tag">技术</div><h3>SimpleAgent + ToolRegistry</h3><p>AST 结构分析 + PEP8 风格检查 + LLM 深度建议</p></div>
+  <div class="goal-card"><div class="tag">产出</div><h3>Markdown 报告</h3><p>写入 outputs/review_report.md</p></div>
+</div>
+<div class="note"><strong>别担心作品「太小」。 </strong>自己动手、能跑通、写清楚，就值得收录。</div>
+</section>
+
+<section class="slide" data-id="example-tools" data-label="示例 · 双工具" data-group="16.6 示例项目">
+<p class="slide-sub">CodeAnalysisTool · StyleCheckTool</p>
+<h2 class="slide-title">自定义工具怎么拆？</h2>
+<div class="compare">
+  <div class="compare-col a"><h3>CodeAnalysisTool</h3>
+    <ul>
+      <li>用 <code>ast.parse</code> 解析代码</li>
+      <li>统计函数/类/行数</li>
+      <li>语法错误友好返回</li>
+    </ul>
+  </div>
+  <div class="compare-col b"><h3>StyleCheckTool</h3>
+    <ul>
+      <li>行宽 &gt; 79 提示</li>
+      <li>缩进是否 4 空格层级</li>
+      <li>无问题则返回「符合 PEP 8」</li>
+    </ul>
+  </div>
+</div>
+<div class="analogy">工具做「可计算、可验证」的事；LLM 做「语义理解与建议」。二者分工，才是 Agent 项目的味道。</div>
+</section>
+
+<section class="slide" data-id="example-agent" data-label="示例 · Agent 装配" data-group="16.6 示例项目">
+<p class="slide-sub">注册表 · 系统提示 · 运行</p>
+<h2 class="slide-title">从工具到审查报告</h2>
+<div class="loop-stepper" id="agentFlow">
+  <div class="steps steps5">
+    <button class="step-btn" type="button">配置 LLM</button>
+    <button class="step-btn" type="button">注册工具</button>
+    <button class="step-btn" type="button">写系统提示</button>
+    <button class="step-btn" type="button">创建 Agent</button>
+    <button class="step-btn" type="button">跑样例落盘</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+</section>
+
+<section class="slide" data-id="example-code" data-label="示例 · 关键代码" data-group="16.6 示例项目">
+<p class="slide-sub">片段导读 · 完整见原书 16.6</p>
+<h2 class="slide-title">装配代码长什么样</h2>
+<div class="code-block">tool_registry = ToolRegistry()
+tool_registry.register_tool(CodeAnalysisTool())
+tool_registry.register_tool(StyleCheckTool())
+
+llm = HelloAgentsLLM()
+agent = SimpleAgent(
+    name="代码审查助手",
+    llm=llm,
+    system_prompt=system_prompt,  # 要求先调工具再写 Markdown 报告
+    tool_registry=tool_registry
+)
+
+sample_code = open("data/sample_code.py", encoding="utf-8").read()
+review_result = agent.run(f"请审查以下Python代码:\n\n```python\n{sample_code}\n```")
+open("outputs/review_report.md", "w", encoding="utf-8").write(review_result)</div>
+</section>
+
+<section class="slide" data-id="example-readme" data-label="示例 · README 亮点" data-group="16.6 示例项目">
+<p class="slide-sub">可直接模仿的文档结构</p>
+<h2 class="slide-title">示例 README 学什么？</h2>
+<ul>
+  <li>一句话定位：基于 HelloAgents 的代码审查工具</li>
+  <li>功能勾选：结构分析 / PEP8 / LLM 建议 / 报告生成</li>
+  <li>技术栈写清：SimpleAgent + ToolRegistry + AST + ModelScope</li>
+  <li>两种配置方式：<code>.env</code> 或 Notebook 内环境变量</li>
+  <li>三步使用：放样例 → 跑 Notebook → 看 outputs</li>
+</ul>
+<div class="callout" data-label="模仿策略">先抄结构，再换你的领域工具与 system prompt——比从空白页起步快得多。</div>
+</section>
+
+<section class="slide" data-id="flash166" data-label="闪卡 · 16.6" data-group="16.6 示例项目">
+<p class="slide-sub">点击卡片看答案</p>
+<h2 class="slide-title">闪卡 · 示例项目</h2>
+<div class="flash-wrap" id="flash166" data-cards='[
+  {"q":"示例为何同时要 AST 工具和 LLM？","a":"AST/规则提供确定的结构与风格信号；LLM 基于信号做语义级审查与建议，分工清晰。"},
+  {"q":"审查结果默认写到哪里？","a":"outputs/review_report.md。"},
+  {"q":"小作品能否被收录？","a":"可以。只要自己动手、可运行、文档清楚，小创意同样欢迎。"}
+]'>
+  <div class="flash-idx"></div>
+  <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+  <div class="flash-nav">
+    <button class="btn" type="button" onclick="moveFlash('flash166',-1)">上一张</button>
+    <button class="btn" type="button" onclick="moveFlash('flash166',1)">下一张</button>
+  </div>
+</div>
+</section>
+
+<section class="slide" data-id="summary" data-label="本章总结" data-group="16.7 总结展望">
+<p class="slide-sub">16.7 · 你应掌握的闭环</p>
+<h2 class="slide-title">从需求到开源协作</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>设计</h3><ul><li>真实问题</li><li>MVP 范围</li><li>Agent+工具分工</li></ul></div>
+  <div class="compare-col b"><h3>工程</h3><ul><li>HelloAgents 组件</li><li>自定义 Tool</li><li>文档与可复现</li></ul></div>
+  <div class="compare-col c"><h3>协作</h3><ul><li>Git 分支</li><li>规范 PR</li><li>响应 Review</li></ul></div>
+</div>
+<div class="note"><strong>记住：</strong>最好的学习方式就是动手实践。期待在 Co-creation-projects 看到你的作品。</div>
+</section>
+
+<section class="slide" data-id="next-path" data-label="下一步路径" data-group="16.7 总结展望">
+<p class="slide-sub">毕业不是终点</p>
+<h2 class="slide-title">可以继续走的三条路</h2>
+<div class="arch-stack">
+  <div class="arch-block enc">理论加深 <span class="sub">更多范式 · 提示/上下文工程 · 多智能体协作</span></div>
+  <div class="arch-block head">技术栈扩展 <span class="sub">Web · 数据库 · 部署上线</span></div>
+  <div class="arch-block base">社区贡献 <span class="sub">帮助学习者 · 参与框架开发 · 分享经验</span></div>
+</div>
+<p>从第一章简单智能体，到独立构建完整应用——这是新起点，不是终点。</p>
+</section>
+
+<section class="slide" data-id="checklist" data-label="自测清单" data-group="16.7 总结展望">
+<p class="slide-sub">勾选过关</p>
+<h2 class="slide-title">本章小结自测</h2>
+<ul class="check-list">
+  <li><input type="checkbox" /> 能说明毕业设计为何要做、交什么、交到哪里</li>
+  <li><input type="checkbox" /> 能按三原则评估一个选题是否合适</li>
+  <li><input type="checkbox" /> 会 Fork / clone / upstream / feature 分支</li>
+  <li><input type="checkbox" /> 能写出合格 README 与 requirements</li>
+  <li><input type="checkbox" /> 知道大文件三条处理方案与 5MB 建议</li>
+  <li><input type="checkbox" /> 能按 <code>[毕业设计]</code> 规范开 PR 并响应 Review</li>
+  <li><input type="checkbox" /> 能复述 CodeReviewAgent 的工具+Agent 分工</li>
+</ul>
+</section>
+
+<section class="slide" data-id="exercises" data-label="行动清单" data-group="16.7 总结展望">
+<p class="slide-sub">今天就可以开始</p>
+<h2 class="slide-title">行动清单 · 开工</h2>
+<ol>
+  <li>用选题自检实验室筛掉「太大/违规/非 Agent」题目，敲定 MVP。</li>
+  <li>Fork 仓库，建 <code>feature/…</code> 与 <code>Co-creation-projects/{user}-{name}/</code>。</li>
+  <li>先写 README 骨架与空 Notebook 七段标题，再填代码。</li>
+  <li>对照测试清单跑通一遍，处理大文件外链。</li>
+  <li>按模板开 PR；有评论就改、推、回复。</li>
+</ol>
+<div class="callout" data-label="完成">恭喜走完 Lab 16。若觉得 Hello-Agents 有帮助，别忘了给仓库一个 ⭐Star。开始构建属于你的智能体应用吧！</div>
+</section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll(".slide"));
+let idx = 0;
+const navEl = document.getElementById("nav");
+const slideLabel = document.getElementById("slideLabel");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const viewport = document.getElementById("viewport");
+
+(function buildNav() {
+  let lastGroup = null;
+  let groupEl = null;
+  slides.forEach((s, i) => {
+    const g = s.dataset.group;
+    if (g !== lastGroup) {
+      groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      const t = document.createElement("div");
+      t.className = "nav-group-title";
+      t.textContent = g;
+      groupEl.appendChild(t);
+      navEl.appendChild(groupEl);
+      lastGroup = g;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>${s.dataset.label}`;
+    b.addEventListener("click", () => { goTo(i); closeSidebar(); });
+    groupEl.appendChild(b);
+    s._navBtn = b;
+  });
+})();
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[idx].classList.remove("active");
+  if (slides[idx]._navBtn) slides[idx]._navBtn.classList.remove("active");
+  idx = i;
+  slides[idx].classList.add("active");
+  if (slides[idx]._navBtn) {
+    slides[idx]._navBtn.classList.add("active");
+    slides[idx]._navBtn.scrollIntoView({ block: "nearest" });
+  }
+  slideLabel.textContent = slides[idx].dataset.label;
+  const pct = ((idx + 1) / slides.length) * 100;
+  progressFill.style.width = pct + "%";
+  progressText.textContent = `${idx + 1} / ${slides.length}`;
+  btnPrev.disabled = idx === 0;
+  btnNext.disabled = idx === slides.length - 1;
+  viewport.scrollTop = 0;
+}
+
+btnPrev.addEventListener("click", () => goTo(idx - 1));
+btnNext.addEventListener("click", () => goTo(idx + 1));
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(idx + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(idx - 1); }
+});
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+const flashState = {};
+function initFlash(id) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const cards = JSON.parse(wrap.dataset.cards);
+  flashState[id] = { cards, i: 0 };
+  renderFlash(id);
+}
+function renderFlash(id) {
+  const st = flashState[id];
+  const wrap = document.getElementById(id);
+  const card = wrap.querySelector(".flash-card");
+  card.classList.remove("revealed");
+  card.querySelector(".q").textContent = st.cards[st.i].q;
+  card.querySelector(".a").textContent = st.cards[st.i].a;
+  wrap.querySelector(".flash-idx").textContent = `${st.i + 1} / ${st.cards.length} · 点击卡片看答案`;
+}
+function toggleFlash(el) { el.classList.toggle("revealed"); }
+function moveFlash(id, d) {
+  const st = flashState[id];
+  st.i = (st.i + d + st.cards.length) % st.cards.length;
+  renderFlash(id);
+}
+["flash161","flash162","flash163","flash164","flash165","flash166"].forEach(initFlash);
+
+const quizScores = {};
+function answerQuiz(btn) {
+  const item = btn.closest(".quiz-item");
+  if (item.dataset.done) return;
+  const ans = Number(item.dataset.answer);
+  const chosen = Number(btn.dataset.i);
+  item.querySelectorAll(".quiz-opt").forEach((o) => {
+    o.disabled = true;
+    const i = Number(o.dataset.i);
+    if (i === ans) o.classList.add("correct");
+    else if (i === chosen) o.classList.add("wrong");
+  });
+  item.querySelector(".quiz-explain").classList.add("show");
+  item.dataset.done = "1";
+  const key = item.dataset.quiz;
+  if (!quizScores[key]) quizScores[key] = { ok: 0, total: 0 };
+  quizScores[key].total++;
+  if (chosen === ans) quizScores[key].ok++;
+  const scoreEl = document.getElementById("score-" + key);
+  if (scoreEl) scoreEl.textContent = `本组已答：${quizScores[key].ok} / ${quizScores[key].total} 正确`;
+}
+
+function bindStepper(rootId, texts) {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  function show(n) {
+    root.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("on", i === n));
+    const panel = root.querySelector(".loop-panel");
+    panel.innerHTML = `<h4>${texts[n].t}</h4><p>${texts[n].p}</p>`;
+  }
+  root.querySelectorAll(".step-btn").forEach((b, i) => b.addEventListener("click", () => show(i)));
+  show(0);
+}
+
+bindStepper("topicFlow", [
+  { t: "问题分析", p: "人工审查耗时易漏；静态分析难懂语义。需要能理解代码语义、给出深度分析的智能助手。" },
+  { t: "核心功能", p: "质量分析、潜在 bug、性能建议、安全扫描、最佳实践推荐——按 MVP 可先做结构+风格+LLM 建议。" },
+  { t: "预期成果", p: "可运行 Notebook、支持主流语言样例、输出结构化 Markdown 报告与改进示例。" },
+  { t: "可迁移到你的题", p: "换成「会议纪要 / 论文助手 / 菜谱」时，同样走：真问题 → 工具分工 → Agent 提示 → 可演示交付。" }
+]);
+
+bindStepper("nbFlow", [
+  { t: "第1部分 · 项目介绍", p: "Markdown 写清目标、作者、日期；让读者 30 秒知道这是什么。" },
+  { t: "第2部分 · 环境配置", p: "安装依赖、import、load_dotenv / 环境变量；失败时给出可读错误。" },
+  { t: "第3部分 · 工具定义", p: "自定义 BaseTool/Tool：name、description、run、参数校验。" },
+  { t: "第4部分 · 智能体构建", p: "HelloAgentsLLM + SimpleAgent（或其他范式）+ 注册工具 + system_prompt。" },
+  { t: "第5部分 · 功能演示", p: "至少两个场景：基础路径与稍复杂路径；打印关键中间结果。" },
+  { t: "第6部分 · 性能评估（可选）", p: "准确率、耗时、人工抽检样例等；没有也没关系，可写计划。" },
+  { t: "第7部分 · 总结展望", p: "已实现功能、踩坑与解法、下一步改进——给 reviewer 与未来的你看。" }
+]);
+
+bindStepper("reviewFlow", [
+  { t: "查看评论", p: "在 PR 页面阅读 reviewer 的每一条意见，先理解再动手。" },
+  { t: "修改代码", p: "按建议改文档、依赖、命名、边界处理；保持 diff 干净。" },
+  { t: "提交更新", p: "同分支 commit + push；PR 会自动更新，无需重复开 PR。" },
+  { t: "回复评论", p: "说明改了什么、为何这样改；关闭误解，方便合并。" }
+]);
+
+bindStepper("agentFlow", [
+  { t: "配置 LLM", p: "设置 LLM_MODEL_ID / API_KEY / BASE_URL（可用 .env 或 Notebook）。" },
+  { t: "注册工具", p: "ToolRegistry 注册 CodeAnalysisTool 与 StyleCheckTool。" },
+  { t: "写系统提示", p: "明确：先调工具 → 再基于结果写含结构/风格/bug/性能/实践的 Markdown 报告。" },
+  { t: "创建 Agent", p: "SimpleAgent(name, llm, system_prompt, tool_registry)。" },
+  { t: "跑样例落盘", p: "读 data/sample_code.py → agent.run → 写入 outputs/review_report.md。" }
+]);
+
+function updateTopicLab() {
+  const real = document.getElementById("tpReal").checked;
+  const mvp = document.getElementById("tpMvp").checked;
+  const agent = document.getElementById("tpAgent").checked;
+  const huge = document.getElementById("tpHuge").checked;
+  const legal = document.getElementById("tpLegal").checked;
+  const meta = document.getElementById("tpMeta");
+  const warn = document.getElementById("tpWarn");
+  let score = 0;
+  if (real) score++;
+  if (mvp) score++;
+  if (agent) score++;
+  if (huge) score -= 2;
+  if (legal) score -= 2;
+  meta.innerHTML = `当前适配分（示意）：<strong>${score}</strong> / 3（正向项）`;
+  if (legal) {
+    warn.classList.add("show");
+    warn.textContent = "存在强合规风险：请缩小为模拟数据/教学场景，或换题，避免未授权爬取与医疗/投资结论承诺。";
+  } else if (huge) {
+    warn.classList.add("show");
+    warn.textContent = "依赖过重：把大数据/权重外置，主仓只留小样例与代码，否则 PR 很难合并。";
+  } else if (score >= 3) {
+    warn.classList.add("show");
+    warn.textContent = "看起来很适合开工：先写 README 与 MVP 范围，两周内跑通一条主路径即可。";
+  } else if (!agent) {
+    warn.classList.add("show");
+    warn.textContent = "若单次问答就够，题目可能偏「调用 LLM」而非 Agent 应用——试着加入工具、多步推理或记忆。";
+  } else {
+    warn.classList.add("show");
+    warn.textContent = "再打磨：确保真需求 + 可完成 MVP。范围切小通常比功能堆多更有效。";
+  }
+}
+["tpReal","tpMvp","tpAgent","tpHuge","tpLegal"].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("change", updateTopicLab);
+});
+if (document.getElementById("tpReal")) updateTopicLab();
+
+document.querySelectorAll(".fig img").forEach((img) => {
+  img.addEventListener("error", () => {
+    const fig = img.closest(".fig");
+    if (fig) fig.classList.add("offline");
+  });
+});
+
+goTo(0);
+</script>
+</body>
+</html>

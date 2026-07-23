@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <rect width="960" height="420" fill="#0a1520"/>
+  <defs>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="rgba(139,124,246,0.18)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8b7cf6" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#3da8b8" stop-opacity="0.12"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="420" fill="url(#g)"/>
+  <ellipse cx="740" cy="60" rx="320" ry="160" fill="url(#glow)"/>
+
+  <!-- Memory stack -->
+  <g font-family="Oxanium, sans-serif">
+    <rect x="64" y="48" width="500" height="48" fill="#0f1e2c" stroke="#8b7cf6" stroke-width="1.5"/>
+    <text x="84" y="78" fill="#b4a8ff" font-size="14" letter-spacing="2">WORKING  �  TTL � ��	P � �
+�</text>
+
+    <rect x="84" y="108" width="480" height="48" fill="#0f1e2c" stroke="#3da8b8" stroke-width="1.5"/>
+    <text x="104" y="138" fill="#5ed4e0" font-size="14" letter-spacing="2">EPISODIC  �  ��� � SQLite + Qdrant</text>
+
+    <rect x="104" y="168" width="460" height="48" fill="#0f1e2c" stroke="#e8a84a" stroke-width="1.5"/>
+    <text x="124" y="198" fill="#e8a84a" font-size="14" letter-spacing="2">SEMANTIC  �  ���1 � Qdrant + Neo4j</text>
+
+    <rect x="124" y="228" width="440" height="48" fill="#0f1e2c" stroke="#6bc89a" stroke-width="1.5"/>
+    <text x="144" y="258" fill="#6bc89a" font-size="14" letter-spacing="2">PERCEPTUAL  �  ! � CLIP / CLAP</text>
+
+    <rect x="144" y="288" width="420" height="48" fill="#0f1e2c" stroke="#8b7cf6" stroke-width="1.5"/>
+    <text x="164" y="318" fill="#b4a8ff" font-size="14" letter-spacing="2">RAG PIPELINE  �  MarkItDown � Embed � Ask</text>
+  </g>
+
+  <g font-family="Oxanium, sans-serif">
+    <circle cx="760" cy="210" r="78" fill="#152636" stroke="#8b7cf6" stroke-width="2"/>
+    <text x="724" y="200" fill="#b4a8ff" font-size="13" letter-spacing="2">LAB 08</text>
+    <text x="714" y="226" fill="#e6ede9" font-size="16" letter-spacing="1">MEMORY</text>
+    <text x="728" y="248" fill="#9aafb8" font-size="12">+ RAG</text>
+  </g>
+
+  <text x="64" y="372" fill="#8b7cf6" font-family="Oxanium, sans-serif" font-size="14" letter-spacing="3">HELLO-AGENTS  �  MEMORY &amp; RETRIEVAL</text>
+  <text x="64" y="396" fill="#6d8490" font-family="Source Serif 4, Georgia, serif" font-size="13">��B � ��" � �"�:</text>
+</svg>

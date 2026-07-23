@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <rect width="960" height="420" fill="#0a1520"/>
+  <defs>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="rgba(232,168,74,0.2)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8a84a" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.14"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="420" fill="url(#g)"/>
+  <ellipse cx="760" cy="70" rx="260" ry="130" fill="url(#glow)"/>
+
+  <!-- three paradigm lanes -->
+  <g font-family="Oxanium, sans-serif">
+    <!-- ReAct loop -->
+    <rect x="56" y="88" width="260" height="200" fill="#0f1e2c" stroke="#e8a84a" stroke-width="1.5"/>
+    <text x="72" y="116" fill="#e8a84a" font-size="13" letter-spacing="2">REACT</text>
+    <circle cx="140" cy="170" r="22" stroke="#e8a84a" fill="#152636"/>
+    <text x="122" y="175" fill="#e6ede9" font-size="11">Think</text>
+    <circle cx="230" cy="170" r="22" stroke="#a78bfa" fill="#152636"/>
+    <text x="210" y="175" fill="#e6ede9" font-size="11">Act</text>
+    <circle cx="185" cy="240" r="22" stroke="#6bc89a" fill="#152636"/>
+    <text x="158" y="245" fill="#e6ede9" font-size="11">Observe</text>
+    <path d="M160 175h46" stroke="#e8a84a" stroke-width="1.5"/>
+    <path d="M220 190 L200 220" stroke="#a78bfa" stroke-width="1.5"/>
+    <path d="M168 230 L150 190" stroke="#6bc89a" stroke-width="1.5"/>
+
+    <!-- Plan-and-Solve -->
+    <rect x="350" y="88" width="260" height="200" fill="#0f1e2c" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="366" y="116" fill="#a78bfa" font-size="13" letter-spacing="2">PLAN-AND-SOLVE</text>
+    <rect x="378" y="145" width="204" height="40" fill="#152636" stroke="#e8a84a"/>
+    <text x="430" y="170" fill="#e6ede9" font-size="13">Plan Blueprint</text>
+    <path d="M480 185v28" stroke="#e8a84a" stroke-width="2"/>
+    <rect x="378" y="220" width="60" height="36" fill="#152636" stroke="#a78bfa"/>
+    <rect x="450" y="220" width="60" height="36" fill="#152636" stroke="#a78bfa"/>
+    <rect x="522" y="220" width="60" height="36" fill="#152636" stroke="#a78bfa"/>
+    <text x="392" y="243" fill="#9aafb8" font-size="11">S1</text>
+    <text x="464" y="243" fill="#9aafb8" font-size="11">S2</text>
+    <text x="536" y="243" fill="#9aafb8" font-size="11">Sn</text>
+
+    <!-- Reflection -->
+    <rect x="644" y="88" width="260" height="200" fill="#0f1e2c" stroke="#6bc89a" stroke-width="1.5"/>
+    <text x="660" y="116" fill="#6bc89a" font-size="13" letter-spacing="2">REFLECTION</text>
+    <rect x="672" y="145" width="200" height="32" fill="#152636" stroke="#e8a84a"/>
+    <text x="730" y="166" fill="#e6ede9" font-size="12">Execute</text>
+    <path d="M772 177v16" stroke="#a78bfa" stroke-width="2"/>
+    <rect x="672" y="193" width="200" height="32" fill="#152636" stroke="#a78bfa"/>
+    <text x="730" y="214" fill="#e6ede9" font-size="12">Reflect</text>
+    <path d="M772 225v16" stroke="#6bc89a" stroke-width="2"/>
+    <rect x="672" y="241" width="200" height="32" fill="#152636" stroke="#6bc89a"/>
+    <text x="734" y="262" fill="#e6ede9" font-size="12">Refine</text>
+  </g>
+
+  <text x="56" y="340" fill="#6d8490" font-family="Oxanium, sans-serif" font-size="12" letter-spacing="3">LAB 04 � AMBER SIGNAL � AGENT PARADIGMS</text>
+  <text x="56" y="378" fill="#e6ede9" font-family="Oxanium, sans-serif" font-size="22">�L� � 	��x</text>
+</svg>
