@@ -1,0 +1,44 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#F5F5F5"/>
+  <text x="120" y="130" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="60" font-weight="700" fill="#1F2937">大模型带来的变化，不是更会说，而是更会围绕目标求解</text>
+  <text x="120" y="190" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="30" font-weight="500" fill="#4B5563">从“固定流程执行”走向“基于目标动态拆解、调工具、再调整”</text>
+
+  <g font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif">
+    <rect x="140" y="360" width="260" height="220" rx="28" fill="#FFFFFF" stroke="#DDE7F5" stroke-width="3"/>
+    <text x="270" y="445" text-anchor="middle" font-size="40" font-weight="700" fill="#1F2937">目标</text>
+    <text x="270" y="505" text-anchor="middle" font-size="28" fill="#4B5563">用户给出高层任务</text>
+
+    <rect x="480" y="360" width="260" height="220" rx="28" fill="#FFFFFF" stroke="#DDE7F5" stroke-width="3"/>
+    <text x="610" y="445" text-anchor="middle" font-size="40" font-weight="700" fill="#1F2937">拆解</text>
+    <text x="610" y="505" text-anchor="middle" font-size="28" fill="#4B5563">判断缺什么信息</text>
+
+    <rect x="820" y="360" width="280" height="220" rx="28" fill="#FFFFFF" stroke="#DDE7F5" stroke-width="3"/>
+    <text x="960" y="445" text-anchor="middle" font-size="40" font-weight="700" fill="#1F2937">工具调用</text>
+    <text x="960" y="505" text-anchor="middle" font-size="28" fill="#4B5563">搜索、终端、网页、API</text>
+
+    <rect x="1180" y="360" width="280" height="220" rx="28" fill="#FFFFFF" stroke="#DDE7F5" stroke-width="3"/>
+    <text x="1320" y="445" text-anchor="middle" font-size="40" font-weight="700" fill="#1F2937">结果读取</text>
+    <text x="1320" y="505" text-anchor="middle" font-size="28" fill="#4B5563">看新信息是否可用</text>
+
+    <rect x="1540" y="360" width="240" height="220" rx="28" fill="#2563EB"/>
+    <text x="1660" y="445" text-anchor="middle" font-size="40" font-weight="700" fill="#FFFFFF">调整</text>
+    <text x="1660" y="505" text-anchor="middle" font-size="28" fill="#EAF1FE">重新规划下一步</text>
+  </g>
+
+  <g stroke="#A6C2F3" stroke-width="8" fill="none" stroke-linecap="round">
+    <line x1="400" y1="470" x2="480" y2="470"/>
+    <line x1="740" y1="470" x2="820" y2="470"/>
+    <line x1="1100" y1="470" x2="1180" y2="470"/>
+    <line x1="1460" y1="470" x2="1540" y2="470"/>
+  </g>
+  <g fill="#2563EB">
+    <polygon points="480,470 452,452 452,488"/>
+    <polygon points="820,470 792,452 792,488"/>
+    <polygon points="1180,470 1152,452 1152,488"/>
+    <polygon points="1540,470 1512,452 1512,488"/>
+  </g>
+
+  <path d="M1660 620 C1660 760 1260 830 960 830 C660 830 260 760 260 620" fill="none" stroke="#93B7F6" stroke-width="8" stroke-dasharray="18 16"/>
+  <polygon points="260,620 292,612 278,644" fill="#2563EB"/>
+  <text x="960" y="930" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="38" font-weight="600" fill="#1F2937">软件正在从“按预设流程执行”转向“围绕目标动态求解”</text>
+</svg>

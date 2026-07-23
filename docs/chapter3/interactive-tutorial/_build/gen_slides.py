@@ -1,0 +1,1014 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Generate expanded chapter-3 interactive tutorial slides (~3x pages)."""
+from pathlib import Path
+
+FIG = "https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/3-figures"
+
+def S(sid, label, group, body, active=False):
+    cls = 'slide active' if active else 'slide'
+    return f'''      <section class="{cls}" data-id="{sid}" data-label="{label}" data-group="{group}">
+{body}
+      </section>
+'''
+
+def flip(title, en, back_h, back_p):
+    return f'''<div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-face front"><h3>{title}</h3><div class="en">{en}</div><div class="flip-hint">点击翻转</div></div><div class="flip-face back"><h3>{back_h}</h3><p>{back_p}</p></div></div></div>'''
+
+def quiz_item(qid, answer, q, opts, explain):
+    btns = "\n".join(
+        f'          <button type="button" class="quiz-opt" data-i="{i}" onclick="answerQuiz(this)">{o}</button>'
+        for i, o in enumerate(opts)
+    )
+    return f'''        <div class="quiz-item" data-quiz="{qid}" data-answer="{answer}">
+          <h4>{q}</h4>
+{btns}
+          <div class="quiz-explain">{explain}</div>
+        </div>'''
+
+slides = []
+
+# ========== 开篇 ==========
+slides.append(S("cover", "封面 · 学习目标", "开篇", '''
+        <div class="cover">
+          <div class="cover-badge">Chapter 03 · Lab Signal · Hello-Agents</div>
+          <h2>大语言模型基础</h2>
+          <p class="tagline">Agent 的大脑：从猜下一个词，到能规划、会幻觉、要选型</p>
+          <img class="cover-img" src="assets/ch3_cover.svg" alt="第三章封面" />
+          <h3 class="slide-sub" style="margin-top:0.5rem">本章学习目标</h3>
+          <div class="goals">
+            <div class="goal"><div class="goal-n">01</div><p>说清语言模型从 N-gram → RNN → Transformer → Decoder-Only 的演进逻辑</p></div>
+            <div class="goal"><div class="goal-n">02</div><p>会用提示工程、Token、本地开源调用与模型选型做交互</p></div>
+            <div class="goal"><div class="goal-n">03</div><p>理解缩放法则、能力涌现与幻觉，并知道 Agent 如何补短板</p></div>
+          </div>
+          <div class="note"><strong>怎么学：</strong>左侧目录跳转；←→ 翻页；翻卡 / 闪卡 / 步进 / 选择题请点交互。完整代码见 <code style="font-family:var(--font-mono);color:var(--signal)">code/chapter3/</code>。</div>
+        </div>''', active=True))
+
+slides.append(S("intro", "开篇导读 · 三条总线", "开篇", '''
+        <div class="slide-sub">导读</div>
+        <h2 class="slide-title">先抓住三个问题，内容就不会碎</h2>
+        <p class="lead">前两章讲了 Agent 是什么、从哪来。本章聚焦大脑——大语言模型：它如何获得知识与推理能力？</p>
+        <div class="compare3">
+          <div class="compare-col a"><h3>在学什么？</h3><p style="margin:0;font-size:0.88rem">本质是「根据上下文预测下一个 token」。规模一大，语法、知识、风格甚至推理都会长出来。</p></div>
+          <div class="compare-col b"><h3>为何这么强？</h3><p style="margin:0;font-size:0.88rem">架构从统计→循环→注意力并行；再叠加海量数据、参数与算力（缩放法则）。</p></div>
+          <div class="compare-col c"><h3>为何还会错？</h3><p style="margin:0;font-size:0.88rem">自回归没有事实核查；会幻觉、知识过时、偏见。Agent 必须加检索、工具与验证。</p></div>
+        </div>
+        <div class="analogy">把 LLM 当「极强但不完美的实习生」：会写、会猜，但签字前你要核对。</div>'''))
+
+slides.append(S("keywords", "关键词与学生类比", "开篇", '''
+        <div class="slide-sub">主线抓手</div>
+        <h2 class="slide-title">先记住这些词</h2>
+        <div class="card-grid">
+          ''' + flip("语言模型", "LM", "猜下一词", "算句子概率 / 预测下一 token；通顺度与生成都从这里来。") + '''
+          ''' + flip("Token", "词元", "读写字母", "不是「词」的简单同义词；上下文窗口与 API 费用都按 Token 计。") + '''
+          ''' + flip("Transformer", "注意力", "远距关联", "抛弃循环、用自注意力并行捕捉长距离依赖。") + '''
+          ''' + flip("幻觉", "Hallucination", "像真的编", "缺依据仍流畅拼答案；聊天尴尬，Agent 可能真出事。") + '''
+        </div>
+        <div class="callout" data-label="学生类比"><p style="margin:0">N-gram≈只看前一两词猜题；RNN≈边读边记但易忘；Transformer≈能同时回头看很多位置；Prompt≈老师出的题目说明。</p></div>'''))
+
+slides.append(S("map", "本章地图", "开篇", '''
+        <div class="slide-sub">结构总览</div>
+        <h2 class="slide-title">四段旅程，对应原书全部小节</h2>
+        <div class="timeline">
+          <div class="tl-item"><span class="tag">3.1</span><h4>架构演进</h4><p>N-gram → 词嵌入/RNN/LSTM → Transformer → Decoder-Only</p></div>
+          <div class="tl-item"><span class="tag">3.2</span><h4>怎么交互</h4><p>提示工程 · Token/BPE · 本地 HF 调用 · 开闭源选型</p></div>
+          <div class="tl-item"><span class="tag">3.3</span><h4>法则与边界</h4><p>缩放法则 / Chinchilla / 涌现 · 幻觉与缓解</p></div>
+          <div class="tl-item"><span class="tag">3.4</span><h4>小结与习题</h4><p>压缩带走 · 误解纠偏 · 书后题热身</p></div>
+        </div>
+        <div class="note"><strong>覆盖承诺：</strong>与原书 Markdown 节级一一对应，不遗漏；每页讲透一个认知点，不是提纲。</div>'''))
+
+slides.append(S("howto", "学习方法提示", "开篇", '''
+        <div class="slide-sub">使用建议</div>
+        <h2 class="slide-title">互动页 + 学习版 MD + 代码仓</h2>
+        <ul>
+          <li><strong>本 HTML</strong>：概念拆页、翻卡、手算步进、节末测验——适合边点边记。</li>
+          <li><strong>学习版 Markdown</strong>：更白话、补易错点与原书未展开的工程补充，适合精读与笔记。</li>
+          <li><strong>code/chapter3/</strong>：N_gram.py、Word_Embedding.py、Transformer.py、BPE.py、Qwen.py 完整可跑。</li>
+        </ul>
+        <div class="callout" data-label="数学焦虑？"><p style="margin:0">公式先读「它在说什么」：链式法则=连乘条件概率；注意力=加权汇总相关词；不必第一遍就推公式。</p></div>'''))
+
+# ========== 3.1 ==========
+G31 = "3.1 架构演进"
+slides.append(S("s31", "3.1 节导读", G31, '''
+        <div class="slide-sub">§ 3.1</div>
+        <h2 class="slide-title">语言模型与 Transformer：大脑内部原理开场</h2>
+        <p class="lead">先把语言模型想成「特别会猜下一个词的人」。任务看似简单，但在超大语料里反复做，就慢慢学会语法、知识、风格甚至推理。</p>
+        <div class="compare">
+          <div class="compare-col a"><h3>本节要回答</h3><p style="margin:0;font-size:0.9rem">为了更会读、更会记、更会关联上下文，人们换了哪些方法？</p></div>
+          <div class="compare-col b"><h3>路线</h3><p style="margin:0;font-size:0.9rem">统计 N-gram → 词向量 NNLM → RNN/LSTM → Transformer → Decoder-Only</p></div>
+        </div>'''))
+
+slides.append(S("lm-def", "3.1.1 语言模型定义", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 定义</div>
+        <h2 class="slide-title">语言模型在算什么？句子出现的概率</h2>
+        <div class="note"><strong>正式定义：</strong>语言模型 (Language Model, LM) 的根本任务是计算一个词序列（句子）出现的概率。好的 LM 能告诉我们什么句子通顺、自然。</div>
+        <p>在多智能体系统中，LM 是智能体理解人类指令、生成回应的基础。本节回顾从统计方法到深度学习的演进，为 Transformer 打底。</p>
+        <div class="analogy">通顺度 ≈「这句话像不像正常人会说的话」。概率高 ≠ 事实真，只是「更像训练语料里的话」。</div>'''))
+
+slides.append(S("chain", "链式法则", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 统计语言模型</div>
+        <h2 class="slide-title">句子概率 = 条件概率连乘</h2>
+        <p>对词 \(w_1,\ldots,w_m\) 构成的句子 \(S\)：</p>
+        <p style="text-align:center;font-family:var(--font-mono);font-size:0.95rem;color:var(--signal-bright)">\(P(S)=P(w_1)P(w_2|w_1)\cdots P(w_m|w_1,\ldots,w_{m-1})\)</p>
+        <div class="callout" data-label="为何算不动？"><p style="margin:0">像 \(P(w_m|w_1,\ldots,w_{m-1})\) 的历史太长，语料里几乎从未完整出现过 → 无法可靠估计。</p></div>
+        <div class="note"><strong>一句话：</strong>链式法则在理论上完美，实践上需要「缩短历史」的近似。</div>'''))
+
+slides.append(S("markov", "马尔可夫假设", G31, f'''
+        <div class="slide-sub">§ 3.1.1 · 马尔可夫</div>
+        <h2 class="slide-title">不必回溯全部历史，只看最近 n−1 个词</h2>
+        <div class="fig"><img src="{FIG}/1757249275674-0.png" alt="马尔可夫" width="90%"/><div class="fig-cap">图 3.1 马尔可夫假设示意图</div></div>
+        <p>基于该假设建立的模型叫 <strong>N-gram</strong>：N = 上下文窗口大小。</p>
+        <div class="analogy">像打字联想：手机键盘只看你刚打的几个字猜下一个，而不是整篇作文。</div>'''))
+
+slides.append(S("bigram", "Bigram 近似", G31, '''
+        <div class="slide-sub">§ 3.1.1 · Bigram</div>
+        <h2 class="slide-title">N=2：只依赖前一个词</h2>
+        <p style="text-align:center">\(P(w_i|w_1,\ldots,w_{i-1}) \\approx P(w_i|w_{i-1})\)</p>
+        <p>最简单、最常用的入门情形。词对 \((w_{i-1}, w_i)\) 的共现次数决定条件概率。</p>
+        <div class="note"><strong>直觉：</strong>「agent」后面更常接 learns / works，很少接 apple——频率就是模型的「知识」。</div>'''))
+
+slides.append(S("trigram", "Trigram 与窗口权衡", G31, '''
+        <div class="slide-sub">§ 3.1.1 · Trigram</div>
+        <h2 class="slide-title">N=3：看前面两个词</h2>
+        <p style="text-align:center">\(P(w_i|\\ldots) \\approx P(w_i|w_{i-2},w_{i-1})\)</p>
+        <div class="compare">
+          <div class="compare-col a"><h3>N 更大</h3><p style="margin:0;font-size:0.88rem">上下文更丰富，但组合爆炸、数据更稀疏，很多 N-gram 从未出现。</p></div>
+          <div class="compare-col b"><h3>N 更小</h3><p style="margin:0;font-size:0.88rem">好估计、好算，但「记性短」，远距离语法/语义抓不住。</p></div>
+        </div>
+        <div class="callout" data-label="工程味"><p style="margin:0">N-gram 时代常用平滑（Smoothing）给零计数「留一点概率」——治标不治本。</p></div>'''))
+
+slides.append(S("mle", "最大似然估计 MLE", G31, '''
+        <div class="slide-sub">§ 3.1.1 · MLE</div>
+        <h2 class="slide-title">最可能的 = 数据里见得最多的</h2>
+        <p>Bigram 条件概率用计数估算：</p>
+        <p style="text-align:center">\(P(w_i|w_{i-1})=\\dfrac{\\mathrm{Count}(w_{i-1},w_i)}{\\mathrm{Count}(w_{i-1})}\)</p>
+        <ul>
+          <li>\(\\mathrm{Count}(w_{i-1},w_i)\)：词对连续出现次数</li>
+          <li>\(\\mathrm{Count}(w_{i-1})\)：前词单独出现次数</li>
+        </ul>
+        <div class="analogy">MLE 名字吓人，动作很土：数一数，再除一除。</div>'''))
+
+slides.append(S("ngram-hand", "迷你语料手算", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 动手算一遍</div>
+        <h2 class="slide-title">语料：datawhale agent learns / works</h2>
+        <p>目标：Bigram 估算 \(P(\\text{datawhale agent learns})\)。总词数 6。</p>
+        <div class="loop-stepper" id="ngramDemo">
+          <div class="step-btns">
+            <button type="button" class="step-btn on" onclick="showNgramStep(0)">① 首词</button>
+            <button type="button" class="step-btn" onclick="showNgramStep(1)">② 条件</button>
+            <button type="button" class="step-btn" onclick="showNgramStep(2)">③ 连乘</button>
+          </div>
+          <div class="step-panel" id="ngramPanel"></div>
+        </div>
+        <div class="note"><strong>习题预告：</strong>同样语料可算 \(P(\\text{agent works})\)——书后第 1 题。</div>'''))
+
+slides.append(S("ngram-detail", "手算三步明细", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 数值</div>
+        <h2 class="slide-title">0.333 × 1 × 0.5 ≈ 0.167</h2>
+        <ol>
+          <li>\(P(\\text{datawhale})=2/6\\approx0.333\)</li>
+          <li>\(P(\\text{agent}|\\text{datawhale})=2/2=1\)</li>
+          <li>\(P(\\text{learns}|\\text{agent})=1/2=0.5\)</li>
+        </ol>
+        <div class="callout" data-label="读结果"><p style="margin:0">0.167 不是「这句话有 16.7% 是真的」，而是在这个迷你世界的 Bigram 近似下，整句的联合概率。</p></div>'''))
+
+slides.append(S("ngram-code", "N-gram Python 代码", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 代码</div>
+        <h2 class="slide-title">用 Counter 复现手算</h2>
+        <div class="code-block">corpus = "datawhale agent learns datawhale agent works"
+tokens = corpus.split()
+bigram_counts = Counter(zip(tokens, tokens[1:]))
+p = (tokens.count("datawhale")/len(tokens)
+   * bigram_counts[("datawhale","agent")]/tokens.count("datawhale")
+   * bigram_counts[("agent","learns")]/tokens.count("agent"))
+# ≈ 0.167</div>
+        <div class="note"><strong>完整脚本：</strong><code style="font-family:var(--font-mono);color:var(--signal)">code/chapter3/N_gram.py</code></div>'''))
+
+slides.append(S("sparse", "缺陷① 数据稀疏", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 局限</div>
+        <h2 class="slide-title">未见过的词序列 → 概率直接变 0</h2>
+        <p>这显然不合理：人类会说从没听过的新句子。平滑可缓解，无法根除。</p>
+        <div class="analogy">词典里没出现「robot learns」，模型就当这件事不可能——太武断。</div>'''))
+
+slides.append(S("nogen", "缺陷② 泛化差", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 局限</div>
+        <h2 class="slide-title">不懂语义相似：agent ≠ robot</h2>
+        <p>见过很多次 <em>agent learns</em>，也无法把知识迁到 <em>robot learns</em>——词被当成孤立符号。</p>
+        <div class="callout" data-label="根因"><p style="margin:0">离散符号 + 精确计数 → 没有「意思接近」的连续空间。下一页：词嵌入登场。</p></div>'''))
+
+slides.append(S("nnlm", "神经网络 LM 与词嵌入", G31, f'''
+        <div class="slide-sub">§ 3.1.1 · NNLM</div>
+        <h2 class="slide-title">用连续向量表示词（Bengio 2003）</h2>
+        <div class="fig"><img src="{FIG}/1757249275674-1.png" alt="NNLM" width="90%"/><div class="fig-cap">图 3.2 神经网络语言模型架构</div></div>
+        <ol>
+          <li><strong>语义空间：</strong>每个词 → 向量（词嵌入）；近义靠近、无关远离。</li>
+          <li><strong>映射函数：</strong>前 n−1 个词向量 → 下一词的概率分布。</li>
+        </ol>
+        <div class="note">词嵌入在「预测下一词」训练中自动学到，无需人工标语义。</div>'''))
+
+slides.append(S("cosine", "余弦相似度", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 度量</div>
+        <h2 class="slide-title">夹角越小，语义越近</h2>
+        <p style="text-align:center">\(\mathrm{similarity}(\\vec a,\\vec b)=\\cos\\theta=\\dfrac{\\vec a\\cdot\\vec b}{|\\vec a||\\vec b|}\)</p>
+        <ul>
+          <li>同向 0° → cos=1（极相关）</li>
+          <li>正交 90° → cos=0（无关）</li>
+          <li>反向 180° → cos=-1（负相关）</li>
+        </ul>
+        <div class="analogy">不像比「长度」，更像比「朝哪边」——方向对齐才算近。</div>'''))
+
+slides.append(S("king", "经典类比 king−man+woman", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 类比</div>
+        <h2 class="slide-title">向量算术能平移「性别 / 皇室」</h2>
+        <p><code style="font-family:var(--font-mono);color:var(--signal-bright)">king − man + woman ≈ queen</code></p>
+        <div class="code-block">result = emb["king"] - emb["man"] + emb["woman"]
+sim = cosine(result, emb["queen"])  # 简化二维例中可达 1.0</div>
+        <div class="callout" data-label="含义"><p style="margin:0">词向量不只记同义词，还能编码抽象关系。完整代码：Word_Embedding.py</p></div>'''))
+
+slides.append(S("fixedwin", "固定窗口的残余问题", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 过渡</div>
+        <h2 class="slide-title">NNLM 解决了泛化，但仍卡死窗口</h2>
+        <p>只能看固定前 n−1 个词，更早的历史直接丢掉——不像人类读长文。这催生了能传「记忆」的 RNN。</p>
+        <div class="note"><strong>一句话：</strong>嵌入解决「像不像」，循环网络解决「记不记得住」。</div>'''))
+
+slides.append(S("rnn", "RNN 隐藏状态", G31, f'''
+        <div class="slide-sub">§ 3.1.1 · RNN</div>
+        <h2 class="slide-title">给网络加短期记忆</h2>
+        <div class="fig"><img src="{FIG}/1757249275674-2.png" alt="RNN" width="90%"/><div class="fig-cap">图 3.3 RNN 结构示意图</div></div>
+        <p>每步：当前词 + 上一刻隐藏状态 → 新隐藏状态传给下一步。信息可沿序列向后传。</p>
+        <div class="analogy">像边读边在脑子里更新一句话摘要，而不是每次只看最近两个词。</div>'''))
+
+slides.append(S("longdep", "长期依赖与梯度问题", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 长期依赖</div>
+        <h2 class="slide-title">序列一长，早期影响传不过来</h2>
+        <p>反向传播时梯度多次连乘 → <strong>梯度消失 / 爆炸</strong>。序列长度≈网络深度，早期对后期难学到。</p>
+        <div class="callout" data-label="生活例子"><p style="margin:0">文章开头的主语，到结尾代词指代时，标准 RNN 容易「忘」。</p></div>'''))
+
+slides.append(S("lstm", "LSTM 三门", G31, '''
+        <div class="slide-sub">§ 3.1.1 · LSTM</div>
+        <h2 class="slide-title">细胞状态 + 门控：选择性记忆</h2>
+        <div class="card-grid">
+          ''' + flip("遗忘门", "Forget", "丢弃", "决定从上一刻细胞状态丢掉什么。") + '''
+          ''' + flip("输入门", "Input", "写入", "决定把当前哪些新信息写入细胞状态。") + '''
+          ''' + flip("输出门", "Output", "读出", "决定根据细胞状态输出什么到隐藏状态。") + '''
+        </div>
+        <div class="note">细胞状态像一条更顺畅的信息高速路；门是小型网络，学习「放行 / 挡住」。</div>'''))
+
+slides.append(S("quiz311", "检测 · 3.1.1", G31, '''
+        <div class="slide-sub">问答检测 · 3.1.1</div>
+        <h2 class="slide-title">自测：从 N-gram 到 LSTM</h2>
+        <div class="quiz-score" id="score-q311"></div>
+''' + quiz_item("q311", 1, "引入马尔可夫 / N-gram 主要是为了？",
+    ["让句子永远概率为 1", "缩短条件历史，使概率可估计", "消灭所有 OOV"],
+    "链式法则历史太长估不动，用有限窗口近似。") + '''
+''' + quiz_item("q311", 0, "词嵌入相对 N-gram 最大进步是？",
+    ["用连续向量表达语义相似，改善泛化", "彻底取消上下文窗口", "保证零幻觉"],
+    "近义在空间中靠近，可迁移到未见组合。") + '''
+''' + quiz_item("q311", 2, "LSTM 相对标准 RNN 的关键创新？",
+    ["完全并行处理整句", "删除隐藏状态", "细胞状态 + 门控缓解长期依赖"],
+    "门控让信息更可控地长距传递。") + '''
+'''))
+
+# 3.1.2
+slides.append(S("tf-why", "3.1.2 为何需要 Transformer", G31, '''
+        <div class="slide-sub">§ 3.1.2 · 动机</div>
+        <h2 class="slide-title">RNN 必须串行：t 等 t−1</h2>
+        <p>循环无法大规模并行，长序列训练慢，限制模型规模。2017 谷歌提出 Transformer：抛弃循环，完全靠<strong>注意力</strong>捕依赖，真正并行。</p>
+        <div class="analogy">流水线每人等上一人做完 vs 全员同时看整段材料写批注——后者可并行。</div>'''))
+
+slides.append(S("tf-ed", "Encoder-Decoder 总览", G31, f'''
+        <div class="slide-sub">§ 3.1.2 · 整体结构</div>
+        <h2 class="slide-title">先理解，再生成（机器翻译出身）</h2>
+        <div class="fig"><img src="{FIG}/1757249275674-3.png" alt="Transformer" width="50%"/><div class="fig-cap">图 3.4 Transformer 整体架构</div></div>
+        <div class="compare">
+          <div class="compare-col a"><h3>编码器</h3><p style="margin:0;font-size:0.88rem">读完全部输入词元，为每个位置生成富含上下文的向量。</p></div>
+          <div class="compare-col b"><h3>解码器</h3><p style="margin:0;font-size:0.88rem">参考已生成前文，并「咨询」编码器，逐词生成目标句。</p></div>
+        </div>'''))
+
+slides.append(S("tf-skel", "自顶向下代码骨架", G31, '''
+        <div class="slide-sub">§ 3.1.2 · 实现路线</div>
+        <h2 class="slide-title">先搭架子，再填模块</h2>
+        <p>占位：PositionalEncoding / MultiHeadAttention / PositionWiseFeedForward；再写 EncoderLayer、DecoderLayer。</p>
+        <div class="code-block"># EncoderLayer 核心：
+attn = self.self_attn(x, x, x, mask)
+x = norm1(x + dropout(attn))
+ff = self.feed_forward(x)
+x = norm2(x + dropout(ff))</div>
+        <div class="note">Decoder 多一层 <strong>交叉注意力</strong>：Query 来自解码端，Key/Value 来自编码器输出。</div>'''))
+
+slides.append(S("attn-intro", "自注意力直觉", G31, '''
+        <div class="slide-sub">§ 3.1.2 · 注意力</div>
+        <h2 class="slide-title">读到 “it” 时，你会看向 “agent”</h2>
+        <p>句子：<em>The agent learns because <strong>it</strong> is intelligent.</em></p>
+        <p><strong>自注意力</strong>：处理每个词时兼顾句中所有词，并分配不同权重——权重高者对当前词更重要。</p>
+        <div class="analogy">开卷考试：带着「考题」去翻「资料标签」，再把相关「内容」抄进自己的笔记。</div>'''))
+
+slides.append(S("qkv", "Query / Key / Value", G31, '''
+        <div class="slide-sub">§ 3.1.2 · QKV</div>
+        <h2 class="slide-title">三个可学习角色</h2>
+        <div class="card-grid">
+          ''' + flip("Query Q", "查询", "考题", "当前词元主动查询其他词元以获取信息。") + '''
+          ''' + flip("Key K", "键", "标签", "可被查询的索引，用于匹配相关性。") + '''
+          ''' + flip("Value V", "值", "内容", "词元携带的实际信息；按权重加权汇总。") + '''
+        </div>
+        <p>均由词嵌入乘以可学习矩阵 \(W^Q,W^K,W^V\) 得到。</p>'''))
+
+slides.append(S("attn-steps", "注意力四步计算", G31, '''
+        <div class="slide-sub">§ 3.1.2 · 计算过程</div>
+        <h2 class="slide-title">开卷考试四步走</h2>
+        <div class="loop-stepper" id="attnDemo">
+          <div class="step-btns">
+            <button type="button" class="step-btn on" onclick="showAttnStep(0)">① 准备</button>
+            <button type="button" class="step-btn" onclick="showAttnStep(1)">② 得分</button>
+            <button type="button" class="step-btn" onclick="showAttnStep(2)">③ Softmax</button>
+            <button type="button" class="step-btn" onclick="showAttnStep(3)">④ 加权</button>
+          </div>
+          <div class="step-panel" id="attnPanel"></div>
+        </div>'''))
+
+slides.append(S("attn-formula", "注意力公式", G31, '''
+        <div class="slide-sub">§ 3.1.2 · 公式</div>
+        <h2 class="slide-title">缩放点积注意力</h2>
+        <p style="text-align:center;font-size:1.05rem">\(\mathrm{Attention}(Q,K,V)=\\mathrm{softmax}\\!\\left(\\dfrac{QK^{T}}{\\sqrt{d_k}}\\right)V\)</p>
+        <ul>
+          <li>除以 \(\\sqrt{d_k}\)：防止点积过大导致 Softmax 梯度过小</li>
+          <li>Softmax：权重非负且和为 1</li>
+          <li>乘 V：按权重混合信息</li>
+        </ul>'''))
+
+slides.append(S("mha", "多头注意力", G31, f'''
+        <div class="slide-sub">§ 3.1.2 · Multi-Head</div>
+        <h2 class="slide-title">多个「专家」从不同角度看句子</h2>
+        <div class="fig"><img src="{FIG}/1757249275674-4.png" alt="MHA" width="50%"/><div class="fig-cap">图 3.5 多头注意力机制</div></div>
+        <p>把 Q/K/V 切成 h 份，各算一遍单头，再拼接 + 线性变换。可同时关注指代、时态、从属等多种关系。</p>
+        <div class="note">单头可能只学会一种关联；多头提升表达能力。</div>'''))
+
+slides.append(S("mha-code", "MultiHeadAttention 代码要点", G31, '''
+        <div class="slide-sub">§ 3.1.2 · 代码</div>
+        <h2 class="slide-title">split → scaled_dot_product → combine → W_o</h2>
+        <div class="code-block">attn_scores = (Q @ K.T) / sqrt(d_k)
+if mask: attn_scores.masked_fill(mask==0, -1e9)
+weights = softmax(attn_scores)
+out = weights @ V
+# 多头：view/transpose 切头，算完再拼回 d_model</div>
+        <div class="callout" data-label="掩码"><p style="margin:0">mask==0 的位置填 −1e9，Softmax 后≈0，禁止偷看不该看的位置。</p></div>'''))
+
+slides.append(S("ffn", "位置前馈网络 FFN", G31, '''
+        <div class="slide-sub">§ 3.1.2 · FFN</div>
+        <h2 class="slide-title">注意力聚合信息，FFN 逐位置深加工</h2>
+        <p style="text-align:center">\(\mathrm{FFN}(x)=\\max(0, xW_1+b_1)W_2+b_2\)</p>
+        <ul>
+          <li><strong>逐位置：</strong>每个词元向量独立过同一组权重</li>
+          <li>常设 \(d_{ff}=4\\cdot d_{model}\)：先放大再缩回</li>
+          <li>注意力=动态聚合；FFN=提取更高阶特征</li>
+        </ul>'''))
+
+slides.append(S("addnorm", "残差连接与层归一化", G31, '''
+        <div class="slide-sub">§ 3.1.2 · Add &amp; Norm</div>
+        <h2 class="slide-title">让深层 Transformer 训得稳</h2>
+        <div class="card-grid">
+          ''' + flip("残差 Add", "Skip", "旁路", "Output = x + Sublayer(x)；梯度可绕过子层，缓解消失。") + '''
+          ''' + flip("LayerNorm", "Norm", "稳分布", "对单样本特征归一化到均值0方差1，加速收敛。") + '''
+        </div>
+        <div class="note">每个子层（注意力、FFN）都被 Add&amp;Norm 包裹。</div>'''))
+
+slides.append(S("pe-why", "为何需要位置编码", G31, '''
+        <div class="slide-sub">§ 3.1.2 · 位置编码动机</div>
+        <h2 class="slide-title">注意力本身不认顺序</h2>
+        <p>对纯自注意力，「agent learns」与「learns agent」等价——只关心关系，不管排列。</p>
+        <div class="callout" data-label="解法"><p style="margin:0">给每个词嵌入加上位置向量，使同词不同位输入不同。原论文用固定 sin/cos，非学习参数。</p></div>'''))
+
+slides.append(S("pe-formula", "正弦位置编码", G31, '''
+        <div class="slide-sub">§ 3.1.2 · PE 公式</div>
+        <h2 class="slide-title">偶数维 sin，奇数维 cos</h2>
+        <p>\(PE_{(pos,2i)}=\\sin(pos/10000^{2i/d_{model}})\)</p>
+        <p>\(PE_{(pos,2i+1)}=\\cos(pos/10000^{2i/d_{model}})\)</p>
+        <div class="code-block">pe[:, 0::2] = sin(position * div_term)
+pe[:, 1::2] = cos(position * div_term)
+x = x + pe[:, :seq_len]  # register_buffer，不进优化器</div>
+        <div class="note">完整实现见 code/chapter3/Transformer.py；本章为理解宏观与模块，不继续堆叠完整训练循环。</div>'''))
+
+slides.append(S("flash31", "闪卡 · 架构关键词", G31, '''
+        <div class="slide-sub">§ 3.1 · 概念速记</div>
+        <h2 class="slide-title">闪卡：从 N-gram 到位置编码</h2>
+        <div class="flash-wrap" id="flash1" data-cards='[
+          {"q":"语言模型的根本任务？","a":"计算词序列概率 / 预测下一 token。"},
+          {"q":"N-gram 两大缺陷？","a":"数据稀疏（零概率）与不懂语义相似。"},
+          {"q":"自注意力 Q/K/V？","a":"查询、标签、内容；加权汇总上下文。"},
+          {"q":"为何除以 √d_k？","a":"稳定点积尺度，避免 Softmax 梯度过小。"},
+          {"q":"FFN「逐位置」？","a":"每个词独立过同一组权重，先扩后缩。"},
+          {"q":"位置编码解决什么？","a":"注意力无序问题，注入绝对/相对位置。"}
+        ]'>
+          <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+          <div class="flash-meta"><span class="flash-idx"></span>
+            <div class="flash-controls">
+              <button type="button" class="btn" onclick="moveFlash('flash1',-1)">上一张</button>
+              <button type="button" class="btn" onclick="moveFlash('flash1',1)">下一张</button>
+            </div>
+          </div>
+        </div>'''))
+
+slides.append(S("quiz312", "检测 · 3.1.2", G31, '''
+        <div class="slide-sub">问答检测 · 3.1.2</div>
+        <h2 class="slide-title">自测：Transformer 组件</h2>
+        <div class="quiz-score" id="score-q312"></div>
+''' + quiz_item("q312", 2, "Transformer 相对 RNN 的关键训练优势？",
+    ["必须更长的序列", "取消所有非线性", "可用注意力并行，摆脱逐步串行"],
+    "抛弃循环依赖，序列位置可并行算注意力。") + '''
+''' + quiz_item("q312", 0, "解码器相对编码器多了什么注意力？",
+    ["交叉注意力：Q 来自解码，K/V 来自编码输出", "只保留 FFN", "删除残差"],
+    "交叉注意力让生成端「咨询」理解端。") + '''
+''' + quiz_item("q312", 1, "没有位置编码会怎样？",
+    ["训练一定不收敛", "模型分不清词序，置换句被视为等价", "词表自动变小"],
+    "注意力置换不变，需显式注入位置。") + '''
+'''))
+
+# 3.1.3
+slides.append(S("dec-idea", "3.1.3 GPT 简化思想", G31, '''
+        <div class="slide-sub">§ 3.1.3 · Decoder-Only</div>
+        <h2 class="slide-title">语言核心任务：预测下一个最可能的词</h2>
+        <p>完整 Encoder-Decoder 擅长「先理解再翻译」。对话、创作、Agent 大脑更常是：在已有文本后接龙。</p>
+        <div class="callout" data-label="GPT 大胆简化"><p style="margin:0">抛弃编码器，只保留解码器 → <strong>Decoder-Only</strong>。今天 GPT / Llama / Qwen Chat 多属此族。</p></div>'''))
+
+slides.append(S("ar", "自回归生成步进", G31, '''
+        <div class="slide-sub">§ 3.1.3 · Autoregressive</div>
+        <h2 class="slide-title">文字接龙：写一个，拼回去，再写一个</h2>
+        <div class="loop-stepper" id="arDemo">
+          <div class="step-btns">
+            <button type="button" class="step-btn on" onclick="showArStep(0)">① 起始</button>
+            <button type="button" class="step-btn" onclick="showArStep(1)">② 预测</button>
+            <button type="button" class="step-btn" onclick="showArStep(2)">③ 拼回</button>
+            <button type="button" class="step-btn" onclick="showArStep(3)">④ 重复</button>
+          </div>
+          <div class="step-panel" id="arPanel"></div>
+        </div>'''))
+
+slides.append(S("mask-attn", "掩码自注意力", G31, '''
+        <div class="slide-sub">§ 3.1.3 · Masked Self-Attention</div>
+        <h2 class="slide-title">预测第 t 个词时，禁止偷看 t+1</h2>
+        <p>在 Softmax 前把「未来位置」分数改成大负数 → 概率变 0。数学上保证只依赖已见前缀。</p>
+        <div class="analogy">考试时把后面试题贴上——只能根据已写内容推断下一词。</div>'''))
+
+slides.append(S("dec-adv", "Decoder-Only 三大优势", G31, '''
+        <div class="slide-sub">§ 3.1.3 · 为何赢了</div>
+        <h2 class="slide-title">统一目标 · 易扩展 · 天生生成</h2>
+        <div class="timeline">
+          <div class="tl-item"><span class="tag">目标</span><h4>只做下一词预测</h4><p>适合海量无标注文本预训练。</p></div>
+          <div class="tl-item"><span class="tag">结构</span><h4>组件更少</h4><p>易堆到千亿 / 万亿参数。</p></div>
+          <div class="tl-item"><span class="tag">任务</span><h4>自回归=生成</h4><p>对话、写作、代码、Agent 输出天然契合。</p></div>
+        </div>'''))
+
+slides.append(S("quiz313", "检测 · 3.1.3", G31, '''
+        <div class="slide-sub">问答检测 · 3.1.3</div>
+        <h2 class="slide-title">自测：Decoder-Only</h2>
+        <div class="quiz-score" id="score-q313"></div>
+''' + quiz_item("q313", 1, "掩码自注意力的目的？",
+    ["加快 Softmax", "阻止关注未来 token，保证自回归公平", "增大词表"],
+    "未来位置概率压成 0。") + '''
+''' + quiz_item("q313", 0, "主流 Chat LLM 多用 Decoder-Only，因为？",
+    ["下一词预测目标统一、结构易扩展、贴合生成", "翻译一定更差", "不能做指令跟随"],
+    "三大优势使其成为通用生成基座。") + '''
+'''))
+
+# ========== 3.2 ==========
+G32 = "3.2 与模型交互"
+slides.append(S("s32", "3.2 节导读", G32, '''
+        <div class="slide-sub">§ 3.2</div>
+        <h2 class="slide-title">与大语言模型交互：怎么「开车」</h2>
+        <p class="lead">懂引擎还不够——会提示、懂 Token、能本地跑、会选型，才谈得上做 Agent。</p>
+        <div class="compare3">
+          <div class="compare-col a"><h3>3.2.1</h3><p style="margin:0;font-size:0.85rem">采样参数 + 提示策略 + CoT</p></div>
+          <div class="compare-col b"><h3>3.2.2–3</h3><p style="margin:0;font-size:0.85rem">分词 / BPE + HF 本地调用</p></div>
+          <div class="compare-col c"><h3>3.2.4</h3><p style="margin:0;font-size:0.85rem">开闭源多维选型</p></div>
+        </div>'''))
+
+slides.append(S("prompt-def", "提示工程是什么", G32, '''
+        <div class="slide-sub">§ 3.2.1 · Prompt</div>
+        <h2 class="slide-title">提示 = 与「大脑」沟通的语言</h2>
+        <p>提示工程研究如何设计精准提示，引导期望输出。Agent 协作里，好提示让分工更稳。</p>
+        <div class="analogy">不是念咒语，是把目标、格式、约束、示例写清楚——实习生才不容易跑偏。</div>'''))
+
+slides.append(S("temp", "Temperature 温度", G32, '''
+        <div class="slide-sub">§ 3.2.1 · Temperature</div>
+        <h2 class="slide-title">改 Softmax 陡峭度，控随机性</h2>
+        <p>\(p_i^{(T)}=e^{z_i/T}/\\sum_j e^{z_j/T}\)</p>
+        <ul>
+          <li><strong>低 T（&lt;0.3）</strong>：更确定——问答、代码、法律解读</li>
+          <li><strong>中 T（0.3–0.7）</strong>：自然平衡——客服、常规文案</li>
+          <li><strong>高 T（0.7–2）</strong>：发散——诗歌、头脑风暴</li>
+        </ul>
+        <div class="note">T→0 时近似总选最高概率 token；Top-k/p 几乎失效。</div>'''))
+
+slides.append(S("topk", "Top-k 采样", G32, '''
+        <div class="slide-sub">§ 3.2.1 · Top-k</div>
+        <h2 class="slide-title">只保留概率最高的 k 个再归一化</h2>
+        <p>截断长尾，避免采到极低概率怪词。k=1 ≡ 贪心，完全确定。</p>
+        <div class="compare">
+          <div class="compare-col a"><h3>温度</h3><p style="margin:0;font-size:0.88rem">改整表形状，候选数仍是全部词表。</p></div>
+          <div class="compare-col b"><h3>Top-k</h3><p style="margin:0;font-size:0.88rem">硬切候选数量，再在子集上采样。</p></div>
+        </div>'''))
+
+slides.append(S("topp", "Top-p / Nucleus", G32, '''
+        <div class="slide-sub">§ 3.2.1 · Top-p</div>
+        <h2 class="slide-title">按累积概率动态决定候选集</h2>
+        <p>从高到低累加，直到 \(\\sum p \\ge p_{threshold}\)。相对固定 k，更能适应「尖峰 / 平坦」不同分布。</p>
+        <div class="callout" data-label="实务"><p style="margin:0">通常 Top-k 与 Top-p 二选一；同时设则为交集。优先级：温度 → Top-k → Top-p。</p></div>'''))
+
+slides.append(S("sample-syn", "采样参数协同", G32, '''
+        <div class="slide-sub">§ 3.2.1 · 协同</div>
+        <h2 class="slide-title">分层过滤：先塑形，再截断</h2>
+        <ol>
+          <li>温度调整整体陡峭度</li>
+          <li>Top-k 保留前 k</li>
+          <li>Top-p 在剩余中取核集合</li>
+        </ol>
+        <div class="note"><strong>短路规则：</strong>T=0 或 k=1 时，其它采样旋钮基本没意义。</div>'''))
+
+slides.append(S("shots", "Zero / One / Few-shot", G32, '''
+        <div class="slide-sub">§ 3.2.1 · 示例数量</div>
+        <h2 class="slide-title">给几个示范，决定「教会」程度</h2>
+        <div class="timeline">
+          <div class="tl-item"><span class="tag">Zero</span><h4>零样本</h4><p>直接指令；靠预训练泛化。例：文本→情感。</p></div>
+          <div class="tl-item"><span class="tag">One</span><h4>单样本</h4><p>一个完整 I/O 示范格式与风格。</p></div>
+          <div class="tl-item"><span class="tag">Few</span><h4>少样本</h4><p>多个覆盖边界的例子，细节更稳。</p></div>
+        </div>'''))
+
+slides.append(S("shots-ex", "情感分类提示示例", G32, '''
+        <div class="slide-sub">§ 3.2.1 · 案例</div>
+        <h2 class="slide-title">Few-shot 长什么样</h2>
+        <div class="code-block">文本:这家餐厅的服务太慢了。
+情感:负面
+
+文本:这部电影的情节很平淡。
+情感:中性
+
+文本:Datawhale的AI Agent课程非常棒！
+情感:</div>
+        <p>模型综合示例，更易补全「正面」，并模仿标签格式。</p>'''))
+
+slides.append(S("instruct", "指令调优影响", G32, '''
+        <div class="slide-sub">§ 3.2.1 · Instruction Tuning</div>
+        <h2 class="slide-title">从「续写」到「听指令」</h2>
+        <p>用大量「指令-回答」数据继续训练。ChatGPT / DeepSeek / Qwen Chat 都是指令调优后的对话版。</p>
+        <div class="compare">
+          <div class="compare-col a"><h3>补全模型</h3><p style="margin:0;font-size:0.85rem">常需 Few-shot「演戏」教会任务格式。</p></div>
+          <div class="compare-col b"><h3>指令模型</h3><p style="margin:0;font-size:0.85rem">可直接：「请把下面英文译成中文…」</p></div>
+        </div>'''))
+
+slides.append(S("role", "角色扮演提示", G32, '''
+        <div class="slide-sub">§ 3.2.1 · 技巧</div>
+        <h2 class="slide-title">赋予角色，锁定风格与知识边界</h2>
+        <div class="code-block">你现在是一位资深的Python编程专家。
+请解释一下Python中的GIL是什么，要让初学者也能听懂。</div>
+        <div class="analogy">同一知识点，对「教授」和对「小学生」讲法应不同——角色在选讲法。</div>'''))
+
+slides.append(S("json-ex", "上下文示例与 JSON", G32, '''
+        <div class="slide-sub">§ 3.2.1 · 格式约束</div>
+        <h2 class="slide-title">用示例锁定输出 schema</h2>
+        <div class="code-block">评论:这款“星尘”笔记本电脑的屏幕惊人，但键盘一般。
+输出:{"product_name":"星尘笔记本电脑","sentiment":"混合"}
+
+评论:我刚买的“声动”耳机音质很棒…
+输出:</div>
+        <div class="note">Agent 解析下游动作时，稳定 JSON 比华丽散文更重要。</div>'''))
+
+slides.append(S("cot", "思维链 CoT", G32, '''
+        <div class="slide-sub">§ 3.2.1 · Chain-of-Thought</div>
+        <h2 class="slide-title">「请逐步思考」提升复杂推理</h2>
+        <p>直接要答案易错；显式展开步骤更易做对，也便于人检查。</p>
+        <div class="code-block">…两个赛季的总胜率是多少？
+请一步一步地思考并解答。</div>
+        <div class="callout" data-label="Agent 价值"><p style="margin:0">可观察的推理链便于插入校验、工具调用与中断恢复。</p></div>'''))
+
+slides.append(S("tok-why", "3.2.2 为何分词", G32, '''
+        <div class="slide-sub">§ 3.2.2 · Tokenization</div>
+        <h2 class="slide-title">文本 → 数字：词元是模型的「字母」</h2>
+        <p>分词器定义规则，把原文切成 Token，再映射成 ID。</p>
+        <div class="card-grid">
+          ''' + flip("按词", "Word", "痛点", "词表爆炸 + OOV；look/looks 被当无关。") + '''
+          ''' + flip("按字符", "Char", "痛点", "无 OOV 但语义弱，序列极长，难学组合。") + '''
+          ''' + flip("子词", "Subword", "折中", "常见词整留，罕见词拆片段。") + '''
+        </div>'''))
+
+slides.append(S("bpe", "BPE 算法", G32, f'''
+        <div class="slide-sub">§ 3.2.2 · BPE</div>
+        <h2 class="slide-title">贪心合并最高频邻对</h2>
+        <div class="fig"><img src="{FIG}/1757249275674-5.png" alt="BPE" width="90%"/><div class="fig-cap">表/图 3.1 BPE 合并过程示例</div></div>
+        <ol>
+          <li>词表初始化为字符</li>
+          <li>合并最高频相邻对，加入词表</li>
+          <li>重复至目标词表大小</li>
+        </ol>
+        <p>未见词 bug → 可切成 <code style="font-family:var(--font-mono)">['b','ug']</code>。</p>'''))
+
+slides.append(S("bpe-step", "BPE 合并步进演示", G32, '''
+        <div class="slide-sub">§ 3.2.2 · 演示</div>
+        <h2 class="slide-title">hug / pug / pun / bun 四词迷你语料</h2>
+        <div class="loop-stepper" id="bpeDemo">
+          <div class="step-btns">
+            <button type="button" class="step-btn on" onclick="showBpeStep(0)">合并1</button>
+            <button type="button" class="step-btn" onclick="showBpeStep(1)">合并2</button>
+            <button type="button" class="step-btn" onclick="showBpeStep(2)">合并3</button>
+            <button type="button" class="step-btn" onclick="showBpeStep(3)">合并4</button>
+          </div>
+          <div class="step-panel" id="bpePanel"></div>
+        </div>
+        <div class="note">完整代码：code/chapter3/BPE.py</div>'''))
+
+slides.append(S("wp-sp", "WordPiece 与 SentencePiece", G32, '''
+        <div class="slide-sub">§ 3.2.2 · 变体</div>
+        <h2 class="slide-title">同是子词，合并准则不同</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>WordPiece</h3><p style="margin:0;font-size:0.88rem">BERT 系。合并「最能抬高语料 LM 概率」的对，而非纯频率。</p></div>
+          <div class="compare-col b"><h3>SentencePiece</h3><p style="margin:0;font-size:0.88rem">Llama 等常用。空格当普通字符（常标 _），编解码可逆，语言无关。</p></div>
+        </div>'''))
+
+slides.append(S("tok-dev", "分词器对开发者意义", G32, '''
+        <div class="slide-sub">§ 3.2.2 · 工程后果</div>
+        <h2 class="slide-title">窗口 · 成本 · 奇怪报错</h2>
+        <ul>
+          <li><strong>上下文窗口</strong>按 Token 计，非字符/词；中英差异大。</li>
+          <li><strong>API 费用</strong>大多按 Token 计费。</li>
+          <li><strong>异常表现</strong>：<code>2 + 2</code> vs <code>2+2</code>、大小写不同切分 → 行为突变。</li>
+        </ul>
+        <div class="analogy">设计 Prompt / 解析输出时，把分词陷阱当「坑位图」。</div>'''))
+
+slides.append(S("oss-why", "3.2.3 为何本地开源", G32, '''
+        <div class="slide-sub">§ 3.2.3 · 动机</div>
+        <h2 class="slide-title">API 很快，但不是唯一路径</h2>
+        <p>敏感数据、离线、可控成本 → 本地部署。Hugging Face Transformers 提供统一加载接口。</p>
+        <div class="note">入门推荐小模型：Qwen/Qwen1.5-0.5B-Chat（约 5 亿参），个人电脑可跑。</div>'''))
+
+slides.append(S("oss-load", "加载模型与分词器", G32, '''
+        <div class="slide-sub">§ 3.2.3 · 加载</div>
+        <h2 class="slide-title">AutoTokenizer + AutoModelForCausalLM</h2>
+        <div class="code-block">pip install transformers torch
+model_id = "Qwen/Qwen1.5-0.5B-Chat"
+device = "cuda" if torch.cuda.is_available() else "cpu"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained(model_id).to(device)</div>
+        <p>首次会从 Hub 下载权重与配置，视网络而定。</p>'''))
+
+slides.append(S("oss-chat", "对话模板与编码", G32, '''
+        <div class="slide-sub">§ 3.2.3 · Chat Template</div>
+        <h2 class="slide-title">messages → apply_chat_template → input_ids</h2>
+        <div class="code-block">messages = [
+  {"role":"system","content":"You are a helpful assistant."},
+  {"role":"user","content":"你好，请介绍你自己。"}
+]
+text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+model_inputs = tokenizer([text], return_tensors="pt").to(device)</div>
+        <div class="callout" data-label="易错"><p style="margin:0">不同 Chat 模型模板不同；乱拼字符串可能导致角色分隔失效。</p></div>'''))
+
+slides.append(S("oss-gen", "generate 与 decode", G32, '''
+        <div class="slide-sub">§ 3.2.3 · 生成</div>
+        <h2 class="slide-title">只解码「新生成」的 Token</h2>
+        <div class="code-block">generated = model.generate(model_inputs.input_ids, max_new_tokens=512)
+new_ids = [o[len(i):] for i,o in zip(model_inputs.input_ids, generated)]
+response = tokenizer.batch_decode(new_ids, skip_special_tokens=True)[0]</div>
+        <div class="note">完整脚本：code/chapter3/Qwen.py。习题建议换 Qwen3-0.6B 并改采样参数观察。</div>'''))
+
+slides.append(S("select-dim", "3.2.4 选型八维度", G32, '''
+        <div class="slide-sub">§ 3.2.4 · 怎么选</div>
+        <h2 class="slide-title">不是越大越好，而是权衡</h2>
+        <div class="card-grid">
+          ''' + flip("性能", "Capability", "看榜也看任务", "推理/代码 vs 创意/多语；参考 Arena 等榜。") + '''
+          ''' + flip("成本", "Cost", "API vs 硬件", "闭源按 Token；开源算 GPU/运维。") + '''
+          ''' + flip("延迟", "Latency", "实时场景", "客服/NPC 要快，轻量或优化版更宜。") + '''
+          ''' + flip("窗口", "Context", "长任务", "长文/代码库/长记忆要大上下文。") + '''
+        </div>
+        <p>另加：部署方式、生态工具链、可微调、安全伦理。</p>'''))
+
+slides.append(S("closed", "闭源模型概览", G32, '''
+        <div class="slide-sub">§ 3.2.4 · 闭源</div>
+        <h2 class="slide-title">前沿能力 + 稳定 API</h2>
+        <ul>
+          <li><strong>OpenAI GPT</strong>：RLHF 对齐、多模态演进</li>
+          <li><strong>Google Gemini</strong>：原生多模态、超长上下文</li>
+          <li><strong>Anthropic Claude</strong>：安全与长文档、指令遵循可靠</li>
+          <li><strong>国内</strong>：文心、混元、盘古、星火、Moonshot 等，中文与产业落地强</li>
+        </ul>
+        <div class="note">版本迭代极快，记「选型原则」比背具体版本号更重要。</div>'''))
+
+slides.append(S("open", "开源模型概览", G32, '''
+        <div class="slide-sub">§ 3.2.4 · 开源</div>
+        <h2 class="slide-title">灵活 · 透明 · 可本地定制</h2>
+        <ul>
+          <li><strong>Meta Llama</strong>：基座生态繁荣；新系列含 MoE / 超长窗等定位</li>
+          <li><strong>Mistral</strong>：小尺寸高性能、多模态与企业语调适配</li>
+          <li><strong>国内</strong>：Qwen、ChatGLM 等——中文强、社区活</li>
+        </ul>
+        <div class="analogy">闭源≈出租跑车；开源≈自家车间——按任务选，不必站队。</div>'''))
+
+slides.append(S("flash32", "闪卡 · 交互与 Token", G32, '''
+        <div class="slide-sub">§ 3.2 · 概念速记</div>
+        <h2 class="slide-title">闪卡：提示、分词、选型</h2>
+        <div class="flash-wrap" id="flash2" data-cards='[
+          {"q":"Temperature 变大？","a":"分布更平，更多样甚至发散。"},
+          {"q":"Top-p 优势？","a":"按累积概率动态定候选集，适应长尾。"},
+          {"q":"指令调优改变什么？","a":"从偏续写变为更好遵循自然语言指令。"},
+          {"q":"CoT 关键招？","a":"显式要求逐步思考，便于检查。"},
+          {"q":"上下文窗口按什么计？","a":"Token 数，不是字符/单词。"},
+          {"q":"BPE 在做什么？","a":"反复合并最高频相邻词元对。"}
+        ]'>
+          <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
+          <div class="flash-meta"><span class="flash-idx"></span>
+            <div class="flash-controls">
+              <button type="button" class="btn" onclick="moveFlash('flash2',-1)">上一张</button>
+              <button type="button" class="btn" onclick="moveFlash('flash2',1)">下一张</button>
+            </div>
+          </div>
+        </div>'''))
+
+slides.append(S("quiz32", "检测 · 3.2 节", G32, '''
+        <div class="slide-sub">问答检测 · 3.2</div>
+        <h2 class="slide-title">自测：提示、Token、选型</h2>
+        <div class="quiz-score" id="score-q32"></div>
+''' + quiz_item("q32", 2, "严谨代码生成，Temperature 更宜？",
+    ["尽量接近 2", "只开 Top-p=1 不管温度", "偏低（如 &lt;0.3），更确定"],
+    "事实性/代码偏好低温度。") + '''
+''' + quiz_item("q32", 0, "子词分词主要解决？",
+    ["词表大小 vs 语义/OOV 的矛盾", "GPU 与网线", "必须删空格"],
+    "常见整词、罕见拆片段。") + '''
+''' + quiz_item("q32", 1, "企业客服 Agent 选型不该忽略？",
+    ["只要参数最大", "延迟、成本、隐私、中文与合规", "永远字符级分词"],
+    "多维权衡，不是追最大。") + '''
+'''))
+
+# ========== 3.3 ==========
+G33 = "3.3 法则与局限"
+slides.append(S("s33", "3.3 节导读", G33, '''
+        <div class="slide-sub">§ 3.3</div>
+        <h2 class="slide-title">很强，但不是绝对正确的智能</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>缩放法则</h3><p style="margin:0;font-size:0.9rem">更大模型/数据/算力 → 损失可预测下降；还有能力涌现。</p></div>
+          <div class="compare-col b"><h3>固有局限</h3><p style="margin:0;font-size:0.9rem">幻觉、知识过时、偏见——必须用检索/工具/验证补。</p></div>
+        </div>'''))
+
+slides.append(S("scaling", "缩放法则", G33, '''
+        <div class="slide-sub">§ 3.3.1 · Scaling Laws</div>
+        <h2 class="slide-title">参数 · 数据 · 算力的幂律</h2>
+        <p>对数-对数坐标下，Loss 与三要素呈平滑幂律：按比例加资源，性能可预测提升（Kaplan 等）。</p>
+        <div class="analogy">不是玄学「突然变聪明」，而是可规划的投入-产出曲线——当然还有涌现这种惊喜。</div>'''))
+
+slides.append(S("chinchilla", "Chinchilla 定律", G33, '''
+        <div class="slide-sub">§ 3.3.1 · 最优配比</div>
+        <h2 class="slide-title">给定算力，参数与数据要匹配</h2>
+        <p>700B 的 Chinchilla 因数据约 4× GPT-3（1750B），性能反而更好。</p>
+        <div class="callout" data-label="纠偏"><p style="margin:0">纠正「越大越好」：数据效率同样关键；影响 Llama 等「小而精训」设计。</p></div>'''))
+
+slides.append(S("emerge", "能力涌现", G33, '''
+        <div class="slide-sub">§ 3.3.1 · Emergence</div>
+        <h2 class="slide-title">过阈值后突然长出小模型没有的能力</h2>
+        <p>CoT、指令遵循、多步推理、代码生成等常在百亿～千亿级才显著。</p>
+        <div class="note"><strong>对 Agent：</strong>复杂自主规划往往需要「足够大」的基座——不是调参能完全替代的。</div>'''))
+
+slides.append(S("hallu", "幻觉定义与类型", G33, '''
+        <div class="slide-sub">§ 3.3.2 · Hallucination</div>
+        <h2 class="slide-title">看起来像真，却可能是编的</h2>
+        <div class="card-grid">
+          ''' + flip("事实性", "Factual", "违背现实", "与世界事实不符。") + '''
+          ''' + flip("忠实性", "Faithfulness", "偏离源文", "摘要/翻译未忠实源文本。") + '''
+          ''' + flip("内在幻觉", "Intrinsic", "自相矛盾", "与输入信息直接冲突。") + '''
+        </div>
+        <p>本质：过度自信地编造，而非准确检索/推理。</p>'''))
+
+slides.append(S("hallu-why", "幻觉为何产生", G33, '''
+        <div class="slide-sub">§ 3.3.2 · 成因</div>
+        <h2 class="slide-title">数据噪声 · 无核查 · 推理链出错</h2>
+        <ul>
+          <li>训练数据含错误或矛盾</li>
+          <li>自回归只预测下一词，无内置事实核查</li>
+          <li>复杂推理中途错了仍继续「圆谎」</li>
+        </ul>
+        <div class="analogy">旅游 Agent 推荐不存在景点、订错航班号——聊天尴尬，Agent 里可能真花钱。</div>'''))
+
+slides.append(S("bias-stale", "知识过时与偏见", G33, '''
+        <div class="slide-sub">§ 3.3.2 · 其它局限</div>
+        <h2 class="slide-title">训练截止后的世界，模型「没上过网」</h2>
+        <p>知识停在数据收集时；同时吸收社会偏见与刻板印象并可能放大。</p>
+        <div class="callout" data-label="Agent 对策预告"><p style="margin:0">实时检索、工具、人工审核与安全策略——后面章节会反复出现。</p></div>'''))
+
+slides.append(S("mitigate", "缓解幻觉三层", G33, '''
+        <div class="slide-sub">§ 3.3.2 · 缓解</div>
+        <h2 class="slide-title">数据 · 模型 · 推理</h2>
+        <div class="timeline">
+          <div class="tl-item"><span class="tag">数据</span><h4>清洗 / 事实知识 / RLHF</h4><p>源头减少胡说动机。</p></div>
+          <div class="tl-item"><span class="tag">模型</span><h4>新架构 / 不确定性</h4><p>让模型能表达「我不确定」。</p></div>
+          <div class="tl-item"><span class="tag">推理</span><h4>RAG · 多步验证 · 工具</h4><p>有据生成、自检、搜索/计算器/代码解释器。</p></div>
+        </div>'''))
+
+slides.append(S("rag", "RAG 要点", G33, '''
+        <div class="slide-sub">§ 3.3.2 · RAG</div>
+        <h2 class="slide-title">先检索外部依据，再作为上下文生成</h2>
+        <div class="arch-stack">
+          <div class="arch-block enc"><strong>Retrieval</strong><div class="sub">从文档库/网页取相关片段</div></div>
+          <div class="arch-block dec"><strong>Augmented</strong><div class="sub">片段进入 Prompt 约束回答</div></div>
+          <div class="arch-block head"><strong>Generation</strong><div class="sub">模型基于证据生成，减少凭空编</div></div>
+        </div>
+        <div class="note">短期难根除幻觉，但可显著降频降害——可靠 Agent 的标配思路。</div>'''))
+
+slides.append(S("quiz33", "检测 · 3.3 节", G33, '''
+        <div class="slide-sub">问答检测 · 3.3</div>
+        <h2 class="slide-title">自测：缩放与幻觉</h2>
+        <div class="quiz-score" id="score-q33"></div>
+''' + quiz_item("q33", 1, "Chinchilla 强调？",
+    ["参数越大越好", "给定算力下参数与数据有最优配比", "T=0 无幻觉"],
+    "数据效率同样关键。") + '''
+''' + quiz_item("q33", 0, "RAG 核心？",
+    ["先检索外部依据再生成", "参数再乘十", "禁止 Prompt"],
+    "有据生成。") + '''
+''' + quiz_item("q33", 2, "Agent 场景幻觉更危险因？",
+    ["Agent 零幻觉", "聊天会下单", "错误进入行动链，可造成真实损失"],
+    "错误经工具传播放大。") + '''
+'''))
+
+# ========== 3.4 ==========
+G34 = "3.4 小结与习题"
+slides.append(S("summary", "3.4 本章小结", G34, '''
+        <div class="slide-sub">§ 3.4</div>
+        <h2 class="slide-title">两句话带走 + 四大块回顾</h2>
+        <div class="callout" data-label="核心压缩"><p style="margin:0">① 强大来自「下一 token 预测」在超大规模下的涌现。<br/>② 再强也非万能——Agent 靠工具、记忆、检索与约束补短板。</p></div>
+        <ul>
+          <li><strong>演进与架构</strong>：N-gram → RNN/LSTM → Transformer；Decoder-Only 开启时代</li>
+          <li><strong>交互</strong>：提示工程 + Tokenization + 本地开源实践</li>
+          <li><strong>选型</strong>：开闭源多维权衡</li>
+          <li><strong>法则与局限</strong>：缩放/涌现；幻觉与缓解</li>
+        </ul>'''))
+
+slides.append(S("bridge", "从 LLM 到 Agent", G34, '''
+        <div class="slide-sub">§ 3.4 · 衔接</div>
+        <h2 class="slide-title">本章为下一章经典范式打底</h2>
+        <p>如何设计提示引导规划、如何选型、如何在工作流加验证——答案都立在本章。</p>
+        <div class="analogy">下一章开始把「大脑理解」接到真正的 Agent 设计与代码范式。</div>'''))
+
+slides.append(S("myths", "三个常见误解", G34, '''
+        <div class="slide-sub">§ 3.4 · 纠偏</div>
+        <h2 class="slide-title">别把 LLM 想成这些东西</h2>
+        <div class="compare3">
+          <div class="compare-col a"><h3>不是答案数据库</h3><p style="margin:0;font-size:0.85rem">不是查表背题，是学统计模式再生成。</p></div>
+          <div class="compare-col b"><h3>Prompt 不是咒语</h3><p style="margin:0;font-size:0.85rem">有效因组织了目标/上下文/约束。</p></div>
+          <div class="compare-col c"><h3>强 ≠ 可靠</h3><p style="margin:0;font-size:0.85rem">规模提能力，不保证句句可信。</p></div>
+        </div>'''))
+
+slides.append(S("checklist", "自测清单", G34, '''
+        <div class="slide-sub">学习验收</div>
+        <h2 class="slide-title">勾完这些，第三章算过关</h2>
+        <ul class="check-list" id="checklist">
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能解释链式法则与 N-gram，并手算迷你 Bigram</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">说清词嵌入、余弦与 king−man+woman</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">对比 RNN 串行与 Transformer 并行；说明 PE、Add&amp;Norm、FFN</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">画出 Decoder-Only 接龙并解释掩码注意力</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">会调 Temperature/Top-k/Top-p，会用 Zero/Few/CoT</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">理解 BPE/Token 对窗口与成本的影响</span></li>
+          <li onclick="this.classList.toggle('done')"><span class="ck-box">✓</span><span class="ck-text">能多维选型；知道缩放、涌现与 RAG/工具缓解幻觉</span></li>
+        </ul>'''))
+
+slides.append(S("exercises", "习题要点热身", G34, '''
+        <div class="slide-sub">习题导引</div>
+        <h2 class="slide-title">书后习题在考什么？</h2>
+        <details class="expand-card" open><summary>1. 演进与 Bigram</summary><div class="expand-body"><p>算 \(P(\\text{agent works})\)；马尔可夫与局限；RNN/Transformer 如何克服。</p></div></details>
+        <details class="expand-card"><summary>2. Transformer 与 Decoder-Only</summary><div class="expand-body"><p>自注意力；为何可并行；PE；与 Encoder-Decoder 区别。</p></div></details>
+        <details class="expand-card"><summary>3. 子词与 BPE</summary><div class="expand-body"><p>为何不用纯字符/单词；BPE 解决什么。</p></div></details>
+        <details class="expand-card"><summary>4. 本地部署与提示对比</summary><div class="expand-body"><p>部署轻量模型；对比 Zero/Few/CoT；开闭源；客服选型。</p></div></details>
+        <details class="expand-card"><summary>5–6. 幻觉与论文阅读 Agent</summary><div class="expand-body"><p>选一种缓解方法；设计论文辅助 Agent：基座、超窗、忠于原文校验。</p></div></details>'''))
+
+slides.append(S("refs", "参考文献与收尾", G34, '''
+        <div class="slide-sub">参考文献（节选）</div>
+        <h2 class="slide-title">想深挖时从这里进</h2>
+        <ol style="font-size:0.88rem">
+          <li>Bengio et al. Neural probabilistic LM. 2003.</li>
+          <li>Elman. Finding structure in time. 1990. · Hochreiter &amp; Schmidhuber. LSTM. 1997.</li>
+          <li>Vaswani et al. Attention is all you need. 2017. · Radford et al. GPT. 2018.</li>
+          <li>Gage. BPE. 1994. · WordPiece. 2012. · SentencePiece. 2018.</li>
+          <li>Kaplan. Scaling Laws. 2020. · Hoffmann. Chinchilla. 2022.</li>
+          <li>Ji et al. Hallucination survey. · Lewis et al. RAG. 2020. · Christiano. RLHF. 2017.</li>
+        </ol>
+        <div class="callout" data-label="覆盖范围"><p style="margin:0">已覆盖原书全部小节：导读、3.1.1–3.1.3、3.2.1–3.2.4、3.3.1–3.3.2、3.4、习题与文献要点。代码见 <code style="font-family:var(--font-mono);color:var(--signal)">code/chapter3/</code>。</p></div>
+        <button class="btn btn-primary" type="button" onclick="goTo(0)" style="margin-top:0.75rem">回到封面</button>'''))
+
+# Extra deep-dive pages to push toward ~3x (add missing granular pages)
+extra = []
+extra.append(S("lm-agent", "LM 与多智能体", G31, '''
+        <div class="slide-sub">§ 3.1.1 · 与 Agent 关系</div>
+        <h2 class="slide-title">为什么 Agent 课要从语言模型讲起？</h2>
+        <p>理解指令、生成计划、写工具调用参数、总结观察——每一步都是「在上下文后继续写合理内容」。</p>
+        <div class="note">架构演进史 = 理解现代 LLM 能力从哪来，也理解边界从哪来。</div>'''))
+
+extra.append(S("dec-layer", "DecoderLayer 三块", G31, '''
+        <div class="slide-sub">§ 3.1.2 · 解码器层</div>
+        <h2 class="slide-title">掩码自注意力 → 交叉注意力 → FFN</h2>
+        <ol>
+          <li>对自己（已生成前缀）做掩码自注意力</li>
+          <li>对编码器输出做交叉注意力</li>
+          <li>逐位置 FFN + 每步 Add&amp;Norm</li>
+        </ol>
+        <div class="code-block">attn = self.self_attn(x,x,x,tgt_mask)
+x = norm1(x + dropout(attn))
+cross = self.cross_attn(x, enc_out, enc_out, src_mask)
+x = norm2(x + dropout(cross))
+x = norm3(x + dropout(self.feed_forward(x)))</div>'''))
+
+extra.append(S("enc-vs-dec-only", "Encoder-Decoder vs Decoder-Only", G31, '''
+        <div class="slide-sub">§ 3.1.3 · 对比</div>
+        <h2 class="slide-title">翻译团队 vs 接龙大师</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>Enc-Dec</h3><p style="margin:0;font-size:0.88rem">双侧结构；适合条件生成（翻译、摘要到另一序列）。</p></div>
+          <div class="compare-col b"><h3>Dec-Only</h3><p style="margin:0;font-size:0.88rem">统一下一词目标；预训练简单、扩展容易、对话自然。</p></div>
+        </div>'''))
+
+extra.append(S("prompt-agent", "提示工程与 Agent 协作", G32, '''
+        <div class="slide-sub">§ 3.2.1 · Agent 视角</div>
+        <h2 class="slide-title">多智能体时，提示=岗位说明书</h2>
+        <p>角色、输入输出契约、禁止事项、何时调用工具——写进系统提示，比事后纠错便宜。</p>
+        <div class="callout" data-label="补充"><p style="margin:0">原书未展开：生产环境常把「可解析格式 + 失败重试 + 最大步数」与 CoT 一起用。</p></div>'''))
+
+extra.append(S("tok-count", "Token 计数直觉", G32, '''
+        <div class="slide-sub">§ 3.2.2 · 补充</div>
+        <h2 class="slide-title">同样汉字，不同分词器 Token 数不同</h2>
+        <p>中文常比英文「更吃」窗口；预估成本要用目标模型的 tokenizer 实算，不能按字数拍脑袋。</p>
+        <div class="note">做长记忆 Agent：分块、检索、摘要压缩，都是在跟 Token 预算谈判。</div>'''))
+
+extra.append(S("oss-pitfall", "本地调用易错清单", G32, '''
+        <div class="slide-sub">§ 3.2.3 · 易错</div>
+        <h2 class="slide-title">跑通前先避开这些坑</h2>
+        <ul>
+          <li>忘记 <code>.to(device)</code>，输入在 CPU、模型在 GPU</li>
+          <li>解码时没截掉 prompt，把问题当回答打印</li>
+          <li>Chat 模型不用官方 template</li>
+          <li>笔记本无 GPU 时用太大模型导致换页卡死</li>
+        </ul>'''))
+
+extra.append(S("select-case", "客服 Agent 选型小案例", G32, '''
+        <div class="slide-sub">§ 3.2.4 · 案例</div>
+        <h2 class="slide-title">企业客服该怎么想？</h2>
+        <ol>
+          <li>延迟与稳定性：用户在线等</li>
+          <li>隐私：对话能否出域？</li>
+          <li>中文与领域话术：是否需微调/RAG</li>
+          <li>成本随并发线性涨？预算墙在哪</li>
+          <li>安全合规：拒答、审计、毒性过滤</li>
+        </ol>
+        <div class="note">常见组合：闭源 API 做复杂推理 + 开源/小模型做分类路由；或全程私有化开源 + RAG。</div>'''))
+
+extra.append(S("scale-agent", "缩放法则对选型启示", G33, '''
+        <div class="slide-sub">§ 3.3.1 · 启示</div>
+        <h2 class="slide-title">复杂规划别指望「超小模型硬撑」</h2>
+        <p>涌现意味着：有些 Agent 能力是阈值现象。同时 Chinchilla 提醒：同等算力下「训够数据的中等模型」可能优于「过大但欠训」。</p>'''))
+
+extra.append(S("hallu-chat-vs-agent", "聊天 vs Agent 幻觉", G33, '''
+        <div class="slide-sub">§ 3.3.2 · 风险对比</div>
+        <h2 class="slide-title">同一句胡话，后果量级不同</h2>
+        <div class="compare">
+          <div class="compare-col a"><h3>聊天</h3><p style="margin:0;font-size:0.88rem">用户可怀疑、可追问；损失多为信息层面。</p></div>
+          <div class="compare-col b"><h3>Agent</h3><p style="margin:0;font-size:0.88rem">错误写进工具参数/状态机，可能下单、改库、发邮件。</p></div>
+        </div>'''))
+
+extra.append(S("quiz-final", "综合检测 · 本章", G34, '''
+        <div class="slide-sub">综合检测</div>
+        <h2 class="slide-title">串起来再测一遍</h2>
+        <div class="quiz-score" id="score-qall"></div>
+''' + quiz_item("qall", 0, "「预测下一个 token」为何能长出能力？",
+    ["在大规模下逼出语法/知识/推理等统计规律与涌现", "因为有外部搜索引擎内置", "因为温度永远为 0"],
+    "简单目标+规模+数据→复杂行为。") + '''
+''' + quiz_item("qall", 2, "上下文窗口不够时长任务 Agent？",
+    ["自动无限记忆", "幻觉消失", "需摘要/检索/外存，否则早期信息被截断"],
+    "Token 预算是硬约束。") + '''
+''' + quiz_item("qall", 1, "缓解幻觉最实用路径之一？",
+    ["只把模型参数乘一百", "RAG + 工具 + 验证步骤", "禁止使用少样本"],
+    "有据生成与外部核查。") + '''
+'''))
+
+# Insert extras after corresponding sections: just append before summary group end - already placed in lists
+# Merge: rebuild order - insert extras at end of their groups by splicing
+# Simpler: append all extras before summary - actually they're already separate. Let's place them properly.
+
+# Rebuild final list with extras woven in
+final = []
+for s in slides:
+    final.append(s)
+    # after certain ids, inject
+    if 'data-id="lm-def"' in s:
+        final.append(extra[0])  # lm-agent
+    if 'data-id="tf-skel"' in s:
+        final.append(extra[1])  # dec-layer
+    if 'data-id="dec-adv"' in s:
+        final.append(extra[2])  # enc-vs-dec-only
+    if 'data-id="cot"' in s:
+        final.append(extra[3])  # prompt-agent
+    if 'data-id="tok-dev"' in s:
+        final.append(extra[4])  # tok-count
+    if 'data-id="oss-gen"' in s:
+        final.append(extra[5])  # oss-pitfall
+    if 'data-id="open"' in s:
+        final.append(extra[6])  # select-case
+    if 'data-id="emerge"' in s:
+        final.append(extra[7])  # scale-agent
+    if 'data-id="hallu-why"' in s:
+        final.append(extra[8])  # hallu-chat-vs-agent
+    if 'data-id="checklist"' in s:
+        final.append(extra[9])  # quiz-final
+
+out = Path(__file__).resolve().parent / "slides_body.html"
+out.write_text("\n".join(final), encoding="utf-8")
+print(f"Wrote {len(final)} slides -> {out}")

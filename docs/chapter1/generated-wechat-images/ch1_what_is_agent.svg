@@ -1,0 +1,31 @@
+<svg width="1440" height="1080" viewBox="0 0 1440 1080" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="1080" fill="#F5F5F5"/>
+  <text x="120" y="130" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="58" font-weight="700" fill="#1F2937">智能体，不只是更聪明一点的聊天机器人</text>
+  <text x="120" y="188" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="28" font-weight="500" fill="#4B5563">区别不在会不会说，而在会不会围绕目标持续推进</text>
+
+  <rect x="110" y="270" width="540" height="540" rx="36" fill="#FFFFFF" stroke="#DDE7F5" stroke-width="3"/>
+  <rect x="790" y="270" width="540" height="540" rx="36" fill="#FFFFFF" stroke="#DDE7F5" stroke-width="3"/>
+
+  <circle cx="220" cy="360" r="34" fill="#DCEAFD"/>
+  <circle cx="900" cy="360" r="34" fill="#DCEAFD"/>
+  <text x="280" y="372" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="44" font-weight="700" fill="#1F2937">聊天机器人</text>
+  <text x="960" y="372" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="44" font-weight="700" fill="#1F2937">智能体</text>
+
+  <g font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="30" fill="#374151">
+    <circle cx="180" cy="470" r="7" fill="#2563EB"/><text x="210" y="480">你问一句，它答一句</text>
+    <circle cx="180" cy="560" r="7" fill="#2563EB"/><text x="210" y="570">更擅长生成回答</text>
+    <circle cx="180" cy="650" r="7" fill="#2563EB"/><text x="210" y="660">不主动推进任务</text>
+    <circle cx="180" cy="740" r="7" fill="#2563EB"/><text x="210" y="750">更像“会说”</text>
+
+    <circle cx="860" cy="470" r="7" fill="#2563EB"/><text x="890" y="480">围绕目标持续行动</text>
+    <circle cx="860" cy="560" r="7" fill="#2563EB"/><text x="890" y="570">会拆任务、调工具、读结果</text>
+    <circle cx="860" cy="650" r="7" fill="#2563EB"/><text x="890" y="660">会根据反馈调整下一步</text>
+    <circle cx="860" cy="740" r="7" fill="#2563EB"/><text x="890" y="750">更像“会做”</text>
+  </g>
+
+  <line x1="650" y1="540" x2="790" y2="540" stroke="#A6C2F3" stroke-width="6" stroke-linecap="round"/>
+  <polygon points="790,540 760,522 760,558" fill="#2563EB"/>
+
+  <rect x="230" y="880" width="980" height="94" rx="22" fill="#EAF1FE"/>
+  <text x="720" y="938" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="34" font-weight="600" fill="#1F2937">模型只是大脑，系统才是智能体</text>
+</svg>

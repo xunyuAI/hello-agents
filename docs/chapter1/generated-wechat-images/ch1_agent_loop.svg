@@ -1,0 +1,39 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#F5F5F5"/>
+  <text x="120" y="128" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="60" font-weight="700" fill="#1F2937">智能体真正的生命线，是循环</text>
+  <text x="120" y="188" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="30" font-weight="500" fill="#4B5563">先看，再想，再做，再根据结果继续看</text>
+
+  <g transform="translate(960 570)">
+    <circle r="250" fill="#FFFFFF" stroke="#DDE7F5" stroke-width="3"/>
+    <circle r="128" fill="#EAF1FE"/>
+    <text y="16" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="42" font-weight="700" fill="#1F2937">Agent Loop</text>
+
+    <circle cx="0" cy="-250" r="88" fill="#2563EB"/>
+    <text x="0" y="-236" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="36" font-weight="700" fill="#FFFFFF">感知</text>
+
+    <circle cx="250" cy="0" r="88" fill="#2563EB"/>
+    <text x="250" y="14" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="36" font-weight="700" fill="#FFFFFF">思考</text>
+
+    <circle cx="0" cy="250" r="88" fill="#2563EB"/>
+    <text x="0" y="264" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="36" font-weight="700" fill="#FFFFFF">行动</text>
+
+    <circle cx="-250" cy="0" r="88" fill="#2563EB"/>
+    <text x="-250" y="14" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="36" font-weight="700" fill="#FFFFFF">观察</text>
+
+    <path d="M72 -212 C180 -180 212 -72 212 0" fill="none" stroke="#93B7F6" stroke-width="10" stroke-linecap="round"/>
+    <polygon points="214,-2 194,-24 186,8" fill="#2563EB"/>
+    <path d="M212 72 C180 180 72 212 0 212" fill="none" stroke="#93B7F6" stroke-width="10" stroke-linecap="round"/>
+    <polygon points="2,214 -8,184 24,192" fill="#2563EB"/>
+    <path d="M-72 212 C-180 180 -212 72 -212 0" fill="none" stroke="#93B7F6" stroke-width="10" stroke-linecap="round"/>
+    <polygon points="-214,2 -184,8 -192,-24" fill="#2563EB"/>
+    <path d="M-212 -72 C-180 -180 -72 -212 0 -212" fill="none" stroke="#93B7F6" stroke-width="10" stroke-linecap="round"/>
+    <polygon points="-2,-214 8,-184 -24,-192" fill="#2563EB"/>
+  </g>
+
+  <g font-family="PingFang SC, Hiragino Sans GB, STHeiti, Arial Unicode MS, sans-serif" font-size="28" fill="#4B5563">
+    <text x="960" y="302" text-anchor="middle">读取环境、输入、工具结果</text>
+    <text x="1370" y="576">规划下一步、选择策略</text>
+    <text x="960" y="864" text-anchor="middle">调用工具、修改状态、执行动作</text>
+    <text x="330" y="576">检查结果对不对，再进入下一轮</text>
+  </g>
+</svg>

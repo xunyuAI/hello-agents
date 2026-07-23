@@ -615,7 +615,8 @@ a { color: var(--cyan-bright); }
   [x] 15.6 API 客户端·对话 UI·主场景整合
   [x] 15.7 回顾·扩展·挑战·自测·收官
   [x] 互动：翻转卡·展开·闪卡·问答·步进·清单
-  slides: 40
+  [x] 加厚页：create 拆解·记忆口诀·好感账本·九步进阶·信号对比
+  slides: 45
 -->
 
 <section class="slide active" data-id="cover" data-label="封面" data-group="开篇">
@@ -630,7 +631,7 @@ a { color: var(--cyan-bright); }
     <div class="goal"><div class="goal-n">03</div><p>实现五级好感度：情感分析 → 分数 → 动态 Prompt</p></div>
     <div class="goal"><div class="goal-n">04</div><p>串通 FastAPI 与 Godot：场景、玩家控制、API 客户端与对话 UI</p></div>
   </div>
-  <p class="kbd-hint">键盘 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · 侧栏可跳转 · 共 40 页</p>
+  <p class="kbd-hint">键盘 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · 侧栏可跳转 · 共 45 页</p>
   <img class="cover-img" src="assets/ch15_cover.svg" alt="Lab 15 赛博小镇封面" />
 </div>
 
@@ -880,6 +881,30 @@ a { color: var(--cyan-bright); }
 
 </section>
 
+<section class="slide" data-id="create-npc-walk" data-label="创建 NPC 四步拆解" data-group="15.2 NPC">
+
+<h2 class="slide-title">create_npc_agent 四步拆解</h2>
+<p class="slide-sub">15.2.1 · 新手按顺序对照源码</p>
+<div class="loop-stepper" id="createNpcLoop">
+  <div class="steps steps4">
+    <button type="button" class="step-btn on" onclick="showCreateNpc(0)">① Prompt</button>
+    <button type="button" class="step-btn" onclick="showCreateNpc(1)">② LLM</button>
+    <button type="button" class="step-btn" onclick="showCreateNpc(2)">③ Memory</button>
+    <button type="button" class="step-btn" onclick="showCreateNpc(3)">④ Agent</button>
+  </div>
+  <div class="loop-panel" id="createNpcPanel"></div>
+</div>
+<div class="callout" data-label="实装提示">仓库里是 <code>NPCAgentManager</code> 统一建三个 Agent；教学先懂「最小四步」，再读 Manager。</div>
+<table class="matrix">
+<thead><tr><th>参数</th><th>直觉</th></tr></thead>
+<tbody>
+<tr><td>capacity=10</td><td>短期最多约 10 条，旧的会被挤掉</td></tr>
+<tr><td>ttl_minutes=120</td><td>两条小时窗口，过期不硬撑上下文</td></tr>
+<tr><td>按 npc_id 分库</td><td>张三的往事不会污染李四的检索</td></tr>
+</tbody></table>
+
+</section>
+
 <section class="slide" data-id="roles" data-label="三角色 Prompt" data-group="15.2 NPC">
 
 <h2 class="slide-title">NPC 角色设定与 Prompt</h2>
@@ -928,6 +953,32 @@ a { color: var(--cyan-bright); }
   <div class="loop-panel" id="memPanel"></div>
 </div>
 <p class="analogy">玩家说「它是什么颜色？」靠短期指代；说「还记得上次那个项目吗？」靠长期语义检索。</p>
+
+</section>
+
+<section class="slide" data-id="memory-motto" data-label="记忆五步口诀" data-group="15.2 NPC">
+
+<h2 class="slide-title">记忆五步 · 新手口诀</h2>
+<p class="slide-sub">15.2.3 · 先近后远，最后写回</p>
+<div class="code-block"># process_dialogue 心智顺序
+recent  = working.get_recent_messages(5)
+relevant = episodic.search(query=msg, top_k=3)
+context = {"recent": recent, "relevant": relevant}
+reply   = agent.run(msg, context=context)
+memory.add_interaction(msg, reply)  # 漏写这一步 = 永远失忆</div>
+<div class="compare">
+  <div class="compare-col a"><h3>Working 解决</h3><ul>
+    <li>指代：「它」是什么</li>
+    <li>刚聊过的话题连贯</li>
+    <li>容量小、会过期</li>
+  </ul></div>
+  <div class="compare-col b"><h3>Episodic 解决</h3><ul>
+    <li>「还记得上次项目吗」</li>
+    <li>跨会话语义检索</li>
+    <li>按 npc_id 隔离存储</li>
+  </ul></div>
+</div>
+<p class="note"><strong>口诀：</strong>先近后远，先连贯后回忆，最后一定要写回。</p>
 
 </section>
 
@@ -1057,6 +1108,20 @@ level = get_affinity_level(new_score)</div>
 
 </section>
 
+<section class="slide" data-id="affinity-ledger" data-label="好感度账本细节" data-group="15.3 好感度">
+
+<h2 class="slide-title">好感度账本 · 键与顺序</h2>
+<p class="slide-sub">15.3.2–15.3.3 · 新手最容易混的两处</p>
+<div class="kw-grid">
+  <div class="kw"><h4>关系键</h4><p><code>npc_id + "_" + player_name</code><br/>张三对 Alice ≠ 张三对 Bob</p></div>
+  <div class="kw"><h4>调用顺序</h4><p>先查等级 → 拼 Prompt / 取 Agent → 生成 → <strong>最后</strong>更新分数</p></div>
+  <div class="kw"><h4>教学三档</h4><p>友好 +5 · 中立 +2 · 不友好 −3<br/>再 clamp 到 [0,100]</p></div>
+  <div class="kw"><h4>仓库实装</h4><p>JSON：change_amount / sentiment / reason<br/>规则区间更细，思想相同</p></div>
+</div>
+<div class="callout" data-label="易混">分数是后端账本；玩家感到的是<strong>语气与信息密度</strong>（动态 Prompt），前端可以暂时不画心形条。</div>
+
+</section>
+
 <section class="slide" data-id="affinity-prompt" data-label="好感度影响对话" data-group="15.3 好感度">
 
 <h2 class="slide-title">好感度如何改说话方式</h2>
@@ -1137,6 +1202,28 @@ system_prompt = f"""你是{name}...
 <li>取好感等级</li><li>Agent 生成</li><li>更新好感</li>
 <li>写日志</li><li>返回回复</li><li>finally 释放 busy</li>
 </ol></div></details>
+
+</section>
+
+<section class="slide" data-id="dialogue-nine" data-label="/dialogue 九步进阶" data-group="15.4 后端">
+
+<h2 class="slide-title">POST /dialogue 九步进阶</h2>
+<p class="slide-sub">15.4.2 · 点一下跟一步，默写用</p>
+<div class="loop-stepper" id="nineLoop">
+  <div class="steps steps5">
+    <button type="button" class="step-btn on" onclick="showNine(0)">1–2 校验</button>
+    <button type="button" class="step-btn" onclick="showNine(1)">3–4 锁与好感</button>
+    <button type="button" class="step-btn" onclick="showNine(2)">5–6 生成更新</button>
+    <button type="button" class="step-btn" onclick="showNine(3)">7–8 日志回包</button>
+    <button type="button" class="step-btn" onclick="showNine(4)">9 finally</button>
+  </div>
+  <div class="loop-panel" id="ninePanel"></div>
+</div>
+<div class="compare">
+  <div class="compare-col a"><h3>404</h3><p>NPC id 不存在</p></div>
+  <div class="compare-col b"><h3>409</h3><p>NPC 正忙（门锁占用）</p></div>
+</div>
+<p class="analogy">漏写 <code>finally</code> = 一次异常后 NPC 永远 busy，整条对话线卡死。</p>
 
 </section>
 
@@ -1276,6 +1363,32 @@ move_and_slide()</div>
 </ul>
 <details class="expand-card"><summary>模块化好处</summary>
 <div class="expand-body"><p>碰撞形状、提示逻辑改在 NPC.tscn 一次完成；Main 只负责接线（信号 → API → UI）。</p></div></details>
+
+</section>
+
+<section class="slide" data-id="signal-vs-getnode" data-label="信号 vs get_node" data-group="15.5 Godot">
+
+<h2 class="slide-title">信号接线 vs 到处 get_node</h2>
+<p class="slide-sub">15.5.3 · Godot 松耦合心法</p>
+<div class="compare">
+  <div class="compare-col a"><h3>推荐：信号 / 组</h3><ul>
+    <li>NPC 发「开始对话(npc_id)」</li>
+    <li>Main 监听并开 UI、调 API</li>
+    <li>组件可单独测试</li>
+    <li>改节点路径不易连环炸</li>
+  </ul></div>
+  <div class="compare-col b"><h3>慎用：硬 get_node</h3><ul>
+    <li><code>../../DialogueUI</code> 路径脆</li>
+    <li>NPC 脚本直接改 UI 字段</li>
+    <li>场景一挪就全红</li>
+    <li>难复用、难单测</li>
+  </ul></div>
+</div>
+<div class="code-block"># 伪流程
+玩家进入 Area → NPC 记下 player → 显示「按 E」
+玩家按 E → 发 start_dialogue(npc) → Main 开 UI + 锁移动
+对话结束 → 解锁移动 → 清提示</div>
+<p class="note"><strong>Player 组：</strong><code>add_to_group("player")</code>，NPC 用组判断「进区的是不是玩家」。</p>
 
 </section>
 
@@ -1583,6 +1696,31 @@ function showMem(n) {
   document.getElementById("memPanel").innerHTML = `<h4>${memTexts[n].t}</h4><p>${memTexts[n].p}</p>`;
 }
 showMem(0);
+
+const createNpcTexts = [
+  { t: "① 拼 system_prompt", p: "用 name / role / personality 写成人设；差异几乎全在这里。" },
+  { t: "② HelloAgentsLLM()", p: "统一 LLM 入口；密钥与模型在环境 / 配置里，不写死在 Prompt。" },
+  { t: "③ MemoryManager", p: "Working(capacity, ttl) + Episodic(按 npc_id 分库)；短期连贯、长期回忆。" },
+  { t: "④ 返回 SimpleAgent", p: "name + llm + system_prompt + memory_manager；之后对话走 agent.run。" }
+];
+function showCreateNpc(n) {
+  document.querySelectorAll("#createNpcLoop .step-btn").forEach((b,i)=>b.classList.toggle("on", i===n));
+  document.getElementById("createNpcPanel").innerHTML = `<h4>${createNpcTexts[n].t}</h4><p>${createNpcTexts[n].p}</p>`;
+}
+showCreateNpc(0);
+
+const nineTexts = [
+  { t: "1–2 校验", p: "NPC 不存在 → 404；已 busy → 409。先挡非法与冲突请求。" },
+  { t: "3–4 加锁与好感", p: "set_npc_busy(true)；get_affinity 取当前等级，供动态 Prompt / 选 Agent。" },
+  { t: "5–6 生成并更新", p: "agent.run(消息) → update_affinity（LLM 判态度加减分）。" },
+  { t: "7–8 日志与回包", p: "DialogueLogger 记账；返回 npc_reply + affinity_level/score。" },
+  { t: "9 finally 释放", p: "无论成功或异常，都 set_npc_busy(false)。门锁必须还。" }
+];
+function showNine(n) {
+  document.querySelectorAll("#nineLoop .step-btn").forEach((b,i)=>b.classList.toggle("on", i===n));
+  document.getElementById("ninePanel").innerHTML = `<h4>${nineTexts[n].t}</h4><p>${nineTexts[n].p}</p>`;
+}
+showNine(0);
 
 const playerTexts = [
   { t: "输入向量", p: "Input.get_vector 读方向（可绑 WASD / 方向键）。" },

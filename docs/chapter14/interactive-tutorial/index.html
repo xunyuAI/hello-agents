@@ -873,6 +873,18 @@ for idx, item in enumerate(tasks_payload, start=1):
 <div class="note">Agent 常在 JSON 前后加说明文字——正则抽数组是工程标配。</div>
 
 </section>
+<section class="slide" data-id="three-fields" data-label="三字段对照" data-group="14.3 智能体设计">
+
+<p class="slide-sub">title · intent · query 缺一不可</p>
+<h2 class="slide-title">子任务字段各服务谁？</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>title</h3><p>给人与报告标题看；缺了任务列表难读。</p></div>
+  <div class="compare-col b"><h3>intent</h3><p>给 Summarizer/Writer：同样搜索结果，意图不同则笔记焦点不同。</p></div>
+  <div class="compare-col c"><h3>query</h3><p>给 SearchTool；常用英文提高召回。过短（&lt;2 词）易搜空。</p></div>
+</div>
+<div class="callout" data-label="校验">创建 TodoItem 前：<code>all(k in item for k in ("title","intent","query"))</code>，缺字段直接 ValueError。</div>
+
+</section>
 <section class="slide" data-id="summarizer-agent" data-label="总结专家" data-group="14.3 智能体设计">
 
 <p class="slide-sub">Agent 2 · Task Summarizer</p>
@@ -915,6 +927,25 @@ for idx, item in enumerate(tasks_payload, start=1):
             })
         return result</pre>
 <div class="analogy">像给每个扳手装上传感器：谁、何时、用了什么参数、结果如何——全部可观测。</div>
+
+</section>
+<section class="slide" data-id="listener-sse" data-label="监听器接 SSE" data-group="14.3 智能体设计">
+
+<p class="slide-sub">同一钩子服务调试与产品</p>
+<h2 class="slide-title">tool_listener → _emit_event</h2>
+<pre class="code-block">def tool_listener(call_info):
+    self._emit_event({
+        "type": "tool_call",
+        "agent": call_info["agent_name"],
+        "tool": call_info["tool_name"],
+        "parameters": call_info["parsed_parameters"],
+    })
+# Planner / Summarizer / Reporter 共用同一 listener</pre>
+<ul>
+  <li><strong>不改变</strong>模型推理能力，只加可观测性</li>
+  <li>调试日志与前端「正在搜索…」可以同源</li>
+  <li>进阶：可按 agent_name 过滤噪音事件</li>
+</ul>
 
 </section>
 <section class="slide" data-id="collab" data-label="顺序协作" data-group="14.3 智能体设计">
@@ -1087,6 +1118,10 @@ tasks_payload = self._extract_tasks(response)
   <li>返回带引用的 Markdown（供 Note 与报告复用）</li>
 </ul>
 <div class="analogy">Planner 定「问什么」；Summarizer 定「这段材料说了什么、出处在哪」。</div>
+<pre class="code-block">formatted = []
+for idx, r in enumerate(search_results, start=1):
+    formatted.append(f"[{idx}] {r['title']}\nURL: {r['url']}\n摘要: {r['snippet']}\n")
+# Prompt 必须带上 task.intent，否则笔记容易偏题</pre>
 
 </section>
 <section class="slide" data-id="svc-report" data-label="ReportingService" data-group="14.5 服务层">
@@ -1115,6 +1150,20 @@ tasks_payload = self._extract_tasks(response)
   <li>失败返回空列表并打日志（不拖垮整条流水线）</li>
   <li>可选 MD5 缓存 <code>query+max_results+engine</code></li>
 </ul>
+
+</section>
+<section class="slide" data-id="search-degrade" data-label="降级与缓存" data-group="14.5 服务层">
+
+<p class="slide-sub">SearchService 工程细节</p>
+<h2 class="slide-title">空列表降级 · MD5 磁盘缓存</h2>
+<div class="compare3">
+  <div class="compare-col a"><h3>抛死全流程</h3><p>一个引擎抖动 → 整份报告作废（不推荐）</p></div>
+  <div class="compare-col b"><h3>返回 []</h3><p>该 TODO 总结变薄，其它任务继续（教材默认）</p></div>
+  <div class="compare-col c"><h3>缓存键</h3><p><code>MD5(query + max_results + SEARCH_API)</code> → <code>./cache/search/</code></p></div>
+</div>
+<pre class="code-block">content = f"{query}_{max_results}_{self.config.search_api.value}"
+cache_key = hashlib.md5(content.encode()).hexdigest()</pre>
+<div class="note">降级会牺牲质量；生产可加：重试 / 换引擎 / 前端标红警告。</div>
 
 </section>
 <section class="slide" data-id="quiz145" data-label="自测 · 服务" data-group="14.5 服务层">
@@ -1172,6 +1221,22 @@ tasks_payload = self._extract_tasks(response)
 </div>
 <pre class="code-block">yield f"data: {json.dumps({'type':'progress','stage':'planning',...})}\n\n"
 # 前端 useResearch.ts：EventSource.onmessage → 更新进度与 Markdown</pre>
+
+</section>
+<section class="slide" data-id="sse-events" data-label="SSE 事件类型" data-group="14.6 前端交互">
+
+<p class="slide-sub">协议一览 · 进度粗分配</p>
+<h2 class="slide-title">前端 switch 要处理哪些 type？</h2>
+<ul>
+  <li><code>progress</code>：percentage + text（规划~10% → 执行10–80% → 报告~90% → 完成100%）</li>
+  <li><code>plan</code>：子任务列表，渲染任务面板</li>
+  <li><code>task_summary</code>：追加该任务 Markdown</li>
+  <li><code>report</code>：覆盖为最终报告</li>
+  <li><code>error</code>：展示错误并 <code>eventSource.close()</code></li>
+</ul>
+<pre class="code-block">// 记住帧格式
+data: {"type":"progress","stage":"executing","percentage":40,...}\n\n</pre>
+<div class="callout" data-label="对比">SSE 单向够用；若要双向「取消/追问」再考虑 WebSocket。</div>
 
 </section>
 <section class="slide" data-id="md-viz" data-label="Markdown 可视化" data-group="14.6 前端交互">

@@ -357,6 +357,7 @@ a { color: var(--cyan-bright); }
 .loop-stepper .steps.steps5 { grid-template-columns: repeat(5, 1fr); }
 .loop-stepper .steps.steps3 { grid-template-columns: repeat(3, 1fr); }
 .loop-stepper .steps.steps4 { grid-template-columns: repeat(4, 1fr); }
+.loop-stepper .steps.steps6 { grid-template-columns: repeat(3, 1fr); }
 .loop-stepper .steps.steps7 { grid-template-columns: repeat(4, 1fr); }
 .loop-stepper .step-btn {
   font-family: var(--font-display); font-size: 0.72rem;
@@ -535,6 +536,7 @@ a { color: var(--cyan-bright); }
   .loop-stepper .steps.steps5,
   .loop-stepper .steps.steps3,
   .loop-stepper .steps.steps4,
+  .loop-stepper .steps.steps6,
   .loop-stepper .steps.steps7 { grid-template-columns: repeat(2, 1fr); }
   .slides-viewport { padding: 1.1rem 1rem 2.5rem; }
 }
@@ -576,7 +578,8 @@ a { color: var(--cyan-bright); }
   [x] 16.1 意义 · 开源提交形式 · 命名规范
   [x] 16.2 选题原则 · 五类方向 · CodeReviewAgent 示例
   [x] 16.3 环境：HelloAgents / Git / Jupyter · Fork · 目录结构
-  [x] 16.4 README · requirements · Notebook · 测试清单 · 大文件
+  [x] 16.4 项目开发指南专节：开发步骤 · README · requirements · Notebook
+       · 测试清单详解 · 大文件 · 翻车点 · 开 PR 前总清单
   [x] 16.5 Git 提交 · PR 模板 · Review 响应
   [x] 16.6 示例项目结构与核心代码
   [x] 16.7 总结 · 自测 · 展望
@@ -596,7 +599,7 @@ a { color: var(--cyan-bright); }
 <div class="goal-grid">
   <div class="goal-card"><div class="tag">16.1–16.2</div><h3>意义与选题</h3><p>为何要做毕业设计；五类方向；CodeReviewAgent 样板。</p></div>
   <div class="goal-card"><div class="tag">16.3</div><h3>环境准备</h3><p>HelloAgents · Git/GitHub · Jupyter · Fork 与分支 · 目录结构。</p></div>
-  <div class="goal-card"><div class="tag">16.4–16.5</div><h3>开发与提交</h3><p>README / 依赖 / Notebook / 大文件规范；PR 标题与 Review。</p></div>
+  <div class="goal-card"><div class="tag">16.4–16.5</div><h3>开发指南与提交</h3><p>16.4 项目开发指南专节（步骤/清单）→ PR 标题与 Review。</p></div>
   <div class="goal-card"><div class="tag">16.6–16.7</div><h3>示例与展望</h3><p>完整示例项目拆解；总结自测与下一步学习路径。</p></div>
 </div>
 <div class="callout" data-label="学习目标">学完后你应能：独立选题并划定范围；搭好仓库与目录；写出合格 README/Notebook；按规范提 PR 并响应 Review。</div>
@@ -931,22 +934,85 @@ jjyaoao-CodeReviewAgent/
 </div>
 </section>
 
-<section class="slide" data-id="readme-guide" data-label="编写 README" data-group="16.4 开发指南">
+<section class="slide" data-id="dev-guide-overview" data-label="项目开发指南总览" data-group="16.4 项目开发指南">
+<p class="slide-sub">16.4 · 施工核心专节</p>
+<h2 class="slide-title">项目开发指南 · 专节地图</h2>
+<p class="lead">原书 16.4 是毕业设计的<strong>施工手册</strong>。本专节按「步骤 → 文档 → 代码 → 清单 → 大文件」展开，覆盖开发全流程。</p>
+<div class="goal-grid">
+  <div class="goal-card"><div class="tag">步骤</div><h3>开发节奏</h3><p>六步流水线 + 两周节奏表，先壳后肉。</p></div>
+  <div class="goal-card"><div class="tag">文档</div><h3>README · 依赖</h3><p>门面写清怎么跑；requirements 可复现。</p></div>
+  <div class="goal-card"><div class="tag">代码</div><h3>Notebook 七段</h3><p>介绍→环境→工具→Agent→演示→评估→总结。</p></div>
+  <div class="goal-card"><div class="tag">质检</div><h3>清单 · 大文件</h3><p>提交前自检；≤5MB；外链/资源仓/小样例。</p></div>
+</div>
+<div class="callout" data-label="对应关系">侧栏本分组 = 原书 16.4；学习版同节有模板与避坑加厚。读完再进 16.5 开 PR。</div>
+</section>
+
+<section class="slide" data-id="dev-steps" data-label="开发步骤流水线" data-group="16.4 项目开发指南">
+<p class="slide-sub">16.4.0 · 端到端六步</p>
+<h2 class="slide-title">先搭壳，再填肉</h2>
+<div class="loop-stepper" id="devFlow">
+  <div class="steps steps6">
+    <button class="step-btn" type="button">1 MVP</button>
+    <button class="step-btn" type="button">2 壳</button>
+    <button class="step-btn" type="button">3 工具</button>
+    <button class="step-btn" type="button">4 Agent</button>
+    <button class="step-btn" type="button">5 演示</button>
+    <button class="step-btn" type="button">6 质检</button>
+  </div>
+  <div class="loop-panel"></div>
+</div>
+<div class="note"><strong>忌讳：</strong>一上来堆 Prompt、最后才写 README——返工最多的两条路。</div>
+</section>
+
+<section class="slide" data-id="mvp-timeline" data-label="两周开发节奏" data-group="16.4 项目开发指南">
+<p class="slide-sub">16.4.0 · 可压缩时间表</p>
+<h2 class="slide-title">两周节奏参考</h2>
+<div class="template-map">
+  <div><strong>D1–D2</strong> · 选题定界 · Fork · 目录 · README 空壳</div>
+  <div><strong>D3–D5</strong> · 工具 + Agent 主路径跑通</div>
+  <div><strong>D6–D8</strong> · 第二场景 · 异常 · 注释 · 七段齐</div>
+  <div><strong>D9–D10</strong> · 清单自检 · 大文件外置 · 开 PR</div>
+</div>
+<div class="analogy">完成标志不是「功能很多」，而是：按 README 在干净环境能跑通<strong>一条</strong>主路径。</div>
+</section>
+
+<section class="slide" data-id="readme-guide" data-label="编写 README" data-group="16.4 项目开发指南">
 <p class="slide-sub">16.4.1 · 项目门面</p>
 <h2 class="slide-title">README 应写什么？</h2>
 <div class="template-map">
   <div><strong>简介</strong> · 解决什么问题 / 特色 / 场景</div>
-  <div><strong>核心功能</strong> ·  checklist</div>
+  <div><strong>核心功能</strong> · checklist（已实现打 ✅）</div>
   <div><strong>技术栈</strong> · HelloAgents 范式、工具、API</div>
   <div><strong>快速开始</strong> · 环境 · 安装 · .env · 运行</div>
-  <div><strong>使用示例</strong> · 代码 + 结果</div>
+  <div><strong>使用示例</strong> · 代码 + 结果路径</div>
   <div><strong>亮点 / 评估 / 计划</strong> · 可选但加分</div>
   <div><strong>作者 · 致谢 · 许可证</strong></div>
 </div>
 <div class="callout" data-label="门面原则">Reviewer 通常先读 README。写不清「怎么跑」，再好的代码也难合并。</div>
 </section>
 
-<section class="slide" data-id="requirements" data-label="requirements.txt" data-group="16.4 开发指南">
+<section class="slide" data-id="readme-template" data-label="README 模板骨架" data-group="16.4 项目开发指南">
+<p class="slide-sub">16.4.1 · 可粘贴改写</p>
+<h2 class="slide-title">README 最小骨架</h2>
+<div class="code-block"># 项目名称
+&gt; 一句话描述
+
+## 项目简介 / 核心功能 / 技术栈
+
+## 快速开始
+- 环境：Python 3.10+
+- pip install -r requirements.txt
+- cp .env.example .env  # 填密钥
+- jupyter lab → 打开 main.ipynb
+
+## 使用示例
+（最短步骤 + 预期输出，如 outputs/xxx.md）
+
+## 作者 / 致谢</div>
+<div class="note">完整加长模板见原书 16.4.1 与学习版；第一天就建空壳，避免最后赶写。</div>
+</section>
+
+<section class="slide" data-id="requirements" data-label="requirements.txt" data-group="16.4 项目开发指南">
 <p class="slide-sub">16.4.2 · 可复现依赖</p>
 <h2 class="slide-title">写全依赖列表</h2>
 <div class="code-block"># 核心
@@ -956,11 +1022,15 @@ hello-agents[all]&gt;=0.2.7
 matplotlib&gt;=3.7.0
 plotly&gt;=5.14.0
 fastapi&gt;=0.109.0
-uvicorn&gt;=0.27.0</div>
-<p>只写你项目<strong>真正 import</strong> 到的包；版本尽量给出下界，避免「在我机器能跑」。</p>
+uvicorn&gt;=0.27.0
+python-dotenv&gt;=1.0.0</div>
+<div class="compare">
+  <div class="compare-col a"><h3>要做</h3><ul><li>只列真实 import</li><li>尽量给版本下界</li><li>与 README 安装步骤一致</li></ul></div>
+  <div class="compare-col b"><h3>别做</h3><ul><li>罗列全世界包</li><li>漏掉 Notebook 用过的库</li><li>密钥写进仓库</li></ul></div>
+</div>
 </section>
 
-<section class="slide" data-id="notebook-struct" data-label="Notebook 结构" data-group="16.4 开发指南">
+<section class="slide" data-id="notebook-struct" data-label="Notebook 七段结构" data-group="16.4 项目开发指南">
 <p class="slide-sub">16.4.3 · 七段式建议</p>
 <h2 class="slide-title">好 Notebook 的骨架</h2>
 <div class="loop-stepper" id="nbFlow">
@@ -977,23 +1047,60 @@ uvicorn&gt;=0.27.0</div>
 </div>
 </section>
 
-<section class="slide" data-id="test-list" data-label="提交前测试清单" data-group="16.4 开发指南">
-<p class="slide-sub">16.4.4 · 自检</p>
+<section class="slide" data-id="notebook-code" data-label="Notebook 代码骨架" data-group="16.4 项目开发指南">
+<p class="slide-sub">16.4.3 · 最小可运行示意</p>
+<h2 class="slide-title">工具确定性 · Agent 语义化</h2>
+<div class="code-block"># 环境
+from hello_agents import SimpleAgent, HelloAgentsLLM
+from dotenv import load_dotenv
+load_dotenv()
+
+# 工具：可验证逻辑
+class CustomTool(...):
+    def run(self, query: str) -&gt; str:
+        return "确定性结果"
+
+# Agent：组织建议
+llm = HelloAgentsLLM()
+agent = SimpleAgent(name="…", llm=llm,
+    system_prompt="先调工具，再基于结果给建议")
+agent.add_tool(CustomTool())
+
+print(agent.run("样例任务"))</div>
+<div class="analogy">完整七段注释版见原书；实战对照见 16.6 CodeReviewAgent（AST 工具 + 风格工具 + 报告 Agent）。</div>
+</section>
+
+<section class="slide" data-id="test-list" data-label="提交前测试清单" data-group="16.4 项目开发指南">
+<p class="slide-sub">16.4.4 · 自检勾选</p>
 <h2 class="slide-title">提交前测试清单</h2>
 <ul class="check-list">
   <li><input type="checkbox" /> 代码能正常运行，没有报错</li>
-  <li><input type="checkbox" /> README 完整清晰</li>
+  <li><input type="checkbox" /> README 完整清晰（尤其快速开始）</li>
   <li><input type="checkbox" /> requirements.txt 含全部依赖</li>
   <li><input type="checkbox" /> 有清晰使用示例</li>
   <li><input type="checkbox" /> 代码有适当注释</li>
   <li><input type="checkbox" /> 输出符合预期</li>
-  <li><input type="checkbox" /> 处理了常见异常</li>
+  <li><input type="checkbox" /> 处理了常见异常（空输入/缺密钥等）</li>
   <li><input type="checkbox" /> 结构清晰、命名规范</li>
   <li><input type="checkbox" /> 大文件已按规范外置</li>
 </ul>
 </section>
 
-<section class="slide" data-id="large-files" data-label="大文件处理" data-group="16.4 开发指南">
+<section class="slide" data-id="checklist-why" data-label="清单项为何重要" data-group="16.4 项目开发指南">
+<p class="slide-sub">16.4.4 · Reviewer 视角</p>
+<h2 class="slide-title">每一项在帮谁？</h2>
+<div class="template-map">
+  <div><strong>能跑</strong> · 合并不该变成「帮你调试环境」</div>
+  <div><strong>README</strong> · 决定别人愿不愿花时间试</div>
+  <div><strong>requirements</strong> · 决定能不能复现</div>
+  <div><strong>示例</strong> · 决定功能是否可信</div>
+  <div><strong>异常处理</strong> · 决定像不像完整应用</div>
+  <div><strong>大文件</strong> · 决定会不会拖垮主仓</div>
+</div>
+<div class="callout" data-label="用法">开 PR 前把上一页勾满；本页用来理解「为什么不能跳项」。</div>
+</section>
+
+<section class="slide" data-id="large-files" data-label="大文件三条出路" data-group="16.4 项目开发指南">
 <p class="slide-sub">16.4.5 · 保持主仓轻量</p>
 <h2 class="slide-title">大文件三条出路</h2>
 <div class="compare3">
@@ -1004,13 +1111,57 @@ uvicorn&gt;=0.27.0</div>
 <div class="note"><strong>硬限制：</strong>项目总大小建议 ≤ <strong>5MB</strong>；禁止直接提交视频、大型数据集、模型文件。</div>
 </section>
 
-<section class="slide" data-id="flash164" data-label="闪卡 · 16.4" data-group="16.4 开发指南">
+<section class="slide" data-id="large-files-gitignore" data-label="大文件 · gitignore" data-group="16.4 项目开发指南">
+<p class="slide-sub">16.4.5 · 防误提交</p>
+<h2 class="slide-title">.gitignore 与平台速查</h2>
+<div class="code-block">.env
+__pycache__/
+.ipynb_checkpoints/
+data/large/
+*.pt  *.bin  *.mp4</div>
+<div class="card-grid" style="margin-top:1rem">
+  <div class="goal-card"><div class="tag">数据</div><h3>外置平台</h3><p>网盘 · Drive · Kaggle · HF Datasets</p></div>
+  <div class="goal-card"><div class="tag">视频</div><h3>演示</h3><p>B 站 · YouTube · 腾讯视频</p></div>
+  <div class="goal-card"><div class="tag">模型</div><h3>权重</h3><p>HF Models · ModelScope</p></div>
+</div>
+</section>
+
+<section class="slide" data-id="dev-pitfalls" data-label="开发期翻车点" data-group="16.4 项目开发指南">
+<p class="slide-sub">16.4.6 · 避坑</p>
+<h2 class="slide-title">常见翻车点</h2>
+<ol>
+  <li><strong>先堆 Prompt、后补工具</strong> → 主路径不稳；先工具可测再接 Agent。</li>
+  <li><strong>README 最后才写</strong> → 易漏步骤；第一天写「快速开始」空壳。</li>
+  <li><strong>密钥写进 Notebook 并 push</strong> → 立即轮换；改用 <code>.env</code>。</li>
+  <li><strong>演示依赖私有数据</strong> → 换成可公开小样例。</li>
+  <li><strong>功能贪多</strong> → 一条主路径胜过五个半成品。</li>
+</ol>
+</section>
+
+<section class="slide" data-id="dev-final-checklist" data-label="开 PR 前总清单" data-group="16.4 项目开发指南">
+<p class="slide-sub">16.4.7 · 出门检查</p>
+<h2 class="slide-title">开发期总检查清单</h2>
+<ul class="check-list">
+  <li><input type="checkbox" /> 目录名 = <code>{GitHub用户名}-{项目名称}</code></li>
+  <li><input type="checkbox" /> 有 README / requirements / 可运行入口</li>
+  <li><input type="checkbox" /> <code>.env.example</code> 有说明，<code>.env</code> 未入库</li>
+  <li><input type="checkbox" /> Notebook/脚本结构可读（七段或等价）</li>
+  <li><input type="checkbox" /> 至少一条端到端演示（样例 → 输出）</li>
+  <li><input type="checkbox" /> <code>git status</code> 无意外大文件</li>
+  <li><input type="checkbox" /> 本地按 README 从零走通一遍</li>
+</ul>
+<div class="callout" data-label="下一步">勾完再进入 16.5：commit → push → 按 <code>[毕业设计]</code> 标题开 PR。</div>
+</section>
+
+<section class="slide" data-id="flash164" data-label="闪卡 · 16.4" data-group="16.4 项目开发指南">
 <p class="slide-sub">点击卡片看答案</p>
-<h2 class="slide-title">闪卡 · 开发</h2>
+<h2 class="slide-title">闪卡 · 项目开发指南</h2>
 <div class="flash-wrap" id="flash164" data-cards='[
+  {"q":"16.4 建议的开发顺序是什么？","a":"定 MVP → 建壳（目录/README/依赖）→ 工具 → Agent → 演示 → 清单与大文件处理。"},
   {"q":"README 最关键的作用是什么？","a":"让陌生人（含 reviewer）快速理解问题、安装依赖并跑通示例。"},
   {"q":"Notebook 建议至少覆盖哪些部分？","a":"介绍、环境、工具定义、智能体构建、功能演示；可选评估与总结。"},
-  {"q":"主仓库对大文件的态度？","a":"控制体积（约≤5MB）；大资源用外链/独立仓/小样例，勿把视频和模型直接塞进 PR。"}
+  {"q":"主仓库对大文件的态度？","a":"控制体积（约≤5MB）；大资源用外链/独立仓/小样例，勿把视频和模型直接塞进 PR。"},
+  {"q":"开 PR 前总清单少不了哪几项？","a":"命名规范、三件套交付物、.env 未入库、端到端演示、无意外大文件、按 README 从零跑通。"}
 ]'>
   <div class="flash-idx"></div>
   <div class="flash-card" onclick="toggleFlash(this)"><div class="q"></div><div class="a"></div></div>
@@ -1021,9 +1172,9 @@ uvicorn&gt;=0.27.0</div>
 </div>
 </section>
 
-<section class="slide" data-id="quiz164" data-label="检测 · 16.4" data-group="16.4 开发指南">
+<section class="slide" data-id="quiz164" data-label="检测 · 16.4" data-group="16.4 项目开发指南">
 <p class="slide-sub">选择题 · 含解析</p>
-<h2 class="slide-title">检测 · 16.4</h2>
+<h2 class="slide-title">检测 · 项目开发指南</h2>
 <div class="quiz-item" data-quiz="q164" data-answer="1">
   <h4>1. 500MB 演示视频应如何处理？</h4>
   <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">直接 git add 进主仓库</button>
@@ -1037,6 +1188,20 @@ uvicorn&gt;=0.27.0</div>
   <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">罗列全世界所有 Python 包</button>
   <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">替代 README</button>
   <div class="quiz-explain">只列真实依赖并尽量带版本下界，服务可复现。</div>
+</div>
+<div class="quiz-item" data-quiz="q164" data-answer="2">
+  <h4>3. 推荐的开工顺序是？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">先写满所有 Prompt，最后补目录</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">先提交空 PR，再慢慢写代码</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">定 MVP → 建壳 → 工具 → Agent → 演示 → 清单</button>
+  <div class="quiz-explain">先壳后肉、工具可测再接 Agent，返工最少。</div>
+</div>
+<div class="quiz-item" data-quiz="q164" data-answer="1">
+  <h4>4. 开 PR 前发现 .env 被 git add 了，应？</h4>
+  <button class="quiz-opt" data-i="0" onclick="answerQuiz(this)">无所谓，密钥反正会过期</button>
+  <button class="quiz-opt" data-i="1" onclick="answerQuiz(this)">移出暂存、加入 .gitignore，并轮换已泄露密钥</button>
+  <button class="quiz-opt" data-i="2" onclick="answerQuiz(this)">把密钥改成注释继续提交</button>
+  <div class="quiz-explain">密钥一旦进历史就视为泄露；用 .env.example 说明字段即可。</div>
 </div>
 <p class="quiz-score" id="score-q164"></p>
 </section>
@@ -1277,7 +1442,8 @@ open("outputs/review_report.md", "w", encoding="utf-8").write(review_result)</di
   <li><input type="checkbox" /> 能说明毕业设计为何要做、交什么、交到哪里</li>
   <li><input type="checkbox" /> 能按三原则评估一个选题是否合适</li>
   <li><input type="checkbox" /> 会 Fork / clone / upstream / feature 分支</li>
-  <li><input type="checkbox" /> 能写出合格 README 与 requirements</li>
+  <li><input type="checkbox" /> 能写出合格 README 与 requirements，并按七段搭 Notebook</li>
+  <li><input type="checkbox" /> 能独立过一遍提交前测试清单与开 PR 前总清单</li>
   <li><input type="checkbox" /> 知道大文件三条处理方案与 5MB 建议</li>
   <li><input type="checkbox" /> 能按 <code>[毕业设计]</code> 规范开 PR 并响应 Review</li>
   <li><input type="checkbox" /> 能复述 CodeReviewAgent 的工具+Agent 分工</li>
@@ -1431,6 +1597,15 @@ function bindStepper(rootId, texts) {
   root.querySelectorAll(".step-btn").forEach((b, i) => b.addEventListener("click", () => show(i)));
   show(0);
 }
+
+bindStepper("devFlow", [
+  { t: "① 定 MVP 一句话", p: "用选题三原则砍范围：真痛点 × 两周能做完 × 别人看得懂。写出「用户输入什么 → 系统输出什么」。" },
+  { t: "② 建壳", p: "Fork/分支/目录命名正确；README 骨架 + requirements 占位 + .env.example，先让结构可审。" },
+  { t: "③ 写工具", p: "1～2 个确定性工具（可单测）：解析、统计、规则检查——先保证工具本身稳。" },
+  { t: "④ 接 Agent", p: "HelloAgentsLLM + SimpleAgent（或其他范式）+ 注册工具 + 明确「先调工具再写报告」的 system prompt。" },
+  { t: "⑤ 主路径演示", p: "样例 in → agent.run → 结果 out（打印或写入 outputs/）；再补一个稍复杂场景。" },
+  { t: "⑥ 质检出门", p: "对照测试清单与开 PR 前总清单；大文件外置；本地按 README 从零跑通。" }
+]);
 
 bindStepper("topicFlow", [
   { t: "问题分析", p: "人工审查耗时易漏；静态分析难懂语义。需要能理解代码语义、给出深度分析的智能助手。" },

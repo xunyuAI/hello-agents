@@ -38,7 +38,7 @@ pip install "hello-agents[all]"
 
 ```
 interactive-tutorial/
-├── index.html      # 主教程（单文件自包含逻辑与样式，约 45 页）
+├── index.html      # 主教程（单文件自包含逻辑与样式，约 55 页）
 ├── assets/         # 本地配图（封面 SVG）
 │   └── ch16_cover.svg
 └── README.md       # 本说明
@@ -48,4 +48,8 @@ interactive-tutorial/
 
 - 主源：`../第十六章 毕业设计.md`
 - 英文补充（可选）：`../Chapter16-Graduation-Project.md`
-- 学习版笔记：`../第十六章 毕业设计-学习版.md`
+- 学习版笔记：`../第十六章 毕业设计-学习版.md`（含加厚的 **16.4 项目开发指南**）
+
+## 16.4 专节说明
+
+互动教程侧栏分组 **「16.4 项目开发指南」** 对应原书 16.4，含多页：开发步骤流水线、两周节奏、README、requirements、Notebook 七段与代码骨架、测试清单、清单项释义、大文件与 gitignore、翻车点、开 PR 前总清单、闪卡与检测。
