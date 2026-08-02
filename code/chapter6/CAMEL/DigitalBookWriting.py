@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from colorama import Fore
 from camel.societies import RolePlaying
 from camel.utils import print_text_animated
@@ -6,18 +8,31 @@ from camel.types import ModelPlatformType
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
-LLM_API_KEY = os.getenv("LLM_API_KEY")
-LLM_BASE_URL = os.getenv("LLM_BASE_URL")
-LLM_MODEL = os.getenv("LLM_MODEL")
+# 优先加载本目录 .env，其次复用同章 AgentScopeDemo 的 DASHSCOPE_API_KEY
+_HERE = Path(__file__).resolve().parent
+load_dotenv(_HERE / ".env")
+load_dotenv(_HERE.parent / "AgentScopeDemo" / ".env")
 
-#创建模型,在这里以Qwen为例,调用的百炼大模型平台API
-model = ModelFactory.create(
-    model_platform=ModelPlatformType.QWEN,
-    model_type=LLM_MODEL,
-    url=LLM_BASE_URL,
-    api_key=LLM_API_KEY
-)
+LLM_API_KEY = os.getenv("LLM_API_KEY") or os.getenv("DASHSCOPE_API_KEY")
+LLM_BASE_URL = os.getenv("LLM_BASE_URL")
+LLM_MODEL = os.getenv("LLM_MODEL") or os.getenv("LLM_MODEL_ID") or "qwen-max"
+
+if not LLM_API_KEY:
+    raise RuntimeError(
+        "缺少 API Key：请在 CAMEL/.env 设置 LLM_API_KEY，"
+        "或在 AgentScopeDemo/.env 设置 DASHSCOPE_API_KEY"
+    )
+
+# 创建模型,在这里以Qwen为例,调用的百炼大模型平台API
+_model_kwargs = {
+    "model_platform": ModelPlatformType.QWEN,
+    "model_type": LLM_MODEL,
+    "api_key": LLM_API_KEY,
+}
+# 百炼默认 endpoint 可不传 url；仅在显式配置时覆盖
+if LLM_BASE_URL:
+    _model_kwargs["url"] = LLM_BASE_URL
+model = ModelFactory.create(**_model_kwargs)
 
 # 定义协作任务
 task_prompt = """
@@ -44,20 +59,27 @@ print(Fore.CYAN + f"具体任务描述:\n{role_play_session.task_prompt}\n")
 
 # 开始协作对话
 chat_turn_limit, n = 30, 0
+# 调用 init_chat() 来获得由 AI 生成的初始对话消息
 input_msg = role_play_session.init_chat()
 
 while n < chat_turn_limit:
     n += 1
+    # step() 方法驱动一轮完整的对话，AI 用户和 AI 助理各发言一次
     assistant_response, user_response = role_play_session.step(input_msg)
     
-    print_text_animated(Fore.BLUE + f"作家:\n\n{user_response.msg.content}\n")
-    print_text_animated(Fore.GREEN + f"心理学家:\n\n{assistant_response.msg.content}\n")
+    # 检查是否有消息返回，防止对话提前终止
+    if assistant_response.msg is None or user_response.msg is None:
+        break
+    
+    print_text_animated(Fore.BLUE + f"作家 (AI User):\n\n{user_response.msg.content}\n")
+    print_text_animated(Fore.GREEN + f"心理学家 (AI Assistant):\n\n{assistant_response.msg.content}\n")
     
     # 检查任务完成标志
-    if "CAMEL_TASK_DONE" in user_response.msg.content:
+    if "<CAMEL_TASK_DONE>" in user_response.msg.content or "<CAMEL_TASK_DONE>" in assistant_response.msg.content:
         print(Fore.MAGENTA + "✅ 电子书创作完成！")
         break
     
+    # 将助理的回复作为下一轮对话的输入
     input_msg = assistant_response.msg
 
 print(Fore.YELLOW + f"总共进行了 {n} 轮协作对话")

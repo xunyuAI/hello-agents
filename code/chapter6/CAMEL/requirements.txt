@@ -1,1 +1,4 @@
-camel-ai==0.2.75
+# Python 3.13 下 camel-ai==0.2.75 不可用（要求 <3.13），改用兼容版本
+camel-ai==0.2.90
+colorama==0.4.6
+python-dotenv>=1.0.0

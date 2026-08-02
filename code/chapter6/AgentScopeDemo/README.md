@@ -33,6 +33,14 @@ pip install pydantic
 
 设置阿里云 DashScope API Key：
 
+在本目录创建 `.env` 文件（推荐）：
+
+```bash
+DASHSCOPE_API_KEY=your-api-key-here
+```
+
+或在终端临时导出：
+
 ```bash
 # Linux/Mac
 export DASHSCOPE_API_KEY="your-api-key-here"

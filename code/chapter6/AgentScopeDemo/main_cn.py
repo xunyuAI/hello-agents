@@ -8,6 +8,10 @@ import os
 import random
 from typing import List, Dict, Optional
 
+from dotenv import load_dotenv
+
+load_dotenv()  # 从同目录 .env 加载 DASHSCOPE_API_KEY
+
 from agentscope.agent import ReActAgent
 from agentscope.model import DashScopeChatModel
 from agentscope.pipeline import MsgHub, sequential_pipeline, fanout_pipeline
