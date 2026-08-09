@@ -45,7 +45,9 @@ class MySimpleAgent(SimpleAgent):
 
         # 如果没有启用工具调用，使用简单对话逻辑
         if not self.enable_tool_calling:
-            response = self.llm.invoke(messages, **kwargs)
+            raw = self.llm.invoke(messages, **kwargs)
+            # 兼容新版 HelloAgentsLLM：invoke 返回 LLMResponse
+            response = raw.content if hasattr(raw, "content") else str(raw)
             self.add_message(Message(input_text, "user"))
             self.add_message(Message(response, "assistant"))
             print(f"✅ {self.name} 响应完成")
@@ -84,8 +86,9 @@ class MySimpleAgent(SimpleAgent):
         final_response = ""
 
         while current_iteration < max_tool_iterations:
-            # 调用LLM
-            response = self.llm.invoke(messages, **kwargs)
+            # 调用LLM（兼容 LLMResponse / str）
+            raw = self.llm.invoke(messages, **kwargs)
+            response = raw.content if hasattr(raw, "content") else str(raw)
 
             # 检查是否有工具调用
             tool_calls = self._parse_tool_calls(response)
@@ -118,7 +121,8 @@ class MySimpleAgent(SimpleAgent):
 
         # 如果超过最大迭代次数，获取最后一次回答
         if current_iteration >= max_tool_iterations and not final_response:
-            final_response = self.llm.invoke(messages, **kwargs)
+            raw = self.llm.invoke(messages, **kwargs)
+            final_response = raw.content if hasattr(raw, "content") else str(raw)
 
         # 保存到历史记录
         self.add_message(Message(input_text, "user"))

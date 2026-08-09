@@ -178,3 +178,6 @@ AGENTS.md
 .tmp-learn-expand/
 .vscode/
 .tmp-ch5-8-build/
+.tmp-ch7-build/
+memory/**
+code/chapter7/memory/**

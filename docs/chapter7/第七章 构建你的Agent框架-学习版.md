@@ -2279,11 +2279,39 @@ async def test_parallel_execution():
 
 ## 习题
 
+> 完整详解也可参见：[study/chapter7-exercises-answers.md](./study/chapter7-exercises-answers.md)
+
 1. 本章构建了 `HelloAgents` 框架，并阐述了"为何需要自建Agent框架"。请分析：
 
    - 在7.1.1节中提到了当前主流框架的四个主要局限性。结合你在[第六章习题](../chapter6/第六章%20框架开发实践.md#习题)或实际项目中使用过的某个框架的实际经验，说明这些问题是如何影响开发效率的。
    - `HelloAgents` 提出了"万物皆为工具"的设计理念，将 `Memory`、`RAG`、`MCP` 等模块都抽象为工具。这种设计有什么优势？是否存在局限性？请举例说明。
    - 对比第四章从零实现的智能体代码和本章的框架化实现，框架化带来了哪些具体的改进？如果让你设计一个框架，你会优先考虑哪些设计原则？
+
+   <details>
+   <summary><strong>参考解答</strong></summary>
+
+   **（1）四个局限性如何拖慢开发效率**
+
+   对照第六章用过的 LangChain / AutoGen / LangGraph / AgentScope：
+
+   | 局限性 | 如何影响效率 | 实际例子 |
+   |--------|--------------|----------|
+   | 过度抽象 | 简单任务也要先对齐多层概念，调试堆栈深 | LangChain 做「搜索+总结」要先搞清 LCEL、Agent、Tool 等多套抽象 |
+   | API 快速迭代 | 文档与代码不同步，旧教程易失效 | 版本升级后 import/参数变更，「复制即失败」 |
+   | 黑盒实现 | 死循环、工具未调用时难定位根因 | AutoGen 群聊跑偏时缺乏清晰状态机，只能靠日志猜 |
+   | 依赖复杂 | 安装体积大、易与现有项目冲突 | 小 Demo 拉起大量传递依赖，排依赖比写业务更久 |
+
+   **（2）「万物皆为工具」的优势与局限**
+
+   - **优势**：心智模型统一（Agent 只调工具）；扩展成本低（实现接口 + 注册）；便于观测/测试；工具链与异步执行器可直接组合能力。
+   - **局限**：Memory/RAG/MCP 的生命周期与结构化语义被压扁成 `str→str`；长连接服务（向量库、MCP）与「无状态工具」不匹配；权限边界变模糊。教学与中小规模很合适，生产级子系统仍建议在工具外观下保留独立模块（见第八章演进）。
+
+   **（3）第四章脚本 vs 框架化；自建优先原则**
+
+   - **改进**：统一 `Agent.run` 入口与 `Message` 历史；`HelloAgentsLLM`/`ToolRegistry` 解耦；提示词可配置；可安装、可复现测试。
+   - **优先原则**：接口统一可替换 → 约定优于配置且支持显式覆盖 → 可观测 → 最小依赖 → 安全默认（白名单/超时/最大步数）。
+
+   </details>
 
 2. 在7.2节中，我们扩展了 `HelloAgentsLLM` 以支持多模型供应商和本地模型调用。
 
@@ -2293,11 +2321,51 @@ async def test_parallel_execution():
    - 在7.2.3节中介绍了自动检测机制的三个优先级。请分析：如果同时设置了 `OPENAI_API_KEY` 和 `LLM_BASE_URL="http://localhost:11434/v1"`，框架最后会选择哪个提供商？这种优先级设计是否合理？
    - 除了本章介绍的 `VLLM` 和 `Ollama`，还有 `SGLang` 等其他本地模型部署方案。请先搜索并了解 `SGLang` 的基本信息和特点，然后对比 `VLLM`、`SGLang` 和 `Ollama` 这三者在易用性、资源占用、推理速度、推理精度等方面的优劣。
 
+   <details>
+   <summary><strong>参考解答</strong></summary>
+
+   **（1）继承扩展新供应商（示意）**
+
+   对齐 7.2.1：子类重写 `__init__`，先根据 `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` / `MOONSHOT_API_KEY`（Kimi）自动检测 `provider`，再补默认 `base_url` 与模型名，最后 `super().__init__(...)`。完整示例见 `study/chapter7-exercises-answers.md` 习题 2.1。
+
+   **（2）同时设置 OpenAI Key 与 Ollama URL**
+
+   按 7.2.3：**最高优先级是特定服务商环境变量**。存在 `OPENAI_API_KEY` 时直接返回 `"openai"`，**不会**再解析 `:11434`。  
+   - 合理处：密钥是强意图，避免本机默认端口误伤云端配置。  
+   - 不妥处：本地开发常「Key 常驻 + 临时切 Ollama」会被抢优先级。建议 `provider=` 显式指定永远最高，或增加 `LLM_PROVIDER`。
+
+   **（3）Ollama / vLLM / SGLang**
+
+   - **SGLang**：高吞吐推理框架，特色是 **RadixAttention**（按前缀复用 KV cache），适合多轮、RAG、Agent 等共享前缀重的负载；通常也提供 OpenAI 兼容 API。
+   - **对比**：易用性 Ollama ≫ vLLM ≈ SGLang；资源上 Ollama 本机友好，后两者吃 GPU 但利用率高；吞吐上高并发时 vLLM/SGLang 明显强于 Ollama，共享前缀重时 SGLang 常更优；**精度主要取决于模型与量化，而非引擎本身**。
+   - **选型**：本机试玩 → Ollama；通用生产吞吐 → vLLM；多轮/Agent 前缀复用重 → 重点评估 SGLang。
+
+   </details>
+
 3. 在7.3节中，我们实现了 `Message` 类、`Config` 类和 `Agent` 基类。请分析：
 
    - `Message` 类使用了 `Pydantic` 的 `BaseModel` 进行数据验证。这种设计在实际应用中有哪些优势？
    - `Agent` 基类定义了 `run` 和 `_execute` 两个方法，其中 `run` 是公开接口，`_execute` 是抽象方法。这种设计模式叫什么？有什么好处？
    - 在 `Config` 类中，我们使用了单例模式。请解释什么是单例模式，为什么配置管理需要使用单例模式？如果不使用单例会导致什么问题？
+
+   <details>
+   <summary><strong>参考解答</strong></summary>
+
+   **（1）Pydantic Message 的优势**
+
+   自动校验（如 `role` 的 `Literal`）、类型提示友好、序列化方便（`to_dict` 对齐 OpenAI）、`metadata`/`timestamp` 扩展位清晰、字段定义即契约。
+
+   **（2）设计模式：模板方法（Template Method）**
+
+   基类 `run` 固定骨架（记历史、日志、异常、再调核心逻辑），子类实现 `_execute` 填差异。好处：公共流程只写一次、子类专注范式逻辑、对外 API 稳定。  
+   > 与正文对照：7.3.3 示例把抽象点直接放在 `run`；习题的 `run`/`_execute` 拆分是更完整的模板方法写法。
+
+   **（3）单例与配置**
+
+   单例保证进程内只有一份实例。配置需要全局一致（温度、debug、默认模型），否则多模块各 `Config()` 会导致行为不一致、热更新只生效一份、测试串味。  
+   > 与正文对照：7.3.2 给出的是普通 `Config` + `from_env()`，**未强制单例**；也可用依赖注入同一实例（更利于测试）。
+
+   </details>
 
 4. 在7.4节中，我们动手进行了四种 `Agent` 范式的框架化实现。
 
@@ -2307,17 +2375,97 @@ async def test_parallel_execution():
    - `ReflectionAgent` 实现了"执行-反思-优化"循环。请扩展这个实现，添加一个"质量评分"机制：在每次反思后，让 `LLM` 对当前版本的输出打分，只有分数低于阈值时才继续优化，否则提前终止。
    - 请设计并实现一个新的 `Agent` 范式 `Tree-of-Thought Agent`，要求继承 `Agent` 基类，它能够在每一步生成多个可能的思考路径，然后选择最优路径继续。
 
+   <details>
+   <summary><strong>参考解答</strong></summary>
+
+   **（1）框架化 ReAct 的 3 个改进**
+
+   1. 接入 `ToolRegistry`：增删工具不必改 Agent 内部分支 → 可扩展性 ↑  
+   2. 提示词模板化/`custom_prompt`：格式约束更严 → 可维护性 ↑  
+   3. 统一生命周期与 `Message` 历史、`max_steps` 配置化 → 可测试/可观测 ↑  
+
+   **（2）质量评分早停**
+
+   在 reflect 之后增加 score 步：LLM 输出 0–10 分；`score >= threshold`（如 8）则 break，否则再 refine。打分解析失败要有兜底，避免空转耗 token。完整伪代码见 study 笔记习题 4.2。
+
+   **（3）Tree-of-Thought Agent**
+
+   每步 **Expand（生成 k 条候选）→ Evaluate（打分/投票）→ Select（选最优继续）**，直到 Final 或达到深度上限。注意控制 `breadth * depth` 的调用成本；需要工具时在选定路径上再调 Registry。
+
+   </details>
+
 5. 在7.5节中，我们构建了工具系统。请思考以下问题：
 
    - `BaseTool` 类定义了 `execute` 抽象方法，所有工具都必须实现这个方法。请解释为什么要强制所有工具实现统一的接口？如果某个工具需要返回多个值（如搜索工具返回标题、摘要、链接），应该如何设计？
    - 在7.5.3节中实现了工具链（`ToolChain`）。请设计一个实际的应用场景，需要串联至少3个工具，并画出工具链的执行流程图。
    - 异步工具执行器（`AsyncToolExecutor`）使用了线程池来并行执行工具。请分析：在什么情况下并行执行工具能带来性能提升？
 
+   <details>
+   <summary><strong>参考解答</strong></summary>
+
+   **（1）统一接口 & 多值返回**
+
+   统一 `execute`/`run` 才能让 Registry、工具链、Agent 无差别调度，符合里氏替换。多值建议返回 **JSON 字符串** 或 dict（由 Registry 统一序列化），也可「摘要 str + metadata」；避免每个工具互不兼容的返回类型。
+
+   **（2）场景：技术调研简报（≥3 工具）**
+
+   `advanced_search`（搜版本与变更）→ `calculator`（对比性能数字）→ `summarizer`/LLM 工具（生成中文简报）。
+
+   ```mermaid
+   flowchart LR
+     A[用户问题] --> B[Search]
+     B --> C[Calculator]
+     C --> D[Summarize]
+     D --> E[最终输出]
+   ```
+
+   **（3）并行何时提速**
+
+   - **能**：相互独立的 I/O（多搜索源、多 URL），等待网络时并行。  
+   - **不能/有害**：后步依赖前步输出；纯 CPU 重且受 GIL 限制；共享配额易触发限流。  
+   - 口诀：无数据依赖的 I/O → 并行；有依赖 → 工具链串行。
+
+   </details>
+
 6. 框架的可扩展性是设计的重要考量因素之一。你现在要扩展 `HelloAgents` 框架，为其实现一些有趣的新功能和特性。
 
    - 首先为 `HelloAgents` 添加一个"流式输出"功能，使得 `Agent` 在生成响应时能够实时返回中间结果（类似 `ChatGPT` 用户界面的打字效果）。请设计这个功能的实现方案，说明需要修改哪些类和方法。
    - 然后为框架添加"多轮对话管理"功能，能够自动管理对话历史、支持对话分支和回溯，你会如何设计？需要新增哪些类？如何与现有的 `Message` 系统集成？
    - 最后请为 `HelloAgents` 设计一个"插件系统"，允许第三方开发者通过插件的方式扩展框架功能（如添加新的 `Agent` 类型、新的工具类型等），而无需修改框架核心代码。要求画出插件系统的架构图并说明关键接口。
+
+   <details>
+   <summary><strong>参考解答</strong></summary>
+
+   **（1）流式输出**
+
+   - `HelloAgentsLLM`：统一 `stream(messages) -> Iterator[str]`（可基于已有 `think`）  
+   - `Agent`：新增 `stream()`；`SimpleAgent` 边生成边 yield；ReAct 等可先 yield 步骤事件再流式输出最终答案  
+   - 可选 `StreamEvent(type, data)`：`token` / `tool_start` / `tool_result` / `final`
+
+   **落地（继承扩展）**：`code/chapter7/my_streaming_agent.py` 中 `StreamingAgent(MySimpleAgent)`；事件模型见 `stream_events.py`；测试 `test_streaming_agent.py`。
+
+   **（2）多轮对话 + 分支回溯**
+
+   新增 `Conversation`、`ConversationStore`、`DialogTree`/`Checkpoint`。叶子仍是 `Message`；分支 = 复制某节点前缀历史再 append；回溯 = 将 Agent `_history` 重置为某 checkpoint。Agent 只消费「当前分支的 Message 列表」。
+
+   **落地（继承扩展）**：`conversation.py` + `my_dialog_agent.py` 中 `DialogAgent(MySimpleAgent)`；测试 `test_dialog_agent.py`。
+
+   **（3）插件系统**
+
+   ```text
+   Core(Agent/ToolRegistry/LLM/Config)
+           │ PluginAPI
+      PluginManager (discover/load/register)
+           ├── AgentPlugin
+           ├── ToolPlugin
+           └── ProviderPlugin
+   ```
+
+   关键接口：`Plugin.setup(app)` / `teardown()`；`app.register_agent_type` / `register_tool` / `register_provider`。通过 entry_points 或 `plugins/` 目录发现，第三方不修改核心源码。
+
+   **落地**：`plugin_system.py`；示例 `plugins/demo_plugins.py` 中 `EchoAgent(SimpleAgent)`；测试 `test_plugin_system.py`。
+
+   </details>
 
 ---
 
