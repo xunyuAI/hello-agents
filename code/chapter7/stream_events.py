@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Optional
 import time
 
+# StreamEventType：流式事件类型别名，用 Literal 限定 type 只能是下列字面量之一（便于类型检查与 IDE 提示）
 StreamEventType = Literal["token", "tool_start", "tool_result", "status", "final", "error"]
 
 
