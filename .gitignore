@@ -180,4 +180,6 @@ AGENTS.md
 .tmp-ch5-8-build/
 .tmp-ch7-build/
 memory/**
+memory_data/
 code/chapter7/memory/**
+code/chapter8/memory_data/

@@ -5,8 +5,28 @@
 展示MemoryTool和MemoryManager的分层架构
 """
 
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+# Code Runner / 系统 python3 时自动切到项目 .venv
+# 注意：venv 里的 python 常是系统解释器的符号链接，需用 sys.prefix 判断
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_VENV_DIR = _PROJECT_ROOT / ".venv"
+_VENV_PYTHON = _VENV_DIR / "bin" / "python"
+if _VENV_PYTHON.exists() and Path(sys.prefix).resolve() != _VENV_DIR.resolve():
+    os.execv(str(_VENV_PYTHON), [str(_VENV_PYTHON), *sys.argv])
+
 from dotenv import load_dotenv
-load_dotenv()
+
+# 用脚本所在目录加载 .env，避免依赖当前工作目录
+_ENV_DIR = Path(__file__).resolve().parent
+load_dotenv(_ENV_DIR / ".env")
+
+from qdrant_local_fallback import ensure_qdrant
+ensure_qdrant()
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from hello_agents.tools import MemoryTool

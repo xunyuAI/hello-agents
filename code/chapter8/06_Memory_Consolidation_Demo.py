@@ -7,6 +7,8 @@
 
 from dotenv import load_dotenv
 load_dotenv()
+from qdrant_local_fallback import ensure_qdrant
+ensure_qdrant()
 import time
 from datetime import datetime, timedelta
 from hello_agents.tools import MemoryTool
